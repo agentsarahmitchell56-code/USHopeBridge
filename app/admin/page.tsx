@@ -15,6 +15,17 @@ type Application = {
   requested_amount: string | null;
   details: string;
   status: string;
+  review_notes: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+};
+type ApplicationStatusHistory = {
+  id: string;
+  application_id: string;
+  previous_status: string;
+  new_status: string;
+  review_note: string;
   created_at: string;
 };
 type Conversation = {
@@ -41,6 +52,11 @@ export default function AdminDashboardPage() {
   const [staffEmail, setStaffEmail] = useState("");
   const [role, setRole] = useState("");
   const [applications, setApplications] = useState<Application[]>([]);
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [reviewHistory, setReviewHistory] = useState<ApplicationStatusHistory[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [notesSaving, setNotesSaving] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -77,7 +93,7 @@ export default function AdminDashboardPage() {
     setRole(profile.role);
 
     const [appResult, conversationResult] = await Promise.all([
-      supabase.from("applications").select("id,reference_number,full_name,email,phone,location,assistance_type,requested_amount,details,status,created_at").order("created_at", { ascending: false }).limit(200),
+      supabase.from("applications").select("id,reference_number,full_name,email,phone,location,assistance_type,requested_amount,details,status,review_notes,reviewed_by,reviewed_at,created_at").order("created_at", { ascending: false }).limit(200),
       supabase.from("conversations").select("id,client_name,client_email,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
     ]);
 
@@ -190,20 +206,82 @@ export default function AdminDashboardPage() {
     setReplySending(false);
   }
 
+  useEffect(() => {
+    if (!selectedApplication) {
+      setReviewHistory([]);
+      return;
+    }
+    let active = true;
+    setHistoryLoading(true);
+    async function loadReviewHistory() {
+      const { data, error: historyError } = await supabase
+        .from("application_status_history")
+        .select("id,application_id,previous_status,new_status,review_note,created_at")
+        .eq("application_id", selectedApplication!.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (!active) return;
+      if (historyError) {
+        setError("Could not load review history. Check the staff history policy in Supabase.");
+        setReviewHistory([]);
+      } else {
+        setReviewHistory((data || []) as ApplicationStatusHistory[]);
+      }
+      setHistoryLoading(false);
+    }
+    void loadReviewHistory();
+    return () => { active = false; };
+  }, [selectedApplication]);
+
+  async function saveReviewNotes(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedApplication || notesSaving) return;
+    setNotesSaving(true);
+    setError("");
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      setError("Your staff session has expired. Please sign in again.");
+      setNotesSaving(false);
+      return;
+    }
+    const now = new Date().toISOString();
+    const { error: saveError } = await supabase
+      .from("applications")
+      .update({ review_notes: reviewNotes.trim(), reviewed_by: authData.user.id, reviewed_at: now })
+      .eq("id", selectedApplication.id);
+    if (saveError) {
+      console.error("Save review notes error:", saveError);
+      setError("Review notes could not be saved. Check the staff application UPDATE policy.");
+    } else {
+      const updated = { ...selectedApplication, review_notes: reviewNotes.trim(), reviewed_by: authData.user.id, reviewed_at: now };
+      setSelectedApplication(updated);
+      setApplications((current) => current.map((item) => item.id === updated.id ? updated : item));
+    }
+    setNotesSaving(false);
+  }
+
   async function updateStatus(application: Application, status: string) {
     if (savingId) return;
     setSavingId(application.id);
     setError("");
 
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      setError("Your staff session has expired. Please sign in again.");
+      setSavingId("");
+      return;
+    }
     const { error: updateError } = await supabase
       .from("applications")
-      .update({ status })
+      .update({ status, reviewed_by: authData.user.id, reviewed_at: new Date().toISOString() })
       .eq("id", application.id);
 
     if (updateError) {
       setError("Status update failed. Your account may not have permission to update applications.");
     } else {
-      setApplications((current) => current.map((item) => item.id === application.id ? { ...item, status } : item));
+      const updated = { ...application, status, reviewed_by: authData.user.id, reviewed_at: new Date().toISOString() };
+      setApplications((current) => current.map((item) => item.id === application.id ? { ...item, ...updated } : item));
+      if (selectedApplication?.id === application.id) setSelectedApplication(updated);
     }
     setSavingId("");
   }
@@ -276,13 +354,47 @@ export default function AdminDashboardPage() {
                 <thead><tr style={{ textAlign: "left", background: "#f7fafc" }}>{["Applicant", "Request", "Submitted", "Reference", "Status"].map((title) => <th key={title} style={{ padding: 12, borderBottom: "1px solid #e3ebf4" }}>{title}</th>)}</tr></thead>
                 <tbody>{filtered.map((item) => <tr key={item.id}>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><strong>{item.full_name}</strong><div style={{ color: "#627d98" }}>{item.email}</div>{item.phone && <div style={{ color: "#627d98" }}>{item.phone}</div>}</td>
-                  <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><strong>{item.assistance_type}</strong><div>{item.requested_amount || "Amount not specified"}</div><details style={{ marginTop: 6, maxWidth: 260 }}><summary style={{ cursor: "pointer", color: "#1464f4" }}>View details</summary><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.details}</p><p style={{ color: "#627d98" }}>{item.location}</p></details></td>
+                  <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><strong>{item.assistance_type}</strong><div>{item.requested_amount || "Amount not specified"}</div><details style={{ marginTop: 6, maxWidth: 260 }}><summary style={{ cursor: "pointer", color: "#1464f4" }}>View details</summary><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.details}</p><p style={{ color: "#627d98" }}>{item.location}</p></details><button type="button" className="btn secondary" style={{ marginTop: 8, padding: "7px 10px", fontSize: 12 }} onClick={() => { setSelectedApplication(item); setReviewNotes(item.review_notes || ""); setError(""); }}>Review notes</button></td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7", whiteSpace: "nowrap" }}>{new Date(item.created_at).toLocaleDateString()}</td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}>{item.reference_number || "—"}</td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><select aria-label={"Status for " + item.full_name} value={item.status} disabled={savingId === item.id} onChange={(event) => void updateStatus(item, event.target.value)} style={{ padding: 9, border: "1px solid #d7e2ee", borderRadius: 8, background: "white" }}>{statuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>{savingId === item.id && <div style={{ fontSize: 12, color: "#627d98" }}>Saving…</div>}</td>
                 </tr>)}</tbody>
               </table>
             </div>
+          )}
+          {selectedApplication && (
+            <section style={{ marginTop: 20, border: "1px solid #d7e2ee", borderRadius: 14, padding: 18, background: "#fbfdff" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 12, flexWrap: "wrap" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 19 }}>Review application</h3>
+                  <p style={{ color: "#627d98", margin: "5px 0 0" }}>{selectedApplication.full_name} · {selectedApplication.reference_number || "No reference"}</p>
+                </div>
+                <button type="button" className="btn secondary" onClick={() => setSelectedApplication(null)}>Close review</button>
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "14px 0", fontSize: 13 }}>
+                <span style={{ background: "#eef2ff", padding: "6px 9px", borderRadius: 8 }}>Current status: <strong>{selectedApplication.status}</strong></span>
+                {selectedApplication.reviewed_at && <span style={{ color: "#627d98", padding: "6px 0" }}>Last reviewed: {new Date(selectedApplication.reviewed_at).toLocaleString()}</span>}
+              </div>
+              <form onSubmit={saveReviewNotes}>
+                <label htmlFor="review-notes" style={{ display: "block", fontWeight: 700, marginBottom: 7 }}>Internal review notes</label>
+                <textarea id="review-notes" value={reviewNotes} onChange={(event) => setReviewNotes(event.target.value)} maxLength={5000} rows={4} placeholder="Record verification steps, missing information, follow-up required, or the reason for a decision. These notes are staff-only." style={{ width: "100%", boxSizing: "border-box", padding: 12, border: "1px solid #d7e2ee", borderRadius: 10, font: "inherit", resize: "vertical" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 10 }}>
+                  <span style={{ color: "#718096", fontSize: 12 }}>{reviewNotes.length}/5000 characters · Internal staff notes only</span>
+                  <button className="btn primary" type="submit" disabled={notesSaving}>{notesSaving ? "Saving notes…" : "Save review notes"}</button>
+                </div>
+              </form>
+              <div style={{ marginTop: 22 }}>
+                <h4 style={{ margin: "0 0 10px" }}>Status history</h4>
+                {historyLoading ? <p style={{ color: "#627d98" }}>Loading status history…</p> : reviewHistory.length === 0 ? <p style={{ color: "#627d98" }}>No status changes recorded yet. New status changes will appear here.</p> : (
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {reviewHistory.map((entry) => <div key={entry.id} style={{ padding: 12, border: "1px solid #e3ebf4", borderRadius: 10, background: "white" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}><strong>{entry.previous_status} → {entry.new_status}</strong><span style={{ color: "#718096", fontSize: 12 }}>{new Date(entry.created_at).toLocaleString()}</span></div>
+                      {entry.review_note && <p style={{ margin: "7px 0 0", whiteSpace: "pre-wrap" }}>Note at time of change: {entry.review_note}</p>}
+                    </div>)}
+                  </div>
+                )}
+              </div>
+            </section>
           )}
           <p style={{ color: "#718096", fontSize: 12, marginTop: 14 }}>Showing up to 200 most recent applications. Applicant data is restricted by Supabase staff policies.</p>
         </section>
