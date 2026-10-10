@@ -63,6 +63,10 @@ export default function Apply() {
                 Chat with an Agent
               </Link>
 
+              <Link className="btn secondary" href="/status">
+                Track Application
+              </Link>
+
               <Link className="btn secondary" href="/">
                 Return Home
               </Link>
