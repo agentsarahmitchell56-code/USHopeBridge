@@ -9,7 +9,7 @@ export const metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",
-    apple: "/icon.svg",
+    apple: "/apple-touch-icon.svg",
   },
   appleWebApp: {
     capable: true,
