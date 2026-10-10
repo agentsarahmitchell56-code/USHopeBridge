@@ -25,6 +25,8 @@ type Application = {
   reviewed_by: string | null;
   reviewed_at: string | null;
   created_at: string;
+  image_path?: string | null;
+  image_type?: string | null;
 };
 type ApplicationStatusHistory = {
   id: string;
@@ -73,6 +75,7 @@ export default function AdminDashboardPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [messageImageUrls, setMessageImageUrls] = useState<Record<string, string>>({});
   const [replyText, setReplyText] = useState("");
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [replySending, setReplySending] = useState(false);
@@ -138,7 +141,7 @@ export default function AdminDashboardPage() {
     async function loadMessages() {
       const { data, error: messagesError } = await supabase
         .from("messages")
-        .select("id,conversation_id,sender_type,sender_id,message,created_at")
+        .select("id,conversation_id,sender_type,sender_id,message,created_at,image_path,image_type")
         .eq("conversation_id", selectedConversation!.id)
         .order("created_at", { ascending: true });
 
@@ -147,7 +150,20 @@ export default function AdminDashboardPage() {
         setError("Could not load this conversation's messages. Check staff message access in Supabase.");
         setMessages([]);
       } else {
-        setMessages((data || []) as Message[]);
+        const loadedMessages = (data || []) as Message[];
+        setMessages(loadedMessages);
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        if (accessToken) {
+          for (const item of loadedMessages) {
+            if (!item.image_path || messageImageUrls[item.id]) continue;
+            try {
+              const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+              const imageResult = await response.json();
+              if (response.ok && imageResult.url && active) setMessageImageUrls((current) => ({ ...current, [item.id]: imageResult.url }));
+            } catch { /* attachment can be retried after refresh */ }
+          }
+        }
       }
       setMessagesLoading(false);
     }
@@ -535,7 +551,9 @@ export default function AdminDashboardPage() {
                         const isAgent = item.sender_type === "agent";
                         return <div key={item.id} style={{ alignSelf: isAgent ? "flex-end" : "flex-start", maxWidth: "88%", background: isAgent ? "#eaf2ff" : "#f1f5f9", color: "#243b53", padding: "10px 12px", borderRadius: 12, overflowWrap: "anywhere" }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: isAgent ? "#1554ad" : "#52667a", marginBottom: 4 }}>{isAgent ? "HOPEBRIDGE staff" : "Customer"}</div>
-                          <div style={{ whiteSpace: "pre-wrap" }}>{item.message}</div>
+                          {item.message && <div style={{ whiteSpace: "pre-wrap" }}>{item.message}</div>}
+                          {item.image_path && messageImageUrls[item.id] && <a href={messageImageUrls[item.id]} target="_blank" rel="noreferrer"><img src={messageImageUrls[item.id]} alt="Customer attachment" style={{ display: "block", maxWidth: "100%", maxHeight: 220, borderRadius: 9, marginTop: item.message ? 8 : 0 }} /></a>}
+                          {item.image_path && !messageImageUrls[item.id] && <div style={{ fontSize: 12, marginTop: 4 }}>Attachment loading or unavailable</div>}
                           <div style={{ fontSize: 10, color: "#718096", marginTop: 5 }}>{new Date(item.created_at).toLocaleString()}</div>
                         </div>;
                       })}
