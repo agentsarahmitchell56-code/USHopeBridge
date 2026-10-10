@@ -21,6 +21,10 @@ type SavedChat = {
 
 const CHAT_STORAGE_KEY = "hopebridge-support-chat-v1";
 
+function formatMessageTime(value: string) {
+  return new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
 export default function ChatPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -89,7 +93,6 @@ export default function ChatPage() {
   async function startChat(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
 
@@ -106,14 +109,12 @@ export default function ChatPage() {
     try {
       const newConversationId = crypto.randomUUID();
       const newChatToken = crypto.randomUUID();
-
       const { error: createError } = await supabase.from("conversations").insert({
         id: newConversationId,
         client_name: cleanName,
         client_email: cleanEmail,
         chat_token: newChatToken,
       });
-
       if (createError) throw new Error(createError.message || "Unable to start your conversation.");
 
       const savedChat: SavedChat = {
@@ -176,95 +177,88 @@ export default function ChatPage() {
     setError("");
   }
 
-  if (!started) {
-    return (
-      <main className="container">
-        <div className="form-wrap">
-          <div className="card">
-            <a href="/" className="brand">
-              HOPEBRIDGE
-              <span>FINANCIAL ASSISTANCE</span>
-            </a>
-            <h1 style={{ marginTop: 30 }}>Chat with an Agent</h1>
-            <p style={{ color: "#627d98", lineHeight: 1.7 }}>
-              Enter your name and email address to start a private conversation with a HOPEBRIDGE agent.
-            </p>
-            <form className="form" onSubmit={startChat}>
-              <div className="field">
-                <label htmlFor="name">Full Name</label>
-                <input id="name" type="text" placeholder="Your full name" value={name}
-                  onChange={(e) => setName(e.target.value)} autoComplete="name" minLength={2} required />
-              </div>
-              <div className="field">
-                <label htmlFor="email">Email Address</label>
-                <input id="email" type="email" placeholder="you@example.com" value={email}
-                  onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
-              </div>
-              {error && <div role="alert" style={{ padding: 14, borderRadius: 10, background: "#fff1f2", color: "#b42318", fontSize: 14, lineHeight: 1.5 }}>{error}</div>}
-              <button type="submit" className="btn primary" disabled={loading}>
-                {loading ? "Starting Chat..." : "Start Chat"}
-              </button>
-              <a href="/" className="btn secondary" style={{ textAlign: "center" }}>Return Home</a>
-              <a href="/status" style={{ color: "#1464f4", textAlign: "center", fontWeight: 700, padding: 8 }}>Check application status</a>
-            </form>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="container">
-      <div className="chat">
-        <div className="card">
-          <a href="/" className="brand">
-            HOPEBRIDGE
-            <span>FINANCIAL ASSISTANCE</span>
-          </a>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 15, alignItems: "center", marginTop: 25, marginBottom: 18 }}>
-            <div>
-              <h1 style={{ margin: 0 }}>Chat with an Agent</h1>
-              <p style={{ color: "#627d98", marginBottom: 0 }}>Hello, {name}</p>
-            </div>
-            <span style={{ fontSize: 12, color: "#15803d", fontWeight: 700 }}>● Chat active</span>
+    <main className="messenger-page">
+      <div className="messenger-shell">
+        <header className="messenger-header">
+          <a href="/" className="messenger-back" aria-label="Return home">‹</a>
+          <div className="messenger-avatar" aria-hidden="true">HB</div>
+          <div className="messenger-heading">
+            <div className="messenger-title">HOPEBRIDGE Support</div>
+            <div className="messenger-presence"><span className="online-dot" /> Support conversation</div>
           </div>
+          <a className="messenger-info" href="/status" aria-label="Check application status" title="Check application status">i</a>
+        </header>
 
-          <div className="messages" ref={messagesRef} aria-live="polite">
-            {messages.length === 0 ? (
-              <div style={{ textAlign: "center", color: "#718096", padding: "60px 20px" }}>
-                <div style={{ fontSize: 34, marginBottom: 12 }}>💬</div>
-                <strong>You're connected.</strong>
-                <p>Send a message and a HOPEBRIDGE agent will respond as soon as possible.</p>
-              </div>
-            ) : messages.map((item) => (
-              <div key={item.id} className={`bubble ${item.sender_type === "client" ? "client" : "agent"}`}>
-                <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
-                  {item.sender_type === "client" ? "You" : "HOPEBRIDGE staff"}
+        {!started ? (
+          <section className="messenger-start">
+            <div className="messenger-intro-avatar">HB</div>
+            <h1>Message HOPEBRIDGE</h1>
+            <p>Start a conversation with our support team. Enter your details below and we’ll open your chat.</p>
+            <form className="messenger-start-form" onSubmit={startChat}>
+              <label htmlFor="name">Your name</label>
+              <input id="name" type="text" placeholder="Full name" value={name}
+                onChange={(e) => setName(e.target.value)} autoComplete="name" minLength={2} required />
+              <label htmlFor="email">Email address</label>
+              <input id="email" type="email" placeholder="you@example.com" value={email}
+                onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+              {error && <div role="alert" className="messenger-error">{error}</div>}
+              <button type="submit" className="messenger-primary" disabled={loading}>
+                {loading ? "Opening conversation…" : "Continue to chat"}
+              </button>
+            </form>
+            <a href="/status" className="messenger-status-link">Track an application instead</a>
+          </section>
+        ) : (
+          <>
+            <div className="messenger-chat-context">
+              <span className="context-lock" aria-hidden="true">✓</span>
+              <span><strong>You’re chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started.</small></span>
+            </div>
+            <div className="messenger-messages" ref={messagesRef} aria-live="polite">
+              <div className="chat-day-label">MESSAGES</div>
+              {messages.length === 0 ? (
+                <div className="messenger-empty">
+                  <div className="messenger-small-avatar">HB</div>
+                  <strong>HOPEBRIDGE Support</strong>
+                  <p>Your conversation starts here. Send us a message and our team will reply as soon as possible.</p>
                 </div>
-                <div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.message}</div>
-                <div style={{ fontSize: 10, opacity: 0.75, marginTop: 5 }}>{new Date(item.created_at).toLocaleString()}</div>
-              </div>
-            ))}
-          </div>
-
-          {error && <div role="alert" style={{ marginTop: 12, padding: 12, borderRadius: 10, background: "#fff1f2", color: "#b42318", fontSize: 14 }}>{error}</div>}
-          <form className="composer" onSubmit={sendMessage}>
-            <input type="text" placeholder="Type your message..." value={message}
-              onChange={(e) => setMessage(e.target.value)} maxLength={5000} disabled={sending} required />
-            <button type="submit" className="btn primary" disabled={sending || !message.trim()}>
-              {sending ? "Sending..." : "Send"}
-            </button>
-          </form>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <a href="/" style={{ color: "#1464f4", fontWeight: 700 }}>← Return Home</a>
-              <a href="/status" style={{ color: "#1464f4", fontWeight: 700 }}>Check application status</a>
+              ) : messages.map((item, index) => {
+                const mine = item.sender_type === "client";
+                const previous = messages[index - 1];
+                const grouped = previous && previous.sender_type === item.sender_type;
+                return (
+                  <div key={item.id} className={`message-row ${mine ? "message-row-mine" : "message-row-agent"}`}>
+                    {!mine && !grouped && <div className="message-avatar">HB</div>}
+                    {!mine && grouped && <div className="message-avatar-spacer" />}
+                    <div className={`message-content ${mine ? "message-content-mine" : ""}`}>
+                      {!mine && !grouped && <div className="message-sender">HOPEBRIDGE Support</div>}
+                      <div className={`messenger-bubble ${mine ? "messenger-bubble-mine" : "messenger-bubble-agent"}`}>
+                        <span style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.message}</span>
+                      </div>
+                      <time className={`message-time ${mine ? "message-time-mine" : ""}`} dateTime={item.created_at}>{formatMessageTime(item.created_at)}</time>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <button type="button" className="btn secondary" onClick={startNewConversation}>Start a new conversation</button>
-          </div>
-          <p style={{ color: "#718096", fontSize: 12, marginTop: 12 }}>Messages refresh automatically. Never send passwords or banking login details in chat.</p>
-        </div>
+            {error && <div role="alert" className="messenger-error messenger-error-inline">{error}</div>}
+            <form className="messenger-composer" onSubmit={sendMessage}>
+              <input aria-label="Type a message" type="text" placeholder="Aa" value={message}
+                onChange={(e) => setMessage(e.target.value)} maxLength={5000} disabled={sending} required />
+              <button type="submit" className="messenger-send" disabled={sending || !message.trim()} aria-label="Send message" title="Send message">
+                {sending ? "…" : "➤"}
+              </button>
+            </form>
+            <div className="messenger-bottom-links">
+              <a href="/">Home</a><span>·</span>
+              <a href="/status">Track application</a><span>·</span>
+              <button type="button" onClick={startNewConversation}>New chat</button>
+            </div>
+          </>
+        )}
       </div>
+      <p className="messenger-page-note">HOPEBRIDGE Financial Assistance · Support chat</p>
     </main>
   );
 }
