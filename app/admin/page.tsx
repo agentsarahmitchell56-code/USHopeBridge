@@ -18,6 +18,8 @@ type Application = {
   payment_status: string;
   payment_updated_at: string | null;
   payment_updated_by: string | null;
+  payment_reference: string | null;
+  payment_paid_at: string | null;
   review_notes: string;
   reviewed_by: string | null;
   reviewed_at: string | null;
@@ -79,6 +81,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState("");
+  const [paymentReferenceDrafts, setPaymentReferenceDrafts] = useState<Record<string, string>>({});
 
   const loadDashboard = useCallback(async () => {
     setError("");
@@ -103,7 +106,7 @@ export default function AdminDashboardPage() {
     setRole(profile.role);
 
     const [appResult, conversationResult] = await Promise.all([
-      supabase.from("applications").select("id,reference_number,full_name,email,phone,location,assistance_type,requested_amount,details,status,payment_status,payment_updated_at,payment_updated_by,review_notes,reviewed_by,reviewed_at,created_at").order("created_at", { ascending: false }).limit(200),
+      supabase.from("applications").select("id,reference_number,full_name,email,phone,location,assistance_type,requested_amount,details,status,payment_status,payment_updated_at,payment_updated_by,payment_reference,payment_paid_at,review_notes,reviewed_by,reviewed_at,created_at").order("created_at", { ascending: false }).limit(200),
       supabase.from("conversations").select("id,client_name,client_email,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
     ]);
 
@@ -309,12 +312,14 @@ export default function AdminDashboardPage() {
     }
 
     const updatedAt = new Date().toISOString();
+    const paidAt = paymentStatus === "PAID" ? (application.payment_paid_at || updatedAt) : null;
     const { error: updateError } = await supabase
       .from("applications")
       .update({
         payment_status: paymentStatus,
         payment_updated_at: updatedAt,
         payment_updated_by: authData.user.id,
+        payment_paid_at: paidAt,
       })
       .eq("id", application.id);
 
@@ -327,9 +332,37 @@ export default function AdminDashboardPage() {
         payment_status: paymentStatus,
         payment_updated_at: updatedAt,
         payment_updated_by: authData.user.id,
+        payment_paid_at: paidAt,
       };
       setApplications((current) => current.map((item) => item.id === application.id ? { ...item, ...updated } : item));
       if (selectedApplication?.id === application.id) setSelectedApplication(updated);
+    }
+    setSavingId("");
+  }
+
+  async function savePaymentReference(application: Application) {
+    if (savingId) return;
+    setSavingId(application.id);
+    setError("");
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      setError("Your staff session has expired. Please sign in again.");
+      setSavingId("");
+      return;
+    }
+    const reference = (paymentReferenceDrafts[application.id] ?? application.payment_reference ?? "").trim();
+    const { error: saveError } = await supabase
+      .from("applications")
+      .update({ payment_reference: reference || null })
+      .eq("id", application.id);
+    if (saveError) {
+      console.error("Payment reference save failed:", saveError);
+      setError("Payment reference could not be saved. Check the staff application UPDATE policy.");
+    } else {
+      const updated = { ...application, payment_reference: reference || null };
+      setApplications((current) => current.map((item) => item.id === application.id ? updated : item));
+      if (selectedApplication?.id === application.id) setSelectedApplication(updated);
+      setPaymentReferenceDrafts((current) => ({ ...current, [application.id]: reference }));
     }
     setSavingId("");
   }
@@ -406,7 +439,15 @@ export default function AdminDashboardPage() {
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7", whiteSpace: "nowrap" }}>{new Date(item.created_at).toLocaleDateString()}</td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}>{item.reference_number || "—"}</td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><select aria-label={"Status for " + item.full_name} value={item.status} disabled={savingId === item.id} onChange={(event) => void updateStatus(item, event.target.value)} style={{ padding: 9, border: "1px solid #d7e2ee", borderRadius: 8, background: "white" }}>{statuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>{savingId === item.id && <div style={{ fontSize: 12, color: "#627d98" }}>Saving…</div>}</td>
-                  <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><select aria-label={"Payment status for " + item.full_name} value={item.payment_status || "NOT_STARTED"} disabled={savingId === item.id} onChange={(event) => void updatePaymentStatus(item, event.target.value)} style={{ padding: 9, border: "1px solid #d7e2ee", borderRadius: 8, background: "white", minWidth: 145 }}>{paymentStatuses.map((paymentStatus) => <option key={paymentStatus} value={paymentStatus}>{paymentStatusLabels[paymentStatus]}</option>)}</select>{item.payment_updated_at && <div style={{ fontSize: 11, color: "#627d98", marginTop: 5 }}>Updated {new Date(item.payment_updated_at).toLocaleDateString()}</div>}{savingId === item.id && <div style={{ fontSize: 12, color: "#627d98" }}>Saving…</div>}</td>
+                  <td style={{ padding: 12, borderBottom: "1px solid #edf2f7", minWidth: 230 }}>
+                    <select aria-label={"Payment status for " + item.full_name} value={item.payment_status || "NOT_STARTED"} disabled={savingId === item.id} onChange={(event) => void updatePaymentStatus(item, event.target.value)} style={{ padding: 9, border: "1px solid #d7e2ee", borderRadius: 8, background: "white", minWidth: 145 }}>{paymentStatuses.map((paymentStatus) => <option key={paymentStatus} value={paymentStatus}>{paymentStatusLabels[paymentStatus]}</option>)}</select>
+                    {item.payment_updated_at && <div style={{ fontSize: 11, color: "#627d98", marginTop: 5 }}>Updated {new Date(item.payment_updated_at).toLocaleDateString()}</div>}
+                    <label style={{ display: "block", fontSize: 11, color: "#52606d", marginTop: 8 }}>Payment reference (optional)</label>
+                    <input aria-label={"Payment reference for " + item.full_name} value={paymentReferenceDrafts[item.id] ?? item.payment_reference ?? ""} maxLength={120} placeholder="Bank or transfer reference" disabled={savingId === item.id} onChange={(event) => setPaymentReferenceDrafts((current) => ({ ...current, [item.id]: event.target.value }))} style={{ width: "100%", boxSizing: "border-box", marginTop: 4, padding: 8, border: "1px solid #d7e2ee", borderRadius: 8 }} />
+                    <button type="button" className="btn secondary" disabled={savingId === item.id} onClick={() => void savePaymentReference(item)} style={{ marginTop: 6, padding: "6px 9px", fontSize: 12 }}>Save reference</button>
+                    {item.payment_status === "PAID" && item.payment_paid_at && <div style={{ fontSize: 11, color: "#237044", marginTop: 5 }}>Marked paid {new Date(item.payment_paid_at).toLocaleDateString()}</div>}
+                    {savingId === item.id && <div style={{ fontSize: 12, color: "#627d98" }}>Saving…</div>}
+                  </td>
                 </tr>)}</tbody>
               </table>
             </div>
