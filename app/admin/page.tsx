@@ -50,6 +50,8 @@ type Message = {
   sender_id: string | null;
   message: string;
   created_at: string;
+  image_path?: string | null;
+  image_type?: string | null;
 };
 
 const statuses = ["NEW", "REVIEWING", "APPROVED", "DECLINED"];
