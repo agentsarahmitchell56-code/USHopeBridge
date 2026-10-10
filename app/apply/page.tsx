@@ -18,8 +18,19 @@ export default function Apply() {
     const form = e.currentTarget;
     const data = new FormData(form);
     const reference = "HB-" + crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
+    const attachment = data.get("supporting_image");
+    let attachmentPath: string | null = null;
 
     try {
+      if (attachment instanceof File && attachment.size > 0) {
+        const upload = new FormData();
+        upload.append("file", attachment);
+        upload.append("purpose", "application");
+        const response = await fetch("/api/uploads", { method: "POST", body: upload });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Image upload failed.");
+        attachmentPath = result.path;
+      }
       const { error: insertError } = await supabase.from("applications").insert({
         reference_number: reference,
         full_name: String(data.get("full_name") || "").trim(),
@@ -29,6 +40,7 @@ export default function Apply() {
         assistance_type: String(data.get("assistance_type") || ""),
         requested_amount: String(data.get("requested_amount") || "").trim(),
         details: String(data.get("details") || "").trim(),
+        attachment_path: attachmentPath,
       });
 
       if (insertError) {
@@ -40,7 +52,7 @@ export default function Apply() {
       }
     } catch (submitError) {
       console.error("Application submission failed:", submitError);
-      setError("A connection issue prevented submission. Please try again.");
+      setError(submitError instanceof Error ? submitError.message : "A connection issue prevented submission. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -137,6 +149,11 @@ export default function Apply() {
               <label htmlFor="requested_amount">Requested amount (optional)</label>
               <input id="requested_amount" name="requested_amount" placeholder="e.g. 500 USD" maxLength={80} />
               <small>Include the currency, such as USD, if you specify an amount.</small>
+            </div>
+            <div className="field">
+              <label htmlFor="supporting_image">Attach a supporting image (optional)</label>
+              <input id="supporting_image" name="supporting_image" type="file" accept="image/jpeg,image/png,image/webp" />
+              <small>JPG, PNG, or WebP · maximum 5 MB. Images are stored privately for staff review.</small>
             </div>
             <div className="field">
               <label htmlFor="details">Describe your request *</label>
