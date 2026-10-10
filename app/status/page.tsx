@@ -79,20 +79,21 @@ export default function ApplicationStatusPage() {
   return (
     <main className="section">
       <div className="container">
-        <Link href="/" className="brand">
-          HOPEBRIDGE
-          <span>FINANCIAL ASSISTANCE</span>
-        </Link>
+        <div className="page-brand-row">
+          <Link href="/" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
+          <Link href="/apply" className="text-link">Apply for assistance →</Link>
+        </div>
 
-        <div className="form-wrap">
-          <h1 style={{ marginBottom: 10 }}>Check Application Status</h1>
+        <div className="form-wrap status-page-wrap">
+          <p className="eyebrow">APPLICATION TRACKING</p>
+          <h1 style={{ marginBottom: 10 }}>Check your application status</h1>
           <p style={{ color: "#627d98", lineHeight: 1.7 }}>
             Enter the reference number from your application confirmation and
             the email address you used to apply. Your details are checked
             privately.
           </p>
 
-          <form className="card form" onSubmit={checkStatus}>
+          <form className="card form status-search-form" onSubmit={checkStatus}>
             <div className="field">
               <label htmlFor="reference">Application reference number</label>
               <input
@@ -141,21 +142,21 @@ export default function ApplicationStatusPage() {
           </form>
 
           {result && (
-            <section className="card" aria-live="polite" style={{ marginTop: 22 }}>
-              <p style={{ marginTop: 0, color: "#627d98", fontSize: 13 }}>APPLICATION FOUND</p>
+            <section className="card status-result-card" aria-live="polite">
+              <p className="eyebrow" style={{ marginTop: 0 }}>APPLICATION FOUND</p>
               <h2 style={{ margin: "0 0 8px", fontSize: 24, overflowWrap: "anywhere" }}>
                 {result.reference_number}
               </h2>
               <p style={{ color: "#52606d", marginTop: 0 }}>{result.assistance_type}</p>
 
-              <div style={{ padding: 18, borderRadius: 14, background: "#f0f7ff", margin: "20px 0" }}>
+              <div className="status-current-panel">
                 <div style={{ fontSize: 13, color: "#52606d", marginBottom: 6 }}>Current status</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: "#123c69" }}>
                   {statusLabels[result.status] || result.status}
                 </div>
               </div>
 
-              <div style={{ padding: 18, borderRadius: 14, border: "1px solid #d7e2ee", margin: "16px 0" }}>
+              <div className="status-payment-panel">
                 <div style={{ fontSize: 13, color: "#52606d", marginBottom: 6 }}>Payment status</div>
                 <div style={{ fontSize: 20, fontWeight: 800, color: "#123c69" }}>
                   {paymentStatusLabels[result.payment_status] || "Not started"}
@@ -200,7 +201,7 @@ export default function ApplicationStatusPage() {
             </section>
           )}
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 20 }}>
+          <div className="status-actions" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 20 }}>
             <Link className="btn secondary" href="/apply">Apply for Assistance</Link>
             <Link className="btn secondary" href="/chat">Contact Support</Link>
           </div>
