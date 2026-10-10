@@ -45,12 +45,12 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const path = request.nextUrl.searchParams.get("path") || "";
-    const bearer = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+    const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
     const conversationId = request.nextUrl.searchParams.get("conversationId") || "";
     const chatToken = request.nextUrl.searchParams.get("chatToken") || "";
     if (!path) return NextResponse.json({ error: "Access denied." }, { status: 401 });
     const db = adminClient();
-    const safePath = path.replace(/^\\/+/, "");
+    const safePath = path.replace(/^\/+/, "");
     if (safePath.startsWith("chat/") && conversationId && chatToken) {
       const { data: conversation } = await db.from("conversations").select("id").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
       if (!conversation) return NextResponse.json({ error: "Access denied." }, { status: 403 });
