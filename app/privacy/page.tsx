@@ -31,9 +31,6 @@ export default function PrivacyPolicyPage() {
             email address, phone number, location, requested assistance type,
             requested amount, the details you provide about your request,
             application reference, application status, and support messages.
-            Please do not submit passwords, bank login credentials, full payment
-            card details, Social Security numbers, or other highly sensitive
-            information through application forms or chat.
           </p>
 
           <h2>How information is used</h2>
