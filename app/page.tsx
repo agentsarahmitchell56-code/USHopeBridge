@@ -205,6 +205,7 @@ export default function ChatPage() {
                 {loading ? "Starting Chat..." : "Start Chat"}
               </button>
               <a href="/" className="btn secondary" style={{ textAlign: "center" }}>Return Home</a>
+              <a href="/status" style={{ color: "#1464f4", textAlign: "center", fontWeight: 700, padding: 8 }}>Check application status</a>
             </form>
           </div>
         </div>
@@ -255,7 +256,10 @@ export default function ChatPage() {
             </button>
           </form>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
-            <a href="/" style={{ color: "#1464f4", fontWeight: 700 }}>← Return Home</a>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+              <a href="/" style={{ color: "#1464f4", fontWeight: 700 }}>← Return Home</a>
+              <a href="/status" style={{ color: "#1464f4", fontWeight: 700 }}>Check application status</a>
+            </div>
             <button type="button" className="btn secondary" onClick={startNewConversation}>Start a new conversation</button>
           </div>
           <p style={{ color: "#718096", fontSize: 12, marginTop: 12 }}>Messages refresh automatically. Never send passwords or banking login details in chat.</p>
