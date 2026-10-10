@@ -15,6 +15,9 @@ type Application = {
   requested_amount: string | null;
   details: string;
   status: string;
+  payment_status: string;
+  payment_updated_at: string | null;
+  payment_updated_by: string | null;
   review_notes: string;
   reviewed_by: string | null;
   reviewed_at: string | null;
@@ -45,6 +48,13 @@ type Message = {
 };
 
 const statuses = ["NEW", "REVIEWING", "APPROVED", "DECLINED"];
+const paymentStatuses = ["NOT_STARTED", "PENDING", "PROCESSING", "PAID"];
+const paymentStatusLabels: Record<string, string> = {
+  NOT_STARTED: "Not started",
+  PENDING: "Payment pending",
+  PROCESSING: "Processing",
+  PAID: "Paid",
+};
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -93,7 +103,7 @@ export default function AdminDashboardPage() {
     setRole(profile.role);
 
     const [appResult, conversationResult] = await Promise.all([
-      supabase.from("applications").select("id,reference_number,full_name,email,phone,location,assistance_type,requested_amount,details,status,review_notes,reviewed_by,reviewed_at,created_at").order("created_at", { ascending: false }).limit(200),
+      supabase.from("applications").select("id,reference_number,full_name,email,phone,location,assistance_type,requested_amount,details,status,payment_status,payment_updated_at,payment_updated_by,review_notes,reviewed_by,reviewed_at,created_at").order("created_at", { ascending: false }).limit(200),
       supabase.from("conversations").select("id,client_name,client_email,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
     ]);
 
@@ -286,6 +296,44 @@ export default function AdminDashboardPage() {
     setSavingId("");
   }
 
+  async function updatePaymentStatus(application: Application, paymentStatus: string) {
+    if (savingId) return;
+    setSavingId(application.id);
+    setError("");
+
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      setError("Your staff session has expired. Please sign in again.");
+      setSavingId("");
+      return;
+    }
+
+    const updatedAt = new Date().toISOString();
+    const { error: updateError } = await supabase
+      .from("applications")
+      .update({
+        payment_status: paymentStatus,
+        payment_updated_at: updatedAt,
+        payment_updated_by: authData.user.id,
+      })
+      .eq("id", application.id);
+
+    if (updateError) {
+      console.error("Payment status update failed:", updateError);
+      setError("Payment status could not be updated. Check the staff application UPDATE policy and database migration.");
+    } else {
+      const updated = {
+        ...application,
+        payment_status: paymentStatus,
+        payment_updated_at: updatedAt,
+        payment_updated_by: authData.user.id,
+      };
+      setApplications((current) => current.map((item) => item.id === application.id ? { ...item, ...updated } : item));
+      if (selectedApplication?.id === application.id) setSelectedApplication(updated);
+    }
+    setSavingId("");
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     router.replace("/admin/login");
@@ -350,14 +398,15 @@ export default function AdminDashboardPage() {
           </div>
           {filtered.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No applications match this search.</p> : (
             <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760, fontSize: 14 }}>
-                <thead><tr style={{ textAlign: "left", background: "#f7fafc" }}>{["Applicant", "Request", "Submitted", "Reference", "Status"].map((title) => <th key={title} style={{ padding: 12, borderBottom: "1px solid #e3ebf4" }}>{title}</th>)}</tr></thead>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 940, fontSize: 14 }}>
+                <thead><tr style={{ textAlign: "left", background: "#f7fafc" }}>{["Applicant", "Request", "Submitted", "Reference", "Application status", "Payment status"].map((title) => <th key={title} style={{ padding: 12, borderBottom: "1px solid #e3ebf4" }}>{title}</th>)}</tr></thead>
                 <tbody>{filtered.map((item) => <tr key={item.id}>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><strong>{item.full_name}</strong><div style={{ color: "#627d98" }}>{item.email}</div>{item.phone && <div style={{ color: "#627d98" }}>{item.phone}</div>}</td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><strong>{item.assistance_type}</strong><div>{item.requested_amount || "Amount not specified"}</div><details style={{ marginTop: 6, maxWidth: 260 }}><summary style={{ cursor: "pointer", color: "#1464f4" }}>View details</summary><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.details}</p><p style={{ color: "#627d98" }}>{item.location}</p></details><button type="button" className="btn secondary" style={{ marginTop: 8, padding: "7px 10px", fontSize: 12 }} onClick={() => { setSelectedApplication(item); setReviewNotes(item.review_notes || ""); setError(""); }}>Review notes</button></td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7", whiteSpace: "nowrap" }}>{new Date(item.created_at).toLocaleDateString()}</td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}>{item.reference_number || "—"}</td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><select aria-label={"Status for " + item.full_name} value={item.status} disabled={savingId === item.id} onChange={(event) => void updateStatus(item, event.target.value)} style={{ padding: 9, border: "1px solid #d7e2ee", borderRadius: 8, background: "white" }}>{statuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>{savingId === item.id && <div style={{ fontSize: 12, color: "#627d98" }}>Saving…</div>}</td>
+                  <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><select aria-label={"Payment status for " + item.full_name} value={item.payment_status || "NOT_STARTED"} disabled={savingId === item.id} onChange={(event) => void updatePaymentStatus(item, event.target.value)} style={{ padding: 9, border: "1px solid #d7e2ee", borderRadius: 8, background: "white", minWidth: 145 }}>{paymentStatuses.map((paymentStatus) => <option key={paymentStatus} value={paymentStatus}>{paymentStatusLabels[paymentStatus]}</option>)}</select>{item.payment_updated_at && <div style={{ fontSize: 11, color: "#627d98", marginTop: 5 }}>Updated {new Date(item.payment_updated_at).toLocaleDateString()}</div>}{savingId === item.id && <div style={{ fontSize: 12, color: "#627d98" }}>Saving…</div>}</td>
                 </tr>)}</tbody>
               </table>
             </div>
