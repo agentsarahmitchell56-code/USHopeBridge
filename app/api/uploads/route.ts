@@ -45,15 +45,25 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const path = request.nextUrl.searchParams.get("path") || "";
-    const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-    if (!path || !token) return NextResponse.json({ error: "Access denied." }, { status: 401 });
+    const bearer = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+    const conversationId = request.nextUrl.searchParams.get("conversationId") || "";
+    const chatToken = request.nextUrl.searchParams.get("chatToken") || "";
+    if (!path) return NextResponse.json({ error: "Access denied." }, { status: 401 });
     const db = adminClient();
-    const { data: authData, error: authError } = await db.auth.getUser(token);
-    if (authError || !authData.user) return NextResponse.json({ error: "Access denied." }, { status: 401 });
-    const { data: profile } = await db.from("profiles").select("role").eq("id", authData.user.id).maybeSingle();
-    if (!profile || !["admin", "agent"].includes(profile.role)) return NextResponse.json({ error: "Access denied." }, { status: 403 });
-    const safePath = path.replace(/^\/+/, "");
-    if (!safePath.startsWith("applications/") && !safePath.startsWith("chat/")) return NextResponse.json({ error: "Invalid file path." }, { status: 400 });
+    const safePath = path.replace(/^\\/+/, "");
+    if (safePath.startsWith("chat/") && conversationId && chatToken) {
+      const { data: conversation } = await db.from("conversations").select("id").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
+      if (!conversation) return NextResponse.json({ error: "Access denied." }, { status: 403 });
+      const { data: attachment } = await db.from("messages").select("id").eq("conversation_id", conversationId).eq("image_path", safePath).maybeSingle();
+      if (!attachment) return NextResponse.json({ error: "Image unavailable." }, { status: 404 });
+    } else {
+      if (!bearer) return NextResponse.json({ error: "Access denied." }, { status: 401 });
+      const { data: authData, error: authError } = await db.auth.getUser(bearer);
+      if (authError || !authData.user) return NextResponse.json({ error: "Access denied." }, { status: 401 });
+      const { data: profile } = await db.from("profiles").select("role").eq("id", authData.user.id).maybeSingle();
+      if (!profile || !["admin", "agent"].includes(profile.role)) return NextResponse.json({ error: "Access denied." }, { status: 403 });
+      if (!safePath.startsWith("applications/") && !safePath.startsWith("chat/")) return NextResponse.json({ error: "Invalid file path." }, { status: 400 });
+    }
     const { data, error } = await db.storage.from("hopebridge-private-uploads").createSignedUrl(safePath, 60);
     if (error || !data?.signedUrl) return NextResponse.json({ error: "Image unavailable." }, { status: 404 });
     return NextResponse.json({ url: data.signedUrl });
