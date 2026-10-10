@@ -43,6 +43,8 @@ export default function BusinessStudioPage() {
   const [savingPost, setSavingPost] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   useEffect(() => {
     let active = true;
@@ -144,6 +146,12 @@ export default function BusinessStudioPage() {
   const drafts = posts.filter((p) => p.status === "DRAFT").length;
   const scheduled = posts.filter((p) => p.status === "SCHEDULED").length;
   const mediaCount = posts.filter((p) => p.media_url).length;
+  const filteredPosts = posts.filter((post) => {
+    const matchesStatus = statusFilter === "ALL" || post.status === statusFilter;
+    const query = searchTerm.trim().toLowerCase();
+    const matchesSearch = !query || post.caption.toLowerCase().includes(query) || (post.media_type || "").toLowerCase().includes(query);
+    return matchesStatus && matchesSearch;
+  });
 
   return (
     <main style={{ minHeight: "100vh", padding: "24px 0 60px", background: "#f4f7fb" }}>
@@ -151,7 +159,8 @@ export default function BusinessStudioPage() {
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14, marginBottom: 24 }}>
           <Link href="/admin" className="brand">HOPEBRIDGE<span>BUSINESS STUDIO</span></Link>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <Link href="/admin" className="btn secondary">← Staff dashboard</Link>
+            <Link href="/admin" className="btn secondary">Applications &amp; inbox</Link>
+            <a href="#content-library" className="btn secondary">Content library</a>
             <button className="btn secondary" onClick={signOut}>Sign out</button>
           </div>
         </header>
@@ -159,7 +168,7 @@ export default function BusinessStudioPage() {
         <div style={{ marginBottom: 24 }}>
           <p className="eyebrow" style={{ marginBottom: 6 }}>BUSINESS MANAGEMENT</p>
           <h1 style={{ margin: "0 0 7px", fontSize: "clamp(28px,4vw,38px)", letterSpacing: "-.04em" }}>Business Studio</h1>
-          <p style={{ margin: 0, color: "#667085", maxWidth: 760 }}>Manage your profile, upload media, and organize content drafts and scheduled posts in one workspace.</p>
+          <p style={{ margin: 0, color: "#667085", maxWidth: 760, lineHeight: 1.7 }}>A simple workspace to manage your profile and prepare content. Start with a draft, preview your media, then schedule it when you are ready.</p>
         </div>
 
         {error && <div role="alert" style={{ background: "#fff1f2", border: "1px solid #fecdd3", color: "#9f1d20", padding: 13, borderRadius: 12, marginBottom: 16 }}>{error}</div>}
@@ -201,14 +210,18 @@ export default function BusinessStudioPage() {
           </section>
         </div>
 
-        <section style={{ ...cardStyle, marginTop: 20 }}>
+        <section id="content-library" style={{ ...cardStyle, marginTop: 20, scrollMarginTop: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
-            <div><h2 style={{ fontSize: 22, margin: 0 }}>Content library</h2><p style={{ color: "#667085", margin: "5px 0 0", fontSize: 14 }}>Your saved drafts and scheduled content.</p></div>
-            <button className="btn secondary" onClick={() => router.refresh()}>Refresh page</button>
+            <div><h2 style={{ fontSize: 22, margin: 0 }}>Content library</h2><p style={{ color: "#667085", margin: "5px 0 0", fontSize: 14 }}>Find and review your saved drafts and scheduled content.</p></div>
+            <button className="btn secondary" onClick={() => window.location.reload()}>Refresh library</button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: 10, marginBottom: 18 }}>
+            <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 700 }}>Search content<input aria-label="Search content" style={fieldStyle} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search captions or media type" /></label>
+            <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 700 }}>Show status<select aria-label="Filter by status" style={fieldStyle} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}><option value="ALL">All content</option><option value="DRAFT">Drafts</option><option value="SCHEDULED">Scheduled</option><option value="PUBLISHED">Published</option></select></label>
           </div>
           {posts.length === 0 ? <div style={{ textAlign: "center", padding: "38px 12px", border: "1px dashed #cbd5e1", borderRadius: 14, color: "#667085" }}><div style={{ fontSize: 30, marginBottom: 8 }}>▧</div><strong style={{ color: "#172b4d" }}>Your content library is empty</strong><p style={{ margin: "6px 0 0" }}>Upload media and save your first draft above.</p></div> :
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,240px),1fr))", gap: 14 }}>
-              {posts.map((post) => <article key={post.id} style={{ border: "1px solid #e2e8f0", borderRadius: 14, overflow: "hidden", background: "#fff", minWidth: 0 }}>
+            filteredPosts.length === 0 ? <div style={{ textAlign: "center", padding: "28px 12px", border: "1px dashed #cbd5e1", borderRadius: 14, color: "#667085" }}>No content matches those filters. Try a different search or status.</div> : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,240px),1fr))", gap: 14 }}>
+              {filteredPosts.map((post) => <article key={post.id} style={{ border: "1px solid #e2e8f0", borderRadius: 14, overflow: "hidden", background: "#fff", minWidth: 0 }}>
                 {post.media_url ? post.media_type?.startsWith("video/") ? <video src={post.media_url} controls style={{ width: "100%", aspectRatio: "16/10", objectFit: "cover", background: "#101828" }} /> : <img src={post.media_url} alt="Post media" loading="lazy" style={{ width: "100%", aspectRatio: "16/10", objectFit: "cover", background: "#f2f4f7" }} /> : <div style={{ aspectRatio: "16/10", display: "grid", placeItems: "center", color: "#98a2b3", background: "#f8fafc", fontSize: 36 }}>✎</div>}
                 <div style={{ padding: 14 }}>
                   <span style={{ display: "inline-block", fontSize: 11, fontWeight: 800, letterSpacing: ".05em", borderRadius: 999, padding: "5px 8px", color: post.status === "SCHEDULED" ? "#175cd3" : "#475467", background: post.status === "SCHEDULED" ? "#eff8ff" : "#f2f4f7" }}>{post.status}</span>
