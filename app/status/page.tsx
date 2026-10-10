@@ -10,6 +10,8 @@ type StatusResult = {
   status: string;
   submitted_at: string;
   last_updated_at: string;
+  payment_status: string;
+  payment_updated_at: string | null;
 };
 
 const statusLabels: Record<string, string> = {
@@ -17,6 +19,13 @@ const statusLabels: Record<string, string> = {
   REVIEWING: "Under review",
   APPROVED: "Approved",
   DECLINED: "Declined",
+};
+
+const paymentStatusLabels: Record<string, string> = {
+  NOT_STARTED: "Not started",
+  PENDING: "Payment pending",
+  PROCESSING: "Processing",
+  PAID: "Paid",
 };
 
 export default function ApplicationStatusPage() {
@@ -142,6 +151,21 @@ export default function ApplicationStatusPage() {
                 <div style={{ fontSize: 22, fontWeight: 800, color: "#123c69" }}>
                   {statusLabels[result.status] || result.status}
                 </div>
+              </div>
+
+              <div style={{ padding: 18, borderRadius: 14, border: "1px solid #d7e2ee", margin: "16px 0" }}>
+                <div style={{ fontSize: 13, color: "#52606d", marginBottom: 6 }}>Payment status</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#123c69" }}>
+                  {paymentStatusLabels[result.payment_status] || "Not started"}
+                </div>
+                {result.payment_updated_at && (
+                  <div style={{ fontSize: 12, color: "#718096", marginTop: 6 }}>
+                    Last payment update: {displayDate(result.payment_updated_at)}
+                  </div>
+                )}
+                <p style={{ fontSize: 13, lineHeight: 1.5, color: "#52606d", marginBottom: 0 }}>
+                  Payment status is updated by HOPEBRIDGE staff. “Paid” should only be selected after the payment has been verified.
+                </p>
               </div>
 
               <div style={{ display: "grid", gap: 12, color: "#52606d", fontSize: 14 }}>
