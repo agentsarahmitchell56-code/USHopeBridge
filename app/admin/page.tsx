@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
     }
   }, [messages]);
 
-  async function sendStaffReply(event: React.FormEvent<HTMLFormElement>) {
+  async function sendStaffReply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const cleanMessage = replyText.trim();
     if (!selectedConversation || !cleanMessage || replySending) return;
