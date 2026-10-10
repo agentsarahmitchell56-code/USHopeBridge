@@ -12,6 +12,8 @@ type StatusResult = {
   last_updated_at: string;
   payment_status: string;
   payment_updated_at: string | null;
+  payment_reference: string | null;
+  payment_paid_at: string | null;
 };
 
 const statusLabels: Record<string, string> = {
@@ -161,6 +163,16 @@ export default function ApplicationStatusPage() {
                 {result.payment_updated_at && (
                   <div style={{ fontSize: 12, color: "#718096", marginTop: 6 }}>
                     Last payment update: {displayDate(result.payment_updated_at)}
+                  </div>
+                )}
+                {result.payment_status === "PAID" && result.payment_paid_at && (
+                  <div style={{ marginTop: 12, fontSize: 14, color: "#237044" }}>
+                    <strong>Date paid:</strong> {displayDate(result.payment_paid_at)}
+                  </div>
+                )}
+                {result.payment_status === "PAID" && result.payment_reference && (
+                  <div style={{ marginTop: 8, fontSize: 14, color: "#52606d", overflowWrap: "anywhere" }}>
+                    <strong>Payment reference:</strong> {result.payment_reference}
                   </div>
                 )}
                 <p style={{ fontSize: 13, lineHeight: 1.5, color: "#52606d", marginBottom: 0 }}>
