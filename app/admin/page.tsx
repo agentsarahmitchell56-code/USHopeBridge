@@ -416,6 +416,8 @@ export default function AdminDashboardPage() {
           <a href="/admin" className="brand">HOPEBRIDGE<span>STAFF DASHBOARD</span></a>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <StaffNotifications />
+            <a href="/admin/analytics" className="btn secondary">Analytics</a>
+            {role === "admin" && <a href="/admin/team" className="btn secondary">Team & permissions</a>}
             <a href="/admin/studio" className="btn secondary">Business Studio</a>
             <div style={{ textAlign: "right" }}><strong>{staffEmail}</strong><div style={{ color: "#627d98", fontSize: 12, textTransform: "capitalize" }}>{role}</div></div>
             <button className="btn secondary" onClick={signOut}>Sign out</button>
