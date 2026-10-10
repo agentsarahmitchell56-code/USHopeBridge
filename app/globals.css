@@ -560,3 +560,7 @@ input, select, textarea { max-width: 100%; }
   .status-actions { display: grid !important; }
   .status-actions .btn { width: 100%; }
 }
+
+.legal-page-nav { display: flex; align-items: center; justify-content: flex-end; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 700; color: #667085; }
+.legal-page-nav a:hover { color: var(--hb-blue); }
+@media (max-width: 600px) { .legal-page-nav { gap: 10px; font-size: 12px; justify-content: flex-start; } }
