@@ -538,3 +538,25 @@ input, select, textarea { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+
+/* Application status tracker */
+.status-page-wrap { max-width: 760px; margin-top: 34px; }
+.status-search-form { padding: clamp(20px, 4vw, 30px); border-radius: 18px; }
+.status-result-card { margin-top: 22px; padding: clamp(20px, 4vw, 30px); border-radius: 18px; }
+.status-result-card > h2 { letter-spacing: -.03em; }
+.status-current-panel {
+  padding: 20px; border-radius: 14px; background: linear-gradient(135deg, #edf5ff, #f5f9ff);
+  border: 1px solid #d8e8ff; margin: 20px 0;
+}
+.status-current-panel > div:last-child { font-size: 23px !important; letter-spacing: -.03em; }
+.status-payment-panel { padding: 20px; border: 1px solid #e2e8f0; border-radius: 14px; margin: 16px 0; background: #fff; }
+.status-payment-panel > div:nth-child(2) { letter-spacing: -.02em; }
+.status-actions .btn { flex: 1 1 180px; }
+.status-search-form button { min-height: 48px; }
+@media (max-width: 600px) {
+  .status-result-card, .status-search-form { padding: 19px 16px; }
+  .status-current-panel, .status-payment-panel { padding: 15px; }
+  .status-actions { display: grid !important; }
+  .status-actions .btn { width: 100%; }
+}
