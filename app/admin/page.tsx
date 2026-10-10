@@ -25,8 +25,7 @@ type Application = {
   reviewed_by: string | null;
   reviewed_at: string | null;
   created_at: string;
-  image_path?: string | null;
-  image_type?: string | null;
+  attachment_path?: string | null;
 };
 type ApplicationStatusHistory = {
   id: string;
@@ -88,6 +87,7 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState("");
   const [paymentReferenceDrafts, setPaymentReferenceDrafts] = useState<Record<string, string>>({});
+  const [openingAttachment, setOpeningAttachment] = useState<string>("");
 
   const loadDashboard = useCallback(async () => {
     setError("");
@@ -112,7 +112,7 @@ export default function AdminDashboardPage() {
     setRole(profile.role);
 
     const [appResult, conversationResult] = await Promise.all([
-      supabase.from("applications").select("id,reference_number,full_name,email,phone,location,assistance_type,requested_amount,details,status,payment_status,payment_updated_at,payment_updated_by,payment_reference,payment_paid_at,review_notes,reviewed_by,reviewed_at,created_at").order("created_at", { ascending: false }).limit(200),
+      supabase.from("applications").select("id,reference_number,full_name,email,phone,location,assistance_type,requested_amount,details,status,payment_status,payment_updated_at,payment_updated_by,payment_reference,payment_paid_at,review_notes,reviewed_by,reviewed_at,created_at,attachment_path").order("created_at", { ascending: false }).limit(200),
       supabase.from("conversations").select("id,client_name,client_email,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
     ]);
 
@@ -456,7 +456,7 @@ export default function AdminDashboardPage() {
                 <thead><tr style={{ textAlign: "left", background: "#f7fafc" }}>{["Applicant", "Request", "Submitted", "Reference", "Application status", "Payment status"].map((title) => <th key={title} style={{ padding: 12, borderBottom: "1px solid #e3ebf4" }}>{title}</th>)}</tr></thead>
                 <tbody>{filtered.map((item) => <tr key={item.id}>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><strong>{item.full_name}</strong><div style={{ color: "#627d98" }}>{item.email}</div>{item.phone && <div style={{ color: "#627d98" }}>{item.phone}</div>}</td>
-                  <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><strong>{item.assistance_type}</strong><div>{item.requested_amount || "Amount not specified"}</div><details style={{ marginTop: 6, maxWidth: 260 }}><summary style={{ cursor: "pointer", color: "#1464f4" }}>View details</summary><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.details}</p><p style={{ color: "#627d98" }}>{item.location}</p></details><button type="button" className="btn secondary" style={{ marginTop: 8, padding: "7px 10px", fontSize: 12 }} onClick={() => { setSelectedApplication(item); setReviewNotes(item.review_notes || ""); setError(""); }}>Review notes</button></td>
+                  <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><strong>{item.assistance_type}</strong><div>{item.requested_amount || "Amount not specified"}</div><details style={{ marginTop: 6, maxWidth: 260 }}><summary style={{ cursor: "pointer", color: "#1464f4" }}>View details</summary><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.details}</p><p style={{ color: "#627d98" }}>{item.location}</p></details>{item.attachment_path && <button type="button" className="btn secondary" disabled={openingAttachment === item.id} onClick={async () => { setOpeningAttachment(item.id); const { data: session } = await supabase.auth.getSession(); const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.attachment_path!)}`, { headers: { Authorization: `Bearer ${session.session?.access_token || ""}` } }); const result = await response.json(); if (response.ok && result.url) window.open(result.url, "_blank", "noopener,noreferrer"); else setError(result.error || "Attachment could not be opened."); setOpeningAttachment(""); }} style={{ marginTop: 8, padding: "7px 10px", fontSize: 12 }}>{openingAttachment === item.id ? "Opening…" : "View supporting image"}</button>}<button type="button" className="btn secondary" style={{ marginTop: 8, padding: "7px 10px", fontSize: 12 }} onClick={() => { setSelectedApplication(item); setReviewNotes(item.review_notes || ""); setError(""); }}>Review notes</button></td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7", whiteSpace: "nowrap" }}>{new Date(item.created_at).toLocaleDateString()}</td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}>{item.reference_number || "—"}</td>
                   <td style={{ padding: 12, borderBottom: "1px solid #edf2f7" }}><select aria-label={"Status for " + item.full_name} value={item.status} disabled={savingId === item.id} onChange={(event) => void updateStatus(item, event.target.value)} style={{ padding: 9, border: "1px solid #d7e2ee", borderRadius: 8, background: "white" }}>{statuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>{savingId === item.id && <div style={{ fontSize: 12, color: "#627d98" }}>Saving…</div>}</td>
