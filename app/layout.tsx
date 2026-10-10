@@ -1,9 +1,27 @@
 import Link from "next/link";
+import PWAInstall from "./pwa-install";
 import "./globals.css";
 
 export const metadata = {
   title: "HOPEBRIDGE | Financial Assistance",
   description: "A bridge to a more secure tomorrow.",
+  applicationName: "HOPEBRIDGE",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default" as const,
+    title: "HOPEBRIDGE",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#123c69",
 };
 
 export default function RootLayout({
@@ -15,6 +33,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <PWAInstall />
         <footer className="footer">
           <div className="container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
             <span>© {new Date().getFullYear()} HOPEBRIDGE. Please review program terms before applying.</span>
