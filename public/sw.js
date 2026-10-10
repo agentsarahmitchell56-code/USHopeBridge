@@ -1,6 +1,6 @@
-const CACHE_NAME = "hopebridge-shell-v1";
+const CACHE_NAME = "hopebridge-shell-v2";
 const OFFLINE_URL = "/offline.html";
-const PRECACHE_URLS = [OFFLINE_URL, "/manifest.json", "/icon.svg", "/icon-maskable.svg"];
+const PRECACHE_URLS = [OFFLINE_URL, "/manifest.json", "/icon.svg", "/icon-maskable.svg", "/apple-touch-icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
