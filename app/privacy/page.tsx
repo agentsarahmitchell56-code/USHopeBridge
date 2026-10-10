@@ -9,10 +9,14 @@ export default function PrivacyPolicyPage() {
   return (
     <main className="section">
       <div className="container">
-        <Link href="/" className="brand">
-          HOPEBRIDGE
-          <span>FINANCIAL ASSISTANCE</span>
-        </Link>
+        <div className="page-brand-row">
+          <Link href="/" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
+          <nav className="legal-page-nav" aria-label="Main navigation">
+            <Link href="/apply">Apply</Link>
+            <Link href="/status">Track application</Link>
+            <Link href="/chat">Support chat</Link>
+          </nav>
+        </div>
         <article className="card form-wrap" style={{ lineHeight: 1.75 }}>
           <p style={{ color: "#627d98", fontSize: 13 }}>Effective date: October 10, 2026</p>
           <h1>Privacy Policy</h1>
