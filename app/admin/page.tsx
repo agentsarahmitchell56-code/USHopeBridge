@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
@@ -24,6 +24,14 @@ type Conversation = {
   created_at: string;
   updated_at?: string;
 };
+type Message = {
+  id: string;
+  conversation_id: string;
+  sender_type: "client" | "agent";
+  sender_id: string | null;
+  message: string;
+  created_at: string;
+};
 
 const statuses = ["NEW", "REVIEWING", "APPROVED", "DECLINED"];
 
@@ -34,6 +42,12 @@ export default function AdminDashboardPage() {
   const [role, setRole] = useState("");
   const [applications, setApplications] = useState<Application[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [replyText, setReplyText] = useState("");
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [replySending, setReplySending] = useState(false);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -81,6 +95,100 @@ export default function AdminDashboardPage() {
   }, [router]);
 
   useEffect(() => { void loadDashboard(); }, [loadDashboard]);
+
+  useEffect(() => {
+    if (!selectedConversation) {
+      setMessages([]);
+      return;
+    }
+
+    let active = true;
+    setMessagesLoading(true);
+
+    async function loadMessages() {
+      const { data, error: messagesError } = await supabase
+        .from("messages")
+        .select("id,conversation_id,sender_type,sender_id,message,created_at")
+        .eq("conversation_id", selectedConversation!.id)
+        .order("created_at", { ascending: true });
+
+      if (!active) return;
+      if (messagesError) {
+        setError("Could not load this conversation's messages. Check staff message access in Supabase.");
+        setMessages([]);
+      } else {
+        setMessages((data || []) as Message[]);
+      }
+      setMessagesLoading(false);
+    }
+
+    void loadMessages();
+
+    const channel = supabase
+      .channel(`staff-conversation-${selectedConversation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${selectedConversation.id}`,
+        },
+        (payload) => {
+          const incoming = payload.new as Message;
+          setMessages((current) =>
+            current.some((item) => item.id === incoming.id)
+              ? current
+              : [...current, incoming].sort(
+                  (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [selectedConversation]);
+
+  useEffect(() => {
+    if (messagesRef.current) {
+      messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  async function sendStaffReply(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const cleanMessage = replyText.trim();
+    if (!selectedConversation || !cleanMessage || replySending) return;
+
+    setReplySending(true);
+    setError("");
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !authData.user) {
+      setError("Your staff session has expired. Please sign in again.");
+      setReplySending(false);
+      return;
+    }
+
+    const { error: insertError } = await supabase.from("messages").insert({
+      conversation_id: selectedConversation.id,
+      sender_type: "agent",
+      sender_id: authData.user.id,
+      message: cleanMessage,
+    });
+
+    if (insertError) {
+      console.error("Staff reply error:", insertError);
+      setError("Reply could not be sent. Check the staff message INSERT policy in Supabase.");
+    } else {
+      setReplyText("");
+    }
+    setReplySending(false);
+  }
 
   async function updateStatus(application: Application, status: string) {
     if (savingId) return;
@@ -181,11 +289,71 @@ export default function AdminDashboardPage() {
 
         <section className="card" style={{ padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-            <div><h2 style={{ margin: 0, fontSize: 22 }}>Support conversations</h2><p style={{ color: "#627d98", marginBottom: 0 }}>Recent customers who contacted the support team.</p></div>
-            <a className="btn primary" href="/chat">Open public chat page</a>
+            <div><h2 style={{ margin: 0, fontSize: 22 }}>Support inbox</h2><p style={{ color: "#627d98", marginBottom: 0 }}>Open a customer conversation to read messages and reply securely.</p></div>
+            <a className="btn secondary" href="/chat">Open public chat page</a>
           </div>
-          {conversations.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No conversations found.</p> : <div style={{ display: "grid", gap: 0, marginTop: 12 }}>{conversations.map((conversation) => <div key={conversation.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "14px 0", borderTop: "1px solid #edf2f7" }}><div><strong>{conversation.client_name}</strong><div style={{ color: "#627d98", fontSize: 14 }}>{conversation.client_email}</div></div><div style={{ color: "#718096", fontSize: 13 }}>{new Date(conversation.updated_at || conversation.created_at).toLocaleDateString()}</div></div>)}</div>}
-          <p style={{ color: "#718096", fontSize: 12, marginTop: 14 }}>Staff reply and message-history UI is not included in this first dashboard pass.</p>
+
+          {conversations.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No conversations found.</p> : (
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(220px, 0.8fr) minmax(0, 1.5fr)", gap: 18, marginTop: 18 }}>
+              <div style={{ border: "1px solid #e3ebf4", borderRadius: 12, overflow: "hidden", alignSelf: "start" }}>
+                {conversations.map((conversation) => {
+                  const isSelected = selectedConversation?.id === conversation.id;
+                  return <button
+                    key={conversation.id}
+                    type="button"
+                    onClick={() => { setSelectedConversation(conversation); setError(""); }}
+                    aria-pressed={isSelected}
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: 14, border: 0, borderBottom: "1px solid #edf2f7", cursor: "pointer", background: isSelected ? "#eaf2ff" : "#fff", color: "#243b53" }}
+                  >
+                    <strong style={{ display: "block" }}>{conversation.client_name}</strong>
+                    <span style={{ display: "block", color: "#627d98", fontSize: 13, overflowWrap: "anywhere" }}>{conversation.client_email}</span>
+                    <span style={{ display: "block", color: "#718096", fontSize: 12, marginTop: 5 }}>{new Date(conversation.updated_at || conversation.created_at).toLocaleString()}</span>
+                  </button>;
+                })}
+              </div>
+
+              <div style={{ border: "1px solid #e3ebf4", borderRadius: 12, padding: 16, minWidth: 0 }}>
+                {!selectedConversation ? (
+                  <div style={{ color: "#627d98", textAlign: "center", padding: "48px 12px" }}>
+                    <div style={{ fontSize: 30, marginBottom: 10 }}>💬</div>
+                    <strong>Select a conversation</strong>
+                    <p style={{ marginBottom: 0 }}>Choose a customer on the left to view their message history and respond.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ borderBottom: "1px solid #edf2f7", paddingBottom: 12, marginBottom: 12 }}>
+                      <strong>{selectedConversation.client_name}</strong>
+                      <div style={{ color: "#627d98", fontSize: 13, overflowWrap: "anywhere" }}>{selectedConversation.client_email}</div>
+                    </div>
+                    <div ref={messagesRef} aria-live="polite" style={{ height: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "8px 2px 16px" }}>
+                      {messagesLoading ? <p style={{ color: "#627d98" }}>Loading messages…</p> : messages.length === 0 ? <p style={{ color: "#627d98", textAlign: "center", margin: "auto 0" }}>No messages in this conversation yet.</p> : messages.map((item) => {
+                        const isAgent = item.sender_type === "agent";
+                        return <div key={item.id} style={{ alignSelf: isAgent ? "flex-end" : "flex-start", maxWidth: "88%", background: isAgent ? "#eaf2ff" : "#f1f5f9", color: "#243b53", padding: "10px 12px", borderRadius: 12, overflowWrap: "anywhere" }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: isAgent ? "#1554ad" : "#52667a", marginBottom: 4 }}>{isAgent ? "HOPEBRIDGE staff" : "Customer"}</div>
+                          <div style={{ whiteSpace: "pre-wrap" }}>{item.message}</div>
+                          <div style={{ fontSize: 10, color: "#718096", marginTop: 5 }}>{new Date(item.created_at).toLocaleString()}</div>
+                        </div>;
+                      })}
+                    </div>
+                    <form onSubmit={sendStaffReply} style={{ display: "flex", gap: 8, alignItems: "stretch", marginTop: 12 }}>
+                      <textarea
+                        aria-label="Write a staff reply"
+                        value={replyText}
+                        onChange={(event) => setReplyText(event.target.value)}
+                        placeholder="Write a reply to the customer…"
+                        maxLength={5000}
+                        rows={2}
+                        required
+                        style={{ flex: 1, minWidth: 0, resize: "vertical", padding: 12, border: "1px solid #d7e2ee", borderRadius: 10, font: "inherit" }}
+                      />
+                      <button className="btn primary" type="submit" disabled={replySending || !replyText.trim()} style={{ alignSelf: "stretch" }}>{replySending ? "Sending…" : "Send reply"}</button>
+                    </form>
+                    <p style={{ color: "#718096", fontSize: 12, marginBottom: 0 }}>Messages are saved to the database. Keep replies focused on verified support information; never ask customers for passwords or banking login details.</p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </main>
