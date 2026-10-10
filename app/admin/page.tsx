@@ -294,7 +294,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {conversations.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No conversations found.</p> : (
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(220px, 0.8fr) minmax(0, 1.5fr)", gap: 18, marginTop: 18 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 18, marginTop: 18 }}>
               <div style={{ border: "1px solid #e3ebf4", borderRadius: 12, overflow: "hidden", alignSelf: "start" }}>
                 {conversations.map((conversation) => {
                   const isSelected = selectedConversation?.id === conversation.id;
