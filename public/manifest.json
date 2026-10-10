@@ -1,0 +1,29 @@
+{
+  "id": "/",
+  "name": "HOPEBRIDGE Financial Assistance",
+  "short_name": "HOPEBRIDGE",
+  "description": "Access your HOPEBRIDGE application, track updates, and contact support.",
+  "lang": "en-US",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#f8fafc",
+  "theme_color": "#123c69",
+  "categories": ["finance", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
