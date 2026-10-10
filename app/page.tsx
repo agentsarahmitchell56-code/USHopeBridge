@@ -10,6 +10,8 @@ type Message = {
   sender_id: string | null;
   message: string;
   created_at: string;
+  image_path?: string | null;
+  image_type?: string | null;
 };
 
 type SavedChat = {
@@ -33,6 +35,8 @@ export default function ChatPage() {
   const [chatToken, setChatToken] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -70,7 +74,17 @@ export default function ChatPage() {
         setError("We couldn't load this chat session. Please start a new conversation.");
         return;
       }
-      setMessages((data as Message[]) || []);
+      const loaded = (data as Message[]) || [];
+      setMessages(loaded);
+      for (const item of loaded) {
+        if (item.image_path && !imageUrls[item.id]) {
+          try {
+            const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path)}&conversationId=${encodeURIComponent(conversationId)}&chatToken=${encodeURIComponent(chatToken)}`);
+            const result = await response.json();
+            if (response.ok && result.url && active) setImageUrls((current) => ({ ...current, [item.id]: result.url }));
+          } catch { /* images can be retried on the next message refresh */ }
+        }
+      }
     }
 
     void loadMessages();
@@ -141,21 +155,41 @@ export default function ChatPage() {
   async function sendMessage(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const cleanMessage = message.trim();
-    if (!cleanMessage || !conversationId || !chatToken || sending) return;
+    if ((!cleanMessage && !imageFile) || !conversationId || !chatToken || sending) return;
 
     setSending(true);
     setError("");
-    const { error: sendError } = await supabase.rpc("send_chat_message", {
-      p_conversation_id: conversationId,
-      p_chat_token: chatToken,
-      p_message: cleanMessage,
-    });
+    let sendError: { message: string } | null = null;
+    if (imageFile) {
+      try {
+        const form = new FormData();
+        form.append("file", imageFile);
+        form.append("purpose", "chat");
+        form.append("conversationId", conversationId);
+        form.append("chatToken", chatToken);
+        const response = await fetch("/api/uploads", { method: "POST", body: form });
+        const upload = await response.json();
+        if (!response.ok) throw new Error(upload.error || "Image upload failed.");
+        const result = await supabase.rpc("send_chat_image", {
+          p_conversation_id: conversationId, p_chat_token: chatToken,
+          p_image_path: upload.path, p_image_type: imageFile.type, p_message: cleanMessage,
+        });
+        sendError = result.error;
+      } catch (uploadError) {
+        sendError = { message: uploadError instanceof Error ? uploadError.message : "Image upload failed." };
+      }
+    } else {
+      const result = await supabase.rpc("send_chat_message", {
+        p_conversation_id: conversationId, p_chat_token: chatToken, p_message: cleanMessage,
+      });
+      sendError = result.error;
+    }
 
     if (sendError) {
       console.error("Send message error:", sendError);
-      setError("Your message could not be sent. Please try again.");
+      setError(sendError.message || "Your message could not be sent. Please try again.");
     } else {
-      setMessage("");
+      setMessage(""); setImageFile(null);
       const { data } = await supabase.rpc("get_chat_messages", {
         p_conversation_id: conversationId,
         p_chat_token: chatToken,
@@ -172,7 +206,7 @@ export default function ChatPage() {
     setConversationId("");
     setChatToken("");
     setMessages([]);
-    setMessage("");
+    setMessage(""); setImageFile(null); setImageUrls({});
     setStarted(false);
     setError("");
   }
@@ -234,7 +268,9 @@ export default function ChatPage() {
                     <div className={`message-content ${mine ? "message-content-mine" : ""}`}>
                       {!mine && !grouped && <div className="message-sender">HOPEBRIDGE Support</div>}
                       <div className={`messenger-bubble ${mine ? "messenger-bubble-mine" : "messenger-bubble-agent"}`}>
-                        <span style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.message}</span>
+                        {item.message && <span style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.message}</span>}
+                        {item.image_path && imageUrls[item.id] && <a href={imageUrls[item.id]} target="_blank" rel="noreferrer"><img src={imageUrls[item.id]} alt="Customer attachment" style={{ display: "block", maxWidth: "100%", maxHeight: 260, objectFit: "contain", borderRadius: 10, marginTop: item.message ? 8 : 0 }} /></a>}
+                        {item.image_path && !imageUrls[item.id] && <span style={{ fontSize: 12 }}>Loading attached image…</span>}
                       </div>
                       <time className={`message-time ${mine ? "message-time-mine" : ""}`} dateTime={item.created_at}>{formatMessageTime(item.created_at)}</time>
                     </div>
@@ -244,9 +280,12 @@ export default function ChatPage() {
             </div>
             {error && <div role="alert" className="messenger-error messenger-error-inline">{error}</div>}
             <form className="messenger-composer" onSubmit={sendMessage}>
-              <input aria-label="Type a message" type="text" placeholder="Aa" value={message}
-                onChange={(e) => setMessage(e.target.value)} maxLength={5000} disabled={sending} required />
-              <button type="submit" className="messenger-send" disabled={sending || !message.trim()} aria-label="Send message" title="Send message">
+              <label title="Attach image" style={{ display: "grid", placeItems: "center", padding: "0 8px", cursor: "pointer", fontSize: 20 }}>
+                <span aria-hidden="true">＋</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setImageFile(e.target.files?.[0] || null)} style={{ display: "none" }} disabled={sending} />
+              </label>
+              <input aria-label="Type a message" type="text" placeholder={imageFile ? `Image: ${imageFile.name}` : "Aa"} value={message}
+                onChange={(e) => setMessage(e.target.value)} maxLength={5000} disabled={sending} />
+              <button type="submit" className="messenger-send" disabled={sending || (!message.trim() && !imageFile)} aria-label="Send message" title="Send message">
                 {sending ? "…" : "➤"}
               </button>
             </form>
