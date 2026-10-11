@@ -63,6 +63,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/hopebridge-upload-test.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          ready=false
+          for attempt in $(seq 1 30); do
+            if curl --silent --output /dev/null http://127.0.0.1:3000/; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" = "true"
 
           get_status=$(curl --silent --show-error -o /tmp/hopebridge-upload-get.json -w "%{http_code}" http://127.0.0.1:3000/api/uploads)
           test "$get_status" = "401"
