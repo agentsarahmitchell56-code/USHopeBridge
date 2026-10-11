@@ -29,9 +29,10 @@ jobs:
         run: npx tsc --noEmit
       - name: Build Next.js app
         run: npm run build
-      - name: Smoke-test key public routes
+      - name: Smoke-test public and staff routes
         shell: bash
         run: |
+          set -euo pipefail
           npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/hopebridge-next.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
@@ -45,7 +46,28 @@ jobs:
 
           test -s /tmp/hopebridge-home.html
           grep -q "A steadier path" /tmp/hopebridge-home.html
-          for route in /apply /status /chat; do
+
+          while IFS='|' read -r route expected; do
             echo "Checking $route"
-            curl --fail --silent --show-error "http://127.0.0.1:3000$route" -o /dev/null
-          done
+            curl --fail --silent --show-error "http://127.0.0.1:3000$route" -o "/tmp/hopebridge-route.html"
+            grep -qi "$expected" /tmp/hopebridge-route.html
+          done <<'ROUTES'
+          /apply|start your application
+          /status|check your application status
+          /chat|message hopebridge
+          /admin/login|staff sign in
+          /admin|HOPEBRIDGE
+          ROUTES
+
+      - name: Verify upload API rejects unauthenticated or invalid requests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          get_status=$(curl --silent --show-error -o /tmp/hopebridge-upload-get.json -w "%{http_code}" http://127.0.0.1:3000/api/uploads)
+          test "$get_status" = "401"
+          grep -qi "access denied" /tmp/hopebridge-upload-get.json
+
+          post_status=$(curl --silent --show-error -o /tmp/hopebridge-upload-post.json -w "%{http_code}" -X POST -F "purpose=application" http://127.0.0.1:3000/api/uploads)
+          test "$post_status" = "400"
+          grep -qi "valid image" /tmp/hopebridge-upload-post.json
