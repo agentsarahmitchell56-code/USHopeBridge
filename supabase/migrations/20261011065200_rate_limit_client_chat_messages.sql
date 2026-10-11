@@ -27,7 +27,7 @@ begin
 
   rate_key := md5('chat-message:' || p_conversation_id::text || ':' || p_chat_token::text)
     || md5('chat-message-second:' || p_conversation_id::text || ':' || p_chat_token::text);
-  if not public.consume_upload_rate_limit(rate_key, 120, 3600) then
+  if not public.consume_upload_rate_limit(rate_key, 100, 3600) then
     raise exception 'Too many messages in this chat. Please wait before sending more.' using errcode = 'P0001';
   end if;
 
@@ -72,7 +72,7 @@ begin
 
   rate_key := md5('chat-message:' || p_conversation_id::text || ':' || p_chat_token::text)
     || md5('chat-message-second:' || p_conversation_id::text || ':' || p_chat_token::text);
-  if not public.consume_upload_rate_limit(rate_key, 120, 3600) then
+  if not public.consume_upload_rate_limit(rate_key, 100, 3600) then
     raise exception 'Too many messages in this chat. Please wait before sending more.' using errcode = 'P0001';
   end if;
 
