@@ -35,15 +35,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "The application is too large. Please shorten your answers." }, { status: 413 });
     }
 
-    const body = await request.json();
-    const fullName = typeof body.full_name === "string" ? body.full_name.trim() : "";
-    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-    const phone = typeof body.phone === "string" ? body.phone.trim() : "";
-    const location = typeof body.location === "string" ? body.location.trim() : "";
-    const assistanceType = typeof body.assistance_type === "string" ? body.assistance_type : "";
-    const requestedAmount = typeof body.requested_amount === "string" ? body.requested_amount.trim() : "";
-    const details = typeof body.details === "string" ? body.details.trim() : "";
-    const attachmentPath = body.attachment_path == null ? null : String(body.attachment_path);
+    const body: unknown = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Please check the application form and try again." }, { status: 400 });
+    }
+    const input = body as Record<string, unknown>;
+    const fullName = typeof input.full_name === "string" ? input.full_name.trim() : "";
+    const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+    const phone = typeof input.phone === "string" ? input.phone.trim() : "";
+    const location = typeof input.location === "string" ? input.location.trim() : "";
+    const assistanceType = typeof input.assistance_type === "string" ? input.assistance_type : "";
+    const requestedAmount = typeof input.requested_amount === "string" ? input.requested_amount.trim() : "";
+    const details = typeof input.details === "string" ? input.details.trim() : "";
+    const attachmentPath = input.attachment_path == null ? null : String(input.attachment_path);
 
     if (fullName.length < 2 || fullName.length > 120) {
       return NextResponse.json({ error: "Enter your full name using 2 to 120 characters." }, { status: 400 });
