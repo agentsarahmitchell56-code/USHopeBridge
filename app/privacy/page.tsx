@@ -78,7 +78,7 @@ export default function PrivacyPolicyPage() {
           <p>
             Depending on applicable law, you may have rights to request access
             to, correction of, or deletion of personal information. To make a
-            privacy request, contact HOPEBRIDGE through the website's support
+            privacy request, contact HOPEBRIDGE through the website&apos;s support
             chat and clearly label the message “Privacy Request.” The operator
             should provide a monitored contact channel and explain how identity
             is verified before fulfilling requests.
@@ -87,7 +87,7 @@ export default function PrivacyPolicyPage() {
           <h2>Children</h2>
           <p>
             Do not submit information on behalf of a child unless you are
-            legally authorized to do so and the program's eligibility rules
+            legally authorized to do so and the program&apos;s eligibility rules
             permit it. The operator should publish age and guardian requirements
             before accepting applications from minors.
           </p>
@@ -96,7 +96,7 @@ export default function PrivacyPolicyPage() {
           <p>
             This policy may be updated as the service changes. Material updates
             should be reflected on this page with a revised effective date.
-            Questions can be sent through the website's support chat.
+            Questions can be sent through the website&apos;s support chat.
           </p>
           <p style={{ color: "#718096", fontSize: 13 }}>
             Important: This general notice is not legal advice. The HOPEBRIDGE
