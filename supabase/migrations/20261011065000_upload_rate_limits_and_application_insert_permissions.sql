@@ -1,7 +1,6 @@
 -- HOPEBRIDGE security hardening.
 -- 1) Public applicants may insert only fields collected by the public application form.
 -- Staff-managed/payment fields, status, IDs, and timestamps remain database-controlled.
-revoke insert on table public.applications from public, anon, authenticated;
 grant insert on table public.applications to service_role;
 -- Public application submissions will go through the rate-limited server endpoint.
 -- service_role retains its privileged access; public client roles receive no INSERT grant.
