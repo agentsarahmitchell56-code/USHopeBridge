@@ -9,11 +9,10 @@ grant insert on table public.applications to service_role;
 revoke update on table public.profiles from public, anon, authenticated;
 grant update (full_name, avatar_url) on table public.profiles to authenticated;
 
--- Public chat creation only needs the fields the client form supplies. The
--- application link and timestamps must remain server/staff controlled.
+-- Public chat creation goes through a rate-limited server endpoint.
+-- Do not let browser clients forge conversation IDs, tokens, or timestamps.
 revoke insert on table public.conversations from public, anon, authenticated;
-grant insert (id, client_name, client_email, chat_token)
-  on table public.conversations to anon, authenticated;
+grant insert on table public.conversations to service_role;
 
 -- Client messages go through token-checking SECURITY DEFINER RPCs; staff
 -- messages use the authenticated INSERT policy and only need these columns.
