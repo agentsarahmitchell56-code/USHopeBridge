@@ -56,7 +56,7 @@ jobs:
           /status|check your application status
           /chat|message hopebridge
           /admin/login|staff sign in
-          /admin|HOPEBRIDGE
+          /admin|loading secure staff dashboard
           ROUTES
 
       - name: Verify upload API rejects unauthenticated or invalid requests
