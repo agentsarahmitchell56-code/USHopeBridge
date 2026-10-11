@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { supabase } from "../../lib/supabase";
 
 type FormValues = {
   full_name: string;
@@ -63,22 +62,25 @@ export default function Apply() {
         if (!response.ok) throw new Error(result.error || "We couldn't upload that image. Please try again.");
         attachmentPath = result.path;
       }
-      const { error: insertError } = await supabase.from("applications").insert({
-        reference_number: reference,
-        full_name: values.full_name.trim(),
-        email: values.email.trim().toLowerCase(),
-        phone: values.phone.trim(),
-        location: values.location.trim(),
-        assistance_type: values.assistance_type,
-        requested_amount: values.requested_amount.trim(),
-        details: values.details.trim(),
-        attachment_path: attachmentPath,
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: values.full_name.trim(),
+          email: values.email.trim().toLowerCase(),
+          phone: values.phone.trim(),
+          location: values.location.trim(),
+          assistance_type: values.assistance_type,
+          requested_amount: values.requested_amount.trim(),
+          details: values.details.trim(),
+          attachment_path: attachmentPath,
+        }),
       });
-      if (insertError) {
-        console.error("Application submission failed:", insertError);
-        throw new Error("We couldn't submit your application right now. Please try again in a moment.");
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "We couldn't submit your application right now. Please try again.");
       }
-      setRef(reference);
+      setRef(result.reference_number || reference);
     } catch (err) {
       console.error("Application submission failed:", err);
       setError(err instanceof Error ? err.message : "A connection issue prevented submission. Please try again.");
