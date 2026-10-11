@@ -44,7 +44,7 @@ export default function TeamPage() {
     if (saving || !targetId || !roles.includes(targetRole)) return;
     if (targetId === myId) { setError("For safety, you cannot change your own role here."); return; }
     setSaving(true); setError(""); setNotice("");
-    const { data, error: rpcError } = await supabase.rpc("admin_set_staff_role", { target_user_id: targetId, new_role: targetRole });
+    const { error: rpcError } = await supabase.rpc("admin_set_staff_role", { target_user_id: targetId, new_role: targetRole });
     if (rpcError) {
       setError("Role change was not applied. Apply the HOPEBRIDGE team-permissions migration in Supabase first, and confirm that you are an administrator.");
     } else {
