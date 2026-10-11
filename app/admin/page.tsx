@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import StaffNotifications from "../components/staff-notifications";
+import "./admin-dashboard.css";
 import Image from "next/image";
 
 type Application = {
@@ -415,7 +416,7 @@ export default function AdminDashboardPage() {
   if (loading || !ready) return <main className="container" style={{ paddingTop: 80 }}><p>Loading secure staff dashboard…</p></main>;
 
   return (
-    <main style={{ minHeight: "100vh", background: "#f4f7fb", padding: "24px 0 56px" }}>
+    <main className="admin-dashboard" style={{ minHeight: "100vh", background: "#f4f7fb", padding: "24px 0 56px" }}>
       <div className="container">
         <header style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
           <a href="/admin" className="brand">HOPEBRIDGE<span>STAFF DASHBOARD</span></a>
