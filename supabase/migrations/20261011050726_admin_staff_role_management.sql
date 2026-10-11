@@ -1,5 +1,4 @@
 -- HOPEBRIDGE: secure administrator-only staff role management.
--- Apply this migration in the Supabase SQL editor or through your migration workflow.
 create or replace function public.admin_set_staff_role(target_user_id uuid, new_role text)
 returns jsonb
 language plpgsql

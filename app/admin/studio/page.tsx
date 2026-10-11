@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "../../../lib/supabase";
 
 type Post = {
@@ -187,7 +188,7 @@ export default function BusinessStudioPage() {
             <p style={{ color: "#667085", margin: "0 0 18px", fontSize: 14 }}>Update the name and profile photo shown in your workspace.</p>
             <form onSubmit={saveProfile} style={{ display: "grid", gap: 14 }}>
               <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                {profile.avatar_url ? <img src={profile.avatar_url} alt="Profile" style={{ width: 76, height: 76, borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0" }} /> : <div aria-label="Profile placeholder" style={{ width: 76, height: 76, borderRadius: "50%", background: "#e7f0ff", color: "#1456b8", display: "grid", placeItems: "center", fontWeight: 800, fontSize: 24 }}>{(profile.full_name || email || "H").slice(0,1).toUpperCase()}</div>}
+                {profile.avatar_url ? <Image src={profile.avatar_url} alt="Profile" width={76} height={76} unoptimized style={{ width: 76, height: 76, borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0" }} /> : <div aria-label="Profile placeholder" style={{ width: 76, height: 76, borderRadius: "50%", background: "#e7f0ff", color: "#1456b8", display: "grid", placeItems: "center", fontWeight: 800, fontSize: 24 }}>{(profile.full_name || email || "H").slice(0,1).toUpperCase()}</div>}
                 <div style={{ minWidth: 0 }}><strong>{profile.full_name || "Your profile"}</strong><div style={{ color: "#667085", fontSize: 13, overflowWrap: "anywhere" }}>{email}</div><div style={{ color: "#667085", fontSize: 12, textTransform: "capitalize" }}>{profile.role}</div></div>
               </div>
               <label style={{ display: "grid", gap: 7, fontWeight: 700, fontSize: 14 }}>Display name<input style={fieldStyle} value={profile.full_name || ""} maxLength={120} onChange={(e) => setProfile((old) => ({ ...old, full_name: e.target.value }))} placeholder="Your name" /></label>
@@ -222,7 +223,7 @@ export default function BusinessStudioPage() {
           {posts.length === 0 ? <div style={{ textAlign: "center", padding: "38px 12px", border: "1px dashed #cbd5e1", borderRadius: 14, color: "#667085" }}><div style={{ fontSize: 30, marginBottom: 8 }}>▧</div><strong style={{ color: "#172b4d" }}>Your content library is empty</strong><p style={{ margin: "6px 0 0" }}>Upload media and save your first draft above.</p></div> :
             filteredPosts.length === 0 ? <div style={{ textAlign: "center", padding: "28px 12px", border: "1px dashed #cbd5e1", borderRadius: 14, color: "#667085" }}>No content matches those filters. Try a different search or status.</div> : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,240px),1fr))", gap: 14 }}>
               {filteredPosts.map((post) => <article key={post.id} style={{ border: "1px solid #e2e8f0", borderRadius: 14, overflow: "hidden", background: "#fff", minWidth: 0 }}>
-                {post.media_url ? post.media_type?.startsWith("video/") ? <video src={post.media_url} controls style={{ width: "100%", aspectRatio: "16/10", objectFit: "cover", background: "#101828" }} /> : <img src={post.media_url} alt="Post media" loading="lazy" style={{ width: "100%", aspectRatio: "16/10", objectFit: "cover", background: "#f2f4f7" }} /> : <div style={{ aspectRatio: "16/10", display: "grid", placeItems: "center", color: "#98a2b3", background: "#f8fafc", fontSize: 36 }}>✎</div>}
+                {post.media_url ? post.media_type?.startsWith("video/") ? <video src={post.media_url} controls style={{ width: "100%", aspectRatio: "16/10", objectFit: "cover", background: "#101828" }} /> : <Image src={post.media_url} alt="Post media" width={640} height={400} unoptimized loading="lazy" style={{ width: "100%", height: "auto", aspectRatio: "16/10", objectFit: "cover", background: "#f2f4f7" }} /> : <div style={{ aspectRatio: "16/10", display: "grid", placeItems: "center", color: "#98a2b3", background: "#f8fafc", fontSize: 36 }}>✎</div>}
                 <div style={{ padding: 14 }}>
                   <span style={{ display: "inline-block", fontSize: 11, fontWeight: 800, letterSpacing: ".05em", borderRadius: 999, padding: "5px 8px", color: post.status === "SCHEDULED" ? "#175cd3" : "#475467", background: post.status === "SCHEDULED" ? "#eff8ff" : "#f2f4f7" }}>{post.status}</span>
                   <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", margin: "10px 0", fontSize: 14 }}>{post.caption || "No caption"}</p>

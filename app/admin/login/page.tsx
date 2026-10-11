@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
@@ -52,7 +53,7 @@ export default function AdminLoginPage() {
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 20, background: "#f3f7fc" }}>
       <section className="card" style={{ width: "100%", maxWidth: 440 }}>
-        <a href="/" className="brand">HOPEBRIDGE<span>STAFF PORTAL</span></a>
+        <Link href="/" className="brand">HOPEBRIDGE<span>STAFF PORTAL</span></Link>
         <h1 style={{ marginTop: 28, marginBottom: 8 }}>Staff sign in</h1>
         <p style={{ color: "#627d98", lineHeight: 1.6 }}>Authorized staff only. Sign in with your staff account to review applications and support conversations.</p>
         <form className="form" onSubmit={submit} style={{ marginTop: 24 }}>
@@ -66,7 +67,7 @@ export default function AdminLoginPage() {
           </div>
           {error && <p role="alert" style={{ color: "#b42318", background: "#fff1f2", padding: 12, borderRadius: 10, margin: 0 }}>{error}</p>}
           <button className="btn primary" type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign in securely"}</button>
-          <a href="/" className="btn secondary" style={{ textAlign: "center" }}>Return to website</a>
+          <Link href="/" className="btn secondary" style={{ textAlign: "center" }}>Return to website</Link>
         </form>
       </section>
     </main>

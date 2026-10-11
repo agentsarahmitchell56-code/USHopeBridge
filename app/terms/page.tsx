@@ -33,7 +33,7 @@ export default function TermsPage() {
             The website provides a way to submit a request for financial
             assistance and communicate with the program. Submitting an
             application does not guarantee eligibility, approval, a particular
-            amount, or payment. Any funding depends on the actual program's
+            amount, or payment. Any funding depends on the actual program&apos;s
             rules, eligibility review, available funds, and a verified decision
             by an authorized representative.
           </p>
@@ -43,7 +43,7 @@ export default function TermsPage() {
             You agree to provide information that is accurate to the best of
             your knowledge and to update it if it changes. Do not impersonate
             another person, submit fraudulent information, interfere with the
-            service, or attempt to access another applicant's records.
+            service, or attempt to access another applicant&apos;s records.
           </p>
 
           <h2>No upfront payment for an application</h2>
@@ -94,7 +94,7 @@ export default function TermsPage() {
             These terms may be updated as the service changes. The latest
             version will be posted on this page with a revised effective date.
             For questions about these terms, contact HOPEBRIDGE through the
-            website's support chat.
+            website&apos;s support chat.
           </p>
           <p style={{ color: "#718096", fontSize: 13 }}>
             Important: These general terms are a starting point, not legal
