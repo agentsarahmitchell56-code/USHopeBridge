@@ -2,17 +2,8 @@
 -- 1) Public applicants may insert only fields collected by the public application form.
 -- Staff-managed/payment fields, status, IDs, and timestamps remain database-controlled.
 revoke insert on table public.applications from public, anon, authenticated;
-grant insert (
-  reference_number,
-  full_name,
-  email,
-  phone,
-  location,
-  assistance_type,
-  requested_amount,
-  details,
-  attachment_path
-) on table public.applications to anon, authenticated;
+-- Public application submissions will go through the rate-limited server endpoint.
+-- service_role retains its privileged access; public client roles receive no INSERT grant.
 
 -- Prevent authenticated users from changing their own role or creation timestamp.
 revoke update on table public.profiles from public, anon, authenticated;
