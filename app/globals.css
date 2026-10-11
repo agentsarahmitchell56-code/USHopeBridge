@@ -770,3 +770,60 @@ input, select, textarea { max-width: 100%; }
   .hb-button, .hb-step-card, .hb-service-card { transition: none; }
   .hb-button:hover, .hb-step-card:hover, .hb-service-card:hover { transform: none; }
 }
+
+
+/* Homepage layout hardening: responsive widths, keyboard focus, and touch targets */
+.hb-home,
+.hb-home *,
+.hb-home *::before,
+.hb-home *::after { box-sizing: border-box; }
+.hb-home { width: 100%; min-width: 0; }
+.hb-home a { text-underline-offset: 3px; }
+.hb-home a:focus-visible {
+  outline: 3px solid #e0a72e;
+  outline-offset: 4px;
+  border-radius: 5px;
+}
+.hb-home .hb-container { min-width: 0; }
+.hb-home .hb-hero-copy,
+.hb-home .hb-support-copy,
+.hb-home .hb-services-heading > div { min-width: 0; }
+.hb-home .hb-hero-art { min-width: 0; }
+.hb-home .hb-art-card { min-width: 0; }
+.hb-home .hb-button { min-height: 48px; }
+.hb-home .hb-nav-actions { flex-shrink: 0; }
+
+@media (max-width: 760px) {
+  .hb-home .hb-nav { gap: 10px; }
+  .hb-home .hb-nav-actions { gap: 8px; }
+  .hb-home .hb-brand { gap: 8px; }
+  .hb-home .hb-brand-copy { letter-spacing: .025em; }
+  .hb-home .hb-hero-grid { min-width: 0; }
+  .hb-home .hb-hero-art {
+    width: 100%;
+    min-height: 365px;
+    overflow: clip;
+  }
+  .hb-home .hb-art-orbit-one { max-width: 88vw; max-height: 88vw; }
+  .hb-home .hb-art-orbit-two { max-width: 70vw; max-height: 70vw; }
+  .hb-home .hb-float-card { max-width: calc(100% - 8px); }
+  .hb-home .hb-float-top { left: 4px; }
+  .hb-home .hb-float-bottom { right: 4px; }
+  .hb-home .hb-art-caption { padding: 0 8px; }
+  .hb-home .hb-disclosure .hb-container { width: min(100% - 34px, 560px); }
+}
+@media (max-width: 380px) {
+  .hb-home .hb-container { width: calc(100% - 28px); }
+  .hb-home .hb-nav { gap: 6px; }
+  .hb-home .hb-brand { gap: 6px; }
+  .hb-home .hb-brand-mark { width: 30px; height: 30px; padding: 6px; }
+  .hb-home .hb-brand-copy { font-size: 12px; }
+  .hb-home .hb-brand-copy small { letter-spacing: .12em; }
+  .hb-home .hb-nav-actions .hb-button-small { min-height: 38px; padding: 0 8px; }
+  .hb-home .hb-hero h1 { font-size: clamp(37px, 11vw, 43px); }
+  .hb-home .hb-hero-art { min-height: 335px; }
+  .hb-home .hb-float-card { padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hb-home * { scroll-behavior: auto !important; }
+}
