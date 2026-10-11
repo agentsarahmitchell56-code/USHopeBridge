@@ -9,10 +9,7 @@ grant insert on table public.applications to service_role;
 revoke update on table public.profiles from public, anon, authenticated;
 grant update (full_name, avatar_url) on table public.profiles to authenticated;
 
--- Public chat creation goes through a rate-limited server endpoint.
--- Do not let browser clients forge conversation IDs, tokens, or timestamps.
-revoke insert on table public.conversations from public, anon, authenticated;
-grant insert on table public.conversations to service_role;
+-- Conversation INSERT permissions are tightened after the new server route is deployed.
 
 -- Client messages go through token-checking SECURITY DEFINER RPCs; staff
 -- messages use the authenticated INSERT policy and only need these columns.
