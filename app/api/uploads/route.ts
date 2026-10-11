@@ -19,7 +19,7 @@ const extByType: Record<string, string> = { "image/jpeg": "jpg", "image/png": "p
 function clientIp(request: NextRequest) {
   // Vercel supplies x-real-ip; x-forwarded-for is a fallback for other trusted proxies.
   return request.headers.get("x-real-ip")?.trim()
-    || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim()
     || "";
 }
 
@@ -76,13 +76,6 @@ export async function POST(request: NextRequest) {
 
     const db = adminClient();
     const validPurpose = purpose as "application" | "chat";
-    if (!(await allowUpload(db, request, validPurpose))) {
-      return NextResponse.json(
-        { error: "Too many uploads from this connection. Please try again in about an hour." },
-        { status: 429, headers: { "Retry-After": "3600" } },
-      );
-    }
-
     let folder = "applications";
     if (validPurpose === "chat") {
       const conversationId = String(form.get("conversationId") || "");
@@ -91,6 +84,13 @@ export async function POST(request: NextRequest) {
       const { data: conversation } = await db.from("conversations").select("id,chat_token").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
       if (!conversation) return NextResponse.json({ error: "Invalid chat session." }, { status: 403 });
       folder = "chat";
+    }
+
+    if (!(await allowUpload(db, request, validPurpose))) {
+      return NextResponse.json(
+        { error: "Too many uploads from this connection. Please try again in about an hour." },
+        { status: 429, headers: { "Retry-After": "3600" } },
+      );
     }
 
     const path = folder + "/" + crypto.randomUUID() + "." + extByType[file.type];
