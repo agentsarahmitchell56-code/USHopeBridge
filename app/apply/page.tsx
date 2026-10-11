@@ -35,7 +35,7 @@ export default function Apply() {
     setError("");
     if (step === 1) {
       if (values.full_name.trim().length < 2) return setError("Please enter your full name (at least 2 characters).");
-      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(values.email.trim())) return setError("Please enter a valid email address.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) return setError("Please enter a valid email address.");
     }
     if (step === 2) {
       if (!values.assistance_type) return setError("Please choose the type of assistance you need.");
