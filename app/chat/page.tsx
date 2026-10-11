@@ -159,7 +159,8 @@ export default function ChatPage() {
 
     setSending(true);
     setError("");
-    let sendError: { message: string } | null = null;
+    try {
+      let sendError: { message: string } | null = null;
     if (imageFile) {
       try {
         const form = new FormData();
@@ -196,7 +197,12 @@ export default function ChatPage() {
       });
       if (data) setMessages((data as Message[]) || []);
     }
-    setSending(false);
+    } catch (sendException) {
+      console.error("Unexpected send message error:", sendException);
+      setError("We couldn't send your message because of a connection issue. Please try again.");
+    } finally {
+      setSending(false);
+    }
   }
 
   function startNewConversation() {
