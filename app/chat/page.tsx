@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "../../lib/supabase";
 
 type Message = {
@@ -42,6 +43,7 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const messagesRef = useRef<HTMLDivElement>(null);
+  const imageUrlsRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     try {
@@ -78,11 +80,14 @@ export default function ChatPage() {
       const loaded = (data as Message[]) || [];
       setMessages(loaded);
       for (const item of loaded) {
-        if (item.image_path && !imageUrls[item.id]) {
+        if (item.image_path && !imageUrlsRef.current[item.id]) {
           try {
             const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path)}&conversationId=${encodeURIComponent(conversationId)}&chatToken=${encodeURIComponent(chatToken)}`);
             const result = await response.json();
-            if (response.ok && result.url && active) setImageUrls((current) => ({ ...current, [item.id]: result.url }));
+            if (response.ok && result.url && active) {
+              imageUrlsRef.current[item.id] = result.url;
+              setImageUrls((current) => ({ ...current, [item.id]: result.url }));
+            }
           } catch { /* images can be retried on the next message refresh */ }
         }
       }
@@ -222,7 +227,7 @@ export default function ChatPage() {
     setConversationId("");
     setChatToken("");
     setMessages([]);
-    setMessage(""); setImageFile(null); setImageUrls({});
+    setMessage(""); setImageFile(null); imageUrlsRef.current = {}; setImageUrls({});
     setStarted(false);
     setError("");
   }
@@ -285,7 +290,7 @@ export default function ChatPage() {
                       {!mine && !grouped && <div className="message-sender">HOPEBRIDGE Support</div>}
                       <div className={`messenger-bubble ${mine ? "messenger-bubble-mine" : "messenger-bubble-agent"}`}>
                         {item.message && <span style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.message}</span>}
-                        {item.image_path && imageUrls[item.id] && <a href={imageUrls[item.id]} target="_blank" rel="noreferrer"><img src={imageUrls[item.id]} alt="Customer attachment" style={{ display: "block", maxWidth: "100%", maxHeight: 260, objectFit: "contain", borderRadius: 10, marginTop: item.message ? 8 : 0 }} /></a>}
+                        {item.image_path && imageUrls[item.id] && <a href={imageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={imageUrls[item.id]} alt="Customer attachment" width={480} height={320} unoptimized style={{ display: "block", maxWidth: "100%", maxHeight: 260, width: "auto", height: "auto", objectFit: "contain", borderRadius: 10, marginTop: item.message ? 8 : 0 }} /></a>}
                         {item.image_path && !imageUrls[item.id] && <span style={{ fontSize: 12 }}>Loading attached image…</span>}
                       </div>
                       <time className={`message-time ${mine ? "message-time-mine" : ""}`} dateTime={item.created_at}>{formatMessageTime(item.created_at)}</time>
