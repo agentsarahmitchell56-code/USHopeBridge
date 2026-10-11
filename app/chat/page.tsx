@@ -127,15 +127,17 @@ export default function ChatPage() {
 
     setLoading(true);
     try {
-      const newConversationId = crypto.randomUUID();
-      const newChatToken = crypto.randomUUID();
-      const { error: createError } = await supabase.from("conversations").insert({
-        id: newConversationId,
-        client_name: cleanName,
-        client_email: cleanEmail,
-        chat_token: newChatToken,
+      const response = await fetch("/api/chat/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: cleanName, email: cleanEmail }),
       });
-      if (createError) throw new Error(createError.message || "Unable to start your conversation.");
+      const result = await response.json();
+      if (!response.ok || !result.conversation_id || !result.chat_token) {
+        throw new Error(result.error || "Unable to start your conversation.");
+      }
+      const newConversationId = result.conversation_id as string;
+      const newChatToken = result.chat_token as string;
 
       const savedChat: SavedChat = {
         name: cleanName,
