@@ -135,7 +135,7 @@ export default function ApplicationStatusPage() {
 
             {searched && !result && (
               <div role="status" style={{ padding: 14, borderRadius: 10, background: "#fff7ed", color: "#9a3412", lineHeight: 1.6 }}>
-                We couldn't find an application matching those details. Check
+                We couldn&apos;t find an application matching those details. Check
                 your reference number and email address, then try again.
               </div>
             )}
