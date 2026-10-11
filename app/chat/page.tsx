@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 
 type Message = {
@@ -230,13 +231,13 @@ export default function ChatPage() {
     <main className="messenger-page">
       <div className="messenger-shell">
         <header className="messenger-header">
-          <a href="/" className="messenger-back" aria-label="Return home">‹</a>
+          <Link href="/" className="messenger-back" aria-label="Return home">‹</Link>
           <div className="messenger-avatar" aria-hidden="true">HB</div>
           <div className="messenger-heading">
             <div className="messenger-title">HOPEBRIDGE Support</div>
             <div className="messenger-presence"><span className="online-dot" /> Support conversation</div>
           </div>
-          <a className="messenger-info" href="/status" aria-label="Check application status" title="Check application status">i</a>
+          <Link className="messenger-info" href="/status" aria-label="Check application status" title="Check application status">i</Link>
         </header>
 
         {!started ? (
@@ -256,7 +257,7 @@ export default function ChatPage() {
                 {loading ? "Opening conversation…" : "Continue to chat"}
               </button>
             </form>
-            <a href="/status" className="messenger-status-link">Track an application instead</a>
+            <Link href="/status" className="messenger-status-link">Track an application instead</Link>
           </section>
         ) : (
           <>
@@ -305,8 +306,8 @@ export default function ChatPage() {
               </button>
             </form>
             <div className="messenger-bottom-links">
-              <a href="/">Home</a><span>·</span>
-              <a href="/status">Track application</a><span>·</span>
+              <Link href="/">Home</Link><span>·</span>
+              <Link href="/status">Track application</Link><span>·</span>
               <button type="button" onClick={startNewConversation}>New chat</button>
             </div>
           </>
