@@ -161,42 +161,51 @@ export default function ChatPage() {
     setError("");
     try {
       let sendError: { message: string } | null = null;
-    if (imageFile) {
-      try {
-        const form = new FormData();
-        form.append("file", imageFile);
-        form.append("purpose", "chat");
-        form.append("conversationId", conversationId);
-        form.append("chatToken", chatToken);
-        const response = await fetch("/api/uploads", { method: "POST", body: form });
-        const upload = await response.json();
-        if (!response.ok) throw new Error(upload.error || "Image upload failed.");
-        const result = await supabase.rpc("send_chat_image", {
-          p_conversation_id: conversationId, p_chat_token: chatToken,
-          p_image_path: upload.path, p_image_type: imageFile.type, p_message: cleanMessage,
+
+      if (imageFile) {
+        try {
+          const form = new FormData();
+          form.append("file", imageFile);
+          form.append("purpose", "chat");
+          form.append("conversationId", conversationId);
+          form.append("chatToken", chatToken);
+          const response = await fetch("/api/uploads", { method: "POST", body: form });
+          const upload = await response.json();
+          if (!response.ok) throw new Error(upload.error || "Image upload failed.");
+          const result = await supabase.rpc("send_chat_image", {
+            p_conversation_id: conversationId,
+            p_chat_token: chatToken,
+            p_image_path: upload.path,
+            p_image_type: imageFile.type,
+            p_message: cleanMessage,
+          });
+          sendError = result.error;
+        } catch (uploadError) {
+          sendError = {
+            message: uploadError instanceof Error ? uploadError.message : "Image upload failed.",
+          };
+        }
+      } else {
+        const result = await supabase.rpc("send_chat_message", {
+          p_conversation_id: conversationId,
+          p_chat_token: chatToken,
+          p_message: cleanMessage,
         });
         sendError = result.error;
-      } catch (uploadError) {
-        sendError = { message: uploadError instanceof Error ? uploadError.message : "Image upload failed." };
       }
-    } else {
-      const result = await supabase.rpc("send_chat_message", {
-        p_conversation_id: conversationId, p_chat_token: chatToken, p_message: cleanMessage,
-      });
-      sendError = result.error;
-    }
 
-    if (sendError) {
-      console.error("Send message error:", sendError);
-      setError(sendError.message || "Your message could not be sent. Please try again.");
-    } else {
-      setMessage(""); setImageFile(null);
-      const { data } = await supabase.rpc("get_chat_messages", {
-        p_conversation_id: conversationId,
-        p_chat_token: chatToken,
-      });
-      if (data) setMessages((data as Message[]) || []);
-    }
+      if (sendError) {
+        console.error("Send message error:", sendError);
+        setError(sendError.message || "Your message could not be sent. Please try again.");
+      } else {
+        setMessage("");
+        setImageFile(null);
+        const { data } = await supabase.rpc("get_chat_messages", {
+          p_conversation_id: conversationId,
+          p_chat_token: chatToken,
+        });
+        if (data) setMessages((data as Message[]) || []);
+      }
     } catch (sendException) {
       console.error("Unexpected send message error:", sendException);
       setError("We couldn't send your message because of a connection issue. Please try again.");
