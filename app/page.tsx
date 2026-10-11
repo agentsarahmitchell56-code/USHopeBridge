@@ -1,303 +1,124 @@
-"use client";
+import Link from "next/link";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
-import { supabase } from "../lib/supabase";
+const steps = [
+  { number: "01", title: "Tell us what you need", description: "Share a few details about your situation through our guided application." },
+  { number: "02", title: "Keep your reference", description: "Save your application reference so you can securely check for updates later." },
+  { number: "03", title: "Follow your status", description: "Use your reference number and application email to view the latest recorded status." },
+];
 
-type Message = {
-  id: string;
-  conversation_id: string;
-  sender_type: "client" | "agent";
-  sender_id: string | null;
-  message: string;
-  created_at: string;
-  image_path?: string | null;
-  image_type?: string | null;
-};
+const services = [
+  { icon: "↗", title: "A guided application", description: "A clear, step-by-step form that helps you share the information needed for review.", link: "/apply", linkText: "Start an application" },
+  { icon: "◎", title: "Status and payment updates", description: "Check the latest application status and any payment status recorded by the HOPEBRIDGE team.", link: "/status", linkText: "Track an application" },
+  { icon: "✳", title: "Human support", description: "Have a question? Start a support conversation and follow up with our team.", link: "/chat", linkText: "Chat with support" },
+];
 
-type SavedChat = {
-  name: string;
-  email: string;
-  conversationId: string;
-  chatToken: string;
-};
-
-const CHAT_STORAGE_KEY = "hopebridge-support-chat-v1";
-
-function formatMessageTime(value: string) {
-  return new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-}
-
-export default function ChatPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [started, setStarted] = useState(false);
-  const [conversationId, setConversationId] = useState("");
-  const [chatToken, setChatToken] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [message, setMessage] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
-  const messagesRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(CHAT_STORAGE_KEY);
-      if (!saved) return;
-      const chat = JSON.parse(saved) as SavedChat;
-      if (chat.name && chat.email && chat.conversationId && chat.chatToken) {
-        setName(chat.name);
-        setEmail(chat.email);
-        setConversationId(chat.conversationId);
-        setChatToken(chat.chatToken);
-        setStarted(true);
-      }
-    } catch (restoreError) {
-      console.error("Could not restore support chat:", restoreError);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!started || !conversationId || !chatToken) return;
-    let active = true;
-
-    async function loadMessages() {
-      const { data, error: messagesError } = await supabase.rpc("get_chat_messages", {
-        p_conversation_id: conversationId,
-        p_chat_token: chatToken,
-      });
-      if (!active) return;
-      if (messagesError) {
-        console.error("Load chat messages error:", messagesError);
-        setError("We couldn't load this chat session. Please start a new conversation.");
-        return;
-      }
-      const loaded = (data as Message[]) || [];
-      setMessages(loaded);
-      for (const item of loaded) {
-        if (item.image_path && !imageUrls[item.id]) {
-          try {
-            const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path)}&conversationId=${encodeURIComponent(conversationId)}&chatToken=${encodeURIComponent(chatToken)}`);
-            const result = await response.json();
-            if (response.ok && result.url && active) setImageUrls((current) => ({ ...current, [item.id]: result.url }));
-          } catch { /* images can be retried on the next message refresh */ }
-        }
-      }
-    }
-
-    void loadMessages();
-    const pollId = window.setInterval(() => void loadMessages(), 4000);
-    return () => {
-      active = false;
-      window.clearInterval(pollId);
-    };
-  }, [started, conversationId, chatToken]);
-
-  useEffect(() => {
-    if (messagesRef.current) {
-      messagesRef.current.scrollTo({
-        top: messagesRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [messages]);
-
-  async function startChat(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError("");
-    const cleanName = name.trim();
-    const cleanEmail = email.trim().toLowerCase();
-
-    if (cleanName.length < 2) {
-      setError("Please enter your full name.");
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const newConversationId = crypto.randomUUID();
-      const newChatToken = crypto.randomUUID();
-      const { error: createError } = await supabase.from("conversations").insert({
-        id: newConversationId,
-        client_name: cleanName,
-        client_email: cleanEmail,
-        chat_token: newChatToken,
-      });
-      if (createError) throw new Error(createError.message || "Unable to start your conversation.");
-
-      const savedChat: SavedChat = {
-        name: cleanName,
-        email: cleanEmail,
-        conversationId: newConversationId,
-        chatToken: newChatToken,
-      };
-      window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(savedChat));
-      setName(cleanName);
-      setEmail(cleanEmail);
-      setConversationId(newConversationId);
-      setChatToken(newChatToken);
-      setMessages([]);
-      setStarted(true);
-    } catch (err) {
-      console.error("Start chat error:", err);
-      setError(err instanceof Error ? err.message : "Unable to start the chat. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function sendMessage(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const cleanMessage = message.trim();
-    if ((!cleanMessage && !imageFile) || !conversationId || !chatToken || sending) return;
-
-    setSending(true);
-    setError("");
-    let sendError: { message: string } | null = null;
-    if (imageFile) {
-      try {
-        const form = new FormData();
-        form.append("file", imageFile);
-        form.append("purpose", "chat");
-        form.append("conversationId", conversationId);
-        form.append("chatToken", chatToken);
-        const response = await fetch("/api/uploads", { method: "POST", body: form });
-        const upload = await response.json();
-        if (!response.ok) throw new Error(upload.error || "Image upload failed.");
-        const result = await supabase.rpc("send_chat_image", {
-          p_conversation_id: conversationId, p_chat_token: chatToken,
-          p_image_path: upload.path, p_image_type: imageFile.type, p_message: cleanMessage,
-        });
-        sendError = result.error;
-      } catch (uploadError) {
-        sendError = { message: uploadError instanceof Error ? uploadError.message : "Image upload failed." };
-      }
-    } else {
-      const result = await supabase.rpc("send_chat_message", {
-        p_conversation_id: conversationId, p_chat_token: chatToken, p_message: cleanMessage,
-      });
-      sendError = result.error;
-    }
-
-    if (sendError) {
-      console.error("Send message error:", sendError);
-      setError(sendError.message || "Your message could not be sent. Please try again.");
-    } else {
-      setMessage(""); setImageFile(null);
-      const { data } = await supabase.rpc("get_chat_messages", {
-        p_conversation_id: conversationId,
-        p_chat_token: chatToken,
-      });
-      if (data) setMessages((data as Message[]) || []);
-    }
-    setSending(false);
-  }
-
-  function startNewConversation() {
-    window.localStorage.removeItem(CHAT_STORAGE_KEY);
-    setName("");
-    setEmail("");
-    setConversationId("");
-    setChatToken("");
-    setMessages([]);
-    setMessage(""); setImageFile(null); setImageUrls({});
-    setStarted(false);
-    setError("");
-  }
-
+export default function HomePage() {
   return (
-    <main className="messenger-page">
-      <div className="messenger-shell">
-        <header className="messenger-header">
-          <a href="/" className="messenger-back" aria-label="Return home">‹</a>
-          <div className="messenger-avatar" aria-hidden="true">HB</div>
-          <div className="messenger-heading">
-            <div className="messenger-title">HOPEBRIDGE Support</div>
-            <div className="messenger-presence"><span className="online-dot" /> Support conversation</div>
-          </div>
-          <a className="messenger-info" href="/status" aria-label="Check application status" title="Check application status">i</a>
-        </header>
-
-        {!started ? (
-          <section className="messenger-start">
-            <div className="messenger-intro-avatar">HB</div>
-            <h1>Message HOPEBRIDGE</h1>
-            <p>Start a conversation with our support team. Enter your details below and we’ll open your chat.</p>
-            <form className="messenger-start-form" onSubmit={startChat}>
-              <label htmlFor="name">Your name</label>
-              <input id="name" type="text" placeholder="Full name" value={name}
-                onChange={(e) => setName(e.target.value)} autoComplete="name" minLength={2} required />
-              <label htmlFor="email">Email address</label>
-              <input id="email" type="email" placeholder="you@example.com" value={email}
-                onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
-              {error && <div role="alert" className="messenger-error">{error}</div>}
-              <button type="submit" className="messenger-primary" disabled={loading}>
-                {loading ? "Opening conversation…" : "Continue to chat"}
-              </button>
-            </form>
-            <a href="/status" className="messenger-status-link">Track an application instead</a>
-          </section>
-        ) : (
-          <>
-            <div className="messenger-chat-context">
-              <span className="context-lock" aria-hidden="true">✓</span>
-              <span><strong>You’re chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started.</small></span>
-            </div>
-            <div className="messenger-messages" ref={messagesRef} aria-live="polite">
-              <div className="chat-day-label">MESSAGES</div>
-              {messages.length === 0 ? (
-                <div className="messenger-empty">
-                  <div className="messenger-small-avatar">HB</div>
-                  <strong>HOPEBRIDGE Support</strong>
-                  <p>Your conversation starts here. Send us a message and our team will reply as soon as possible.</p>
-                </div>
-              ) : messages.map((item, index) => {
-                const mine = item.sender_type === "client";
-                const previous = messages[index - 1];
-                const grouped = previous && previous.sender_type === item.sender_type;
-                return (
-                  <div key={item.id} className={`message-row ${mine ? "message-row-mine" : "message-row-agent"}`}>
-                    {!mine && !grouped && <div className="message-avatar">HB</div>}
-                    {!mine && grouped && <div className="message-avatar-spacer" />}
-                    <div className={`message-content ${mine ? "message-content-mine" : ""}`}>
-                      {!mine && !grouped && <div className="message-sender">HOPEBRIDGE Support</div>}
-                      <div className={`messenger-bubble ${mine ? "messenger-bubble-mine" : "messenger-bubble-agent"}`}>
-                        {item.message && <span style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.message}</span>}
-                        {item.image_path && imageUrls[item.id] && <a href={imageUrls[item.id]} target="_blank" rel="noreferrer"><img src={imageUrls[item.id]} alt="Customer attachment" style={{ display: "block", maxWidth: "100%", maxHeight: 260, objectFit: "contain", borderRadius: 10, marginTop: item.message ? 8 : 0 }} /></a>}
-                        {item.image_path && !imageUrls[item.id] && <span style={{ fontSize: 12 }}>Loading attached image…</span>}
-                      </div>
-                      <time className={`message-time ${mine ? "message-time-mine" : ""}`} dateTime={item.created_at}>{formatMessageTime(item.created_at)}</time>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {error && <div role="alert" className="messenger-error messenger-error-inline">{error}</div>}
-            <form className="messenger-composer" onSubmit={sendMessage}>
-              <label title="Attach image" style={{ display: "grid", placeItems: "center", padding: "0 8px", cursor: "pointer", fontSize: 20 }}>
-                <span aria-hidden="true">＋</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setImageFile(e.target.files?.[0] || null)} style={{ display: "none" }} disabled={sending} />
-              </label>
-              <input aria-label="Type a message" type="text" placeholder={imageFile ? `Image: ${imageFile.name}` : "Aa"} value={message}
-                onChange={(e) => setMessage(e.target.value)} maxLength={5000} disabled={sending} />
-              <button type="submit" className="messenger-send" disabled={sending || (!message.trim() && !imageFile)} aria-label="Send message" title="Send message">
-                {sending ? "…" : "➤"}
-              </button>
-            </form>
-            <div className="messenger-bottom-links">
-              <a href="/">Home</a><span>·</span>
-              <a href="/status">Track application</a><span>·</span>
-              <button type="button" onClick={startNewConversation}>New chat</button>
-            </div>
-          </>
-        )}
+    <main className="hb-home">
+      <div className="hb-topline">
+        <div className="hb-container hb-topline-inner">
+          <span><span className="hb-live-dot" /> A clearer way to navigate your request</span>
+          <Link href="/status">Already applied? Track your status <span aria-hidden="true">↗</span></Link>
+        </div>
       </div>
-      <p className="messenger-page-note">HOPEBRIDGE Financial Assistance · Support chat</p>
+
+      <header className="hb-header">
+        <div className="hb-container hb-nav">
+          <Link href="/" className="hb-brand" aria-label="HOPEBRIDGE home">
+            <span className="hb-brand-mark" aria-hidden="true"><span /><span /><span /></span>
+            <span className="hb-brand-copy">HOPEBRIDGE<small>FINANCIAL ASSISTANCE</small></span>
+          </Link>
+          <nav className="hb-nav-links" aria-label="Main navigation">
+            <Link href="#how-it-works">How it works</Link>
+            <Link href="#support">Support</Link>
+            <Link href="/status">Track status</Link>
+          </nav>
+          <div className="hb-nav-actions">
+            <Link className="hb-login-link" href="/admin/login">Staff sign in</Link>
+            <Link className="hb-button hb-button-small" href="/apply">Apply now <span aria-hidden="true">↗</span></Link>
+          </div>
+        </div>
+      </header>
+
+      <section className="hb-hero">
+        <div className="hb-container hb-hero-grid">
+          <div className="hb-hero-copy">
+            <div className="hb-eyebrow"><span className="hb-eyebrow-line" /> SUPPORT THAT STARTS WITH CLARITY</div>
+            <h1>A steadier path<br />starts <em>with a next step.</em></h1>
+            <p className="hb-hero-lead">When life feels uncertain, finding your way through a request shouldn’t. HOPEBRIDGE helps you submit your information, keep track of updates, and reach our support team in one place.</p>
+            <div className="hb-hero-actions">
+              <Link href="/apply" className="hb-button">Begin your application <span aria-hidden="true">→</span></Link>
+              <Link href="/status" className="hb-button hb-button-light"><span className="hb-track-icon" aria-hidden="true">◎</span> Track an existing request</Link>
+            </div>
+            <div className="hb-hero-note"><span className="hb-shield" aria-hidden="true">✓</span><span><strong>One step at a time.</strong> You can review your answers before submitting.</span></div>
+          </div>
+
+          <div className="hb-hero-art" aria-label="A simple illustration representing guidance and progress">
+            <div className="hb-art-orbit hb-art-orbit-one" />
+            <div className="hb-art-orbit hb-art-orbit-two" />
+            <div className="hb-art-sun" />
+            <div className="hb-art-card hb-art-card-main">
+              <div className="hb-art-card-head"><span className="hb-art-mini-mark">HB</span><span><strong>Your next steps</strong><small>A simple path forward</small></span><span className="hb-art-menu">•••</span></div>
+              <div className="hb-art-progress"><span /><span /><span /></div>
+              <div className="hb-art-step"><span className="hb-step-check">✓</span><span><strong>Share your request</strong><small>Tell us a little about your needs</small></span><span className="hb-step-arrow">↗</span></div>
+              <div className="hb-art-step hb-art-step-current"><span className="hb-step-number">2</span><span><strong>Review your details</strong><small>Check everything before sending</small></span><span className="hb-step-arrow">→</span></div>
+              <div className="hb-art-step"><span className="hb-step-number hb-step-muted">3</span><span><strong>Check for updates</strong><small>Use your private reference</small></span></div>
+              <div className="hb-art-card-foot"><span className="hb-foot-lock">✓</span> Your progress, made clearer</div>
+            </div>
+            <div className="hb-float-card hb-float-top"><span className="hb-float-icon">↗</span><span><strong>One step at a time</strong><small>A guided experience</small></span></div>
+            <div className="hb-float-card hb-float-bottom"><span className="hb-float-check">✓</span><span><strong>Stay informed</strong><small>Check status when you need to</small></span></div>
+            <div className="hb-art-caption">A little more clarity. A little less guesswork.</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="hb-assurance">
+        <div className="hb-container hb-assurance-grid">
+          <div className="hb-assurance-item"><span className="hb-assurance-icon">▤</span><span><strong>Guided form</strong><small>Review before submitting</small></span></div>
+          <div className="hb-assurance-item"><span className="hb-assurance-icon">⌕</span><span><strong>Application tracking</strong><small>Check recorded updates</small></span></div>
+          <div className="hb-assurance-item"><span className="hb-assurance-icon">♡</span><span><strong>Support when needed</strong><small>Reach our support team</small></span></div>
+          <div className="hb-assurance-item"><span className="hb-assurance-icon">⌑</span><span><strong>Clear next steps</strong><small>Know where to go next</small></span></div>
+        </div>
+      </section>
+
+      <section className="hb-section" id="how-it-works">
+        <div className="hb-container">
+          <div className="hb-section-heading">
+            <span className="hb-eyebrow"><span className="hb-eyebrow-line" /> A SIMPLE PROCESS</span>
+            <h2>Move forward with<br /><em>more confidence.</em></h2>
+            <p>From the first form to the latest update, the essentials are easy to find and follow.</p>
+          </div>
+          <div className="hb-steps-grid">
+            {steps.map((step) => <article className="hb-step-card" key={step.number}>
+              <span className="hb-step-index">{step.number}</span><span className="hb-step-decoration" aria-hidden="true">↗</span>
+              <h3>{step.title}</h3><p>{step.description}</p>
+            </article>)}
+          </div>
+        </div>
+      </section>
+
+      <section className="hb-section hb-services-section">
+        <div className="hb-container">
+          <div className="hb-services-heading"><div><span className="hb-eyebrow"><span className="hb-eyebrow-line" /> YOUR HOPEBRIDGE SPACE</span><h2>What you need,<br /><em>all in one place.</em></h2></div><p>Choose the next step that fits where you are today.</p></div>
+          <div className="hb-services-grid">
+            {services.map((service) => <article className="hb-service-card" key={service.title}>
+              <span className="hb-service-icon" aria-hidden="true">{service.icon}</span><h3>{service.title}</h3><p>{service.description}</p><Link href={service.link}>{service.linkText} <span aria-hidden="true">→</span></Link>
+            </article>)}
+          </div>
+        </div>
+      </section>
+
+      <section className="hb-support-band" id="support">
+        <div className="hb-container hb-support-inner">
+          <div className="hb-support-symbol" aria-hidden="true"><span>HB</span><i>✳</i></div>
+          <div className="hb-support-copy"><span className="hb-eyebrow">HERE IF YOU NEED US</span><h2>Questions along the way?</h2><p>Start a conversation with our support team or return to your application status whenever you need an update.</p></div>
+          <div className="hb-support-actions"><Link href="/chat" className="hb-button hb-button-white">Chat with support <span aria-hidden="true">→</span></Link><Link href="/status" className="hb-support-text-link">Check application status ↗</Link></div>
+        </div>
+      </section>
+
+      <section className="hb-disclosure">
+        <div className="hb-container"><span className="hb-disclosure-icon" aria-hidden="true">i</span><p><strong>Please note:</strong> Submitting an application does not guarantee eligibility, approval, or payment. All requests are subject to the program’s review process and applicable requirements. Payment status reflects the latest information recorded by HOPEBRIDGE staff.</p></div>
+      </section>
     </main>
   );
 }
