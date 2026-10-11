@@ -27,6 +27,8 @@ jobs:
         run: npm install
       - name: Type-check TypeScript
         run: npx tsc --noEmit
+      - name: Lint Next.js app
+        run: npm run lint
       - name: Build Next.js app
         run: npm run build
       - name: Smoke-test public and staff routes
