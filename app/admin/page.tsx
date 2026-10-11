@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import StaffNotifications from "../components/staff-notifications";
+import Image from "next/image";
 
 type Application = {
   id: string;
@@ -81,6 +82,7 @@ export default function AdminDashboardPage() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [replySending, setReplySending] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const messageImageUrlsRef = useRef<Record<string, string>>({});
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -158,11 +160,14 @@ export default function AdminDashboardPage() {
         const accessToken = sessionData.session?.access_token;
         if (accessToken) {
           for (const item of loadedMessages) {
-            if (!item.image_path || messageImageUrls[item.id]) continue;
+            if (!item.image_path || messageImageUrlsRef.current[item.id]) continue;
             try {
               const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
               const imageResult = await response.json();
-              if (response.ok && imageResult.url && active) setMessageImageUrls((current) => ({ ...current, [item.id]: imageResult.url }));
+              if (response.ok && imageResult.url && active) {
+                messageImageUrlsRef.current[item.id] = imageResult.url;
+                setMessageImageUrls((current) => ({ ...current, [item.id]: imageResult.url }));
+              }
             } catch { /* attachment can be retried after refresh */ }
           }
         }
@@ -556,7 +561,7 @@ export default function AdminDashboardPage() {
                         return <div key={item.id} style={{ alignSelf: isAgent ? "flex-end" : "flex-start", maxWidth: "88%", background: isAgent ? "#eaf2ff" : "#f1f5f9", color: "#243b53", padding: "10px 12px", borderRadius: 12, overflowWrap: "anywhere" }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: isAgent ? "#1554ad" : "#52667a", marginBottom: 4 }}>{isAgent ? "HOPEBRIDGE staff" : "Customer"}</div>
                           {item.message && <div style={{ whiteSpace: "pre-wrap" }}>{item.message}</div>}
-                          {item.image_path && messageImageUrls[item.id] && <a href={messageImageUrls[item.id]} target="_blank" rel="noreferrer"><img src={messageImageUrls[item.id]} alt="Customer attachment" style={{ display: "block", maxWidth: "100%", maxHeight: 220, borderRadius: 9, marginTop: item.message ? 8 : 0 }} /></a>}
+                          {item.image_path && messageImageUrls[item.id] && <a href={messageImageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={messageImageUrls[item.id]} alt="Customer attachment" width={480} height={320} unoptimized style={{ display: "block", maxWidth: "100%", maxHeight: 220, width: "auto", height: "auto", borderRadius: 9, marginTop: item.message ? 8 : 0 }} /></a>}
                           {item.image_path && !messageImageUrls[item.id] && <div style={{ fontSize: 12, marginTop: 4 }}>Attachment loading or unavailable</div>}
                           <div style={{ fontSize: 10, color: "#718096", marginTop: 5 }}>{new Date(item.created_at).toLocaleString()}</div>
                         </div>;
