@@ -97,12 +97,12 @@ export default function Apply() {
           <div className="success-mark" aria-hidden="true">✓</div>
           <p className="eyebrow">STEP 3 OF 3 · COMPLETE</p>
           <h1>We received your application</h1>
-          <p className="success-copy">Thank you. Your request has been submitted for review.</p>
+          <p className="success-copy">Thank you. Your application has been received and is awaiting review.</p>
           <div className="reference-card"><span>Your application reference number</span><strong>{ref}</strong>
             <button type="button" className="btn secondary" onClick={() => void navigator.clipboard?.writeText(ref)}>Copy reference</button>
           </div>
           <p className="helper-copy">Please save this number. To check for updates, you’ll also need the email address you used on the form.</p>
-          <div className="actions"><Link className="btn primary" href="/status">Check application status</Link><Link className="btn secondary" href="/chat">Ask for help</Link><Link className="btn secondary" href="/">Return home</Link></div>
+          <div className="actions"><Link className="btn primary" href="/status">Check application status</Link><Link className="btn secondary" href="/chat">Contact support</Link><Link className="btn secondary" href="/">Return home</Link></div>
           <p className="form-footnote">Submitting an application does not guarantee approval or funding.</p>
         </div>
       </div></main>
@@ -116,9 +116,9 @@ export default function Apply() {
         <Link href="/status" className="text-link">Already applied? Check status →</Link>
       </div>
       <div className="form-wrap application-form-wrap">
-        <p className="eyebrow">WE’LL GUIDE YOU THROUGH IT</p>
-        <h1>Let’s start your application</h1>
-        <p className="page-lead">You’ll answer a few short questions. It usually feels easier one step at a time. Fields marked * are required.</p>
+        <p className="eyebrow">APPLICATION PROCESS</p>
+        <h1>Start an application</h1>
+        <p className="page-lead">Complete the sections below and review your information before submitting. Fields marked * are required.</p>
         <div className="form-progress" aria-label={`Step ${step} of 3`}>
           <span className={`progress-step ${step >= 1 ? "progress-step-active" : ""}`}><span>1</span>Your details</span>
           <span className="progress-line" />
