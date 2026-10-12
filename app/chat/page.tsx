@@ -292,7 +292,7 @@ export default function ChatPage() {
           <>
             <div className="messenger-chat-context">
               <span className="context-lock" aria-hidden="true">✓</span>
-              <span><strong>You’re chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started. You don't need a customer account; replies appear here automatically.</small></span>
+              <span><strong>You’re chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started. You do not need a customer account; replies appear here automatically.</small></span>
             </div>
             <div className="messenger-messages" ref={messagesRef} aria-live="polite">
               <div className="chat-day-label">MESSAGES</div>
