@@ -894,3 +894,36 @@ a:focus-visible, button:focus-visible { outline:3px solid #d5a536; outline-offse
   .actions > * { width:100%; text-align:center; }
   body > footer.footer .container { align-items:flex-start !important; }
 }
+
+
+/* Final consistency pass: support chat and global footer */
+.hb-global-footer-inner { display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; }
+.hb-global-footer-links { display:flex; gap:16px; flex-wrap:wrap; }
+.messenger-page { background:#f5f8f7; color:var(--hb-ink); padding:34px 16px; }
+.messenger-shell { max-width:850px; margin:0 auto; border:1px solid var(--hb-line); border-radius:18px; overflow:hidden; background:#fff; box-shadow:0 14px 42px rgba(20,48,67,.08); }
+.messenger-header { background:#fff; border-bottom:1px solid var(--hb-line); }
+.messenger-avatar, .messenger-intro-avatar, .messenger-small-avatar, .message-avatar { background:#e6f2eb; color:var(--hb-green); box-shadow:none; }
+.messenger-title, .messenger-start h1, .messenger-empty strong { color:var(--hb-navy); }
+.messenger-presence, .messenger-start > p { color:var(--hb-muted); }
+.online-dot { background:#348768; }
+.messenger-start-form input { min-height:47px; border:1px solid #ccd9de; border-radius:10px; padding:12px 14px; font:inherit; }
+.messenger-start-form input:focus { border-color:#41866c; box-shadow:0 0 0 3px rgba(65,134,108,.13); }
+.messenger-primary { min-height:47px; border:0; border-radius:10px; background:var(--hb-navy); color:#fff; font-weight:750; }
+.messenger-primary:hover { background:#1d4a6e; }
+.messenger-status-link { color:var(--hb-green); }
+.messenger-chat-context { background:#f5f9f6; border-color:#e0ebe4; }
+.messenger-chat-context strong { color:var(--hb-navy); }
+.messenger-messages { background:#fbfcfc; }
+.messenger-bubble-agent { background:#edf2f3; color:var(--hb-ink); }
+.messenger-bubble-mine { background:var(--hb-navy); color:#fff; }
+.messenger-composer { border-top:1px solid var(--hb-line); }
+.messenger-composer input { background:#f3f6f6; border-radius:10px; }
+.messenger-send { background:var(--hb-green); border-radius:10px; }
+.messenger-send:hover { background:#1f6047; }
+.messenger-bottom-links a:hover, .messenger-bottom-links button:hover { color:var(--hb-green); }
+.messenger-page-note { color:#6f8190; }
+@media (max-width:640px) {
+  .messenger-page { padding:0; background:#fff; }
+  .messenger-shell { border-radius:0; }
+  .hb-global-footer-inner { align-items:flex-start; }
+}
