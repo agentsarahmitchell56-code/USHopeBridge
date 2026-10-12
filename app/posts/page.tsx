@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MobileMenu from "../mobile-menu";
 
 const posts = [
   { title: "A Step Toward New Possibilities", category: "Encouragement", body: "If you are exploring financial assistance options, take the process one step at a time. Read the information carefully and choose the next step that works for you." },
@@ -39,6 +40,7 @@ export default function PostsPage() {
             <Link href="/chat">Support</Link>
           </nav>
           <div className="hb-nav-actions"><Link className="hb-button hb-button-small" href="/apply">Apply now <span aria-hidden="true">↗</span></Link></div>
+          <MobileMenu />
         </div>
       </header>
       <section className="hb-section">
