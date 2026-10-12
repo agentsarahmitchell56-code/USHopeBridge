@@ -170,6 +170,7 @@ export default function ChatPage() {
       setEmail(cleanEmail);
       setConversationId(newConversationId);
       setChatToken(newChatToken);
+      setChatConnection("connecting");
       setMessages([]);
       setStarted(true);
     } catch (err) {
