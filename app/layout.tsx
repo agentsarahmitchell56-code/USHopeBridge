@@ -35,7 +35,7 @@ export default function RootLayout({
         {children}
         <PWAInstall />
         <footer className="footer">
-          <div className="container" className="hb-global-footer-inner">
+          <div className="container hb-global-footer-inner">
             <span>© {new Date().getFullYear()} HOPEBRIDGE Financial Assistance. All rights reserved.</span>
             <nav aria-label="Legal and support links" className="hb-global-footer-links">
               <Link href="/privacy" style={{ color: "#1464f4" }}>Privacy Policy</Link>
