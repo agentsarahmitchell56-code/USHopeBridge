@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MobileMenu from "./mobile-menu";
 
 const steps = [
   { number: "01", title: "Tell us what you need", description: "Share a few details about your situation through our guided application." },
@@ -38,6 +39,7 @@ export default function HomePage() {
             <Link className="hb-login-link" href="/admin/login">Staff sign in</Link>
             <Link className="hb-button hb-button-small" href="/apply">Apply now <span aria-hidden="true">↗</span></Link>
           </div>
+          <MobileMenu />
         </div>
       </header>
 
