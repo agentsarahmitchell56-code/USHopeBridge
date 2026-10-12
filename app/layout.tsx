@@ -3,8 +3,28 @@ import PWAInstall from "./pwa-install";
 import "./globals.css";
 
 export const metadata = {
-  title: "HOPEBRIDGE | Financial Assistance",
-  description: "A bridge to a more secure tomorrow.",
+  metadataBase: new URL("https://us-hope-bridge.vercel.app"),
+  title: {
+    default: "HOPEBRIDGE | Financial Assistance",
+    template: "%s | HOPEBRIDGE",
+  },
+  description: "Submit an assistance request, review recorded application updates, and contact HOPEBRIDGE support through a clear, guided process.",
+  openGraph: {
+    type: "website",
+    url: "https://us-hope-bridge.vercel.app",
+    siteName: "HOPEBRIDGE Financial Assistance",
+    title: "HOPEBRIDGE | Financial Assistance",
+    description: "A clear, guided process for assistance requests, application status updates, and support.",
+  },
+  twitter: {
+    card: "summary",
+    title: "HOPEBRIDGE | Financial Assistance",
+    description: "A clear, guided process for assistance requests, application status updates, and support.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   applicationName: "HOPEBRIDGE",
   manifest: "/manifest.json",
   icons: {
