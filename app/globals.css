@@ -1285,3 +1285,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .messenger-primary, .messenger-send { transition: none; }
   .messenger-messages { scroll-behavior: auto; }
 }
+
+
+/* Customer support chat: connection state and privacy note */
+.online-dot-connected { background: #2c8a58; box-shadow: 0 0 0 3px #e0f2e7; }
+.messenger-privacy-note { max-width: 360px; margin: 13px auto 0; color: #7a8981; font-size: 11px; line-height: 1.6; }
+@media (max-width: 640px) {
+  .messenger-privacy-note { max-width: 320px; font-size: 11px; }
+}
