@@ -227,18 +227,35 @@ export default function AdminDashboardPage() {
       return;
     }
 
-    const { error: insertError } = await supabase.from("messages").insert({
-      conversation_id: selectedConversation.id,
-      sender_type: "agent",
-      sender_id: authData.user.id,
-      message: cleanMessage,
+    const { data: messageId, error: insertError } = await supabase.rpc("send_staff_chat_message", {
+      p_conversation_id: selectedConversation.id,
+      p_message: cleanMessage,
     });
 
-    if (insertError) {
+    if (insertError || !messageId) {
       console.error("Staff reply error:", insertError);
-      setError("Reply could not be sent. Check the staff message INSERT policy in Supabase.");
+      setError(insertError?.message || "The reply was not saved. Please refresh the dashboard and try again.");
     } else {
       setReplyText("");
+      const now = new Date().toISOString();
+      const newMessage: Message = {
+        id: messageId as string,
+        conversation_id: selectedConversation.id,
+        sender_type: "agent",
+        sender_id: authData.user.id,
+        message: cleanMessage,
+        created_at: now,
+      };
+      setMessages((current) =>
+        current.some((item) => item.id === newMessage.id)
+          ? current
+          : [...current, newMessage].sort(
+              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            )
+      );
+      setConversations((current) => current
+        .map((item) => item.id === selectedConversation.id ? { ...item, updated_at: now } : item)
+        .sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()));
     }
     setReplySending(false);
   }
