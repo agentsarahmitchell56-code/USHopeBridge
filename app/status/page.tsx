@@ -86,9 +86,9 @@ export default function ApplicationStatusPage() {
 
         <div className="form-wrap status-page-wrap">
           <p className="eyebrow">APPLICATION TRACKING</p>
-          <h1 style={{ marginBottom: 10 }}>Check your application status</h1>
+          <h1 style={{ marginBottom: 10 }}>Application status</h1>
           <p style={{ color: "#627d98", lineHeight: 1.7 }}>
-            Enter the reference number from your application confirmation and
+            To retrieve the latest recorded status, enter the reference number from your confirmation and
             the email address you used to apply. Your details are checked
             privately.
           </p>
