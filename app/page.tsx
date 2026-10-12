@@ -32,6 +32,7 @@ export default function HomePage() {
             <Link href="#how-it-works">How it works</Link>
             <Link href="#support">Support</Link>
             <Link href="/status">Track status</Link>
+            <Link href="/posts">Stories &amp; updates</Link>
           </nav>
           <div className="hb-nav-actions">
             <Link className="hb-login-link" href="/admin/login">Staff sign in</Link>
