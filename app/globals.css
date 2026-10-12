@@ -1101,3 +1101,40 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .hb-mobile-menu-panel { animation: none; }
   .hb-home .hb-button, .hb-home .hb-step-card, .hb-home .hb-service-card { transition: none; }
 }
+
+
+/* HOPEBRIDGE experience update: consistent forms, clear feedback, and FAQ interactions */
+.hb-faq-section { background: #f7faf8; border-top: 1px solid #e9f0eb; }
+.hb-faq-layout { display: grid; grid-template-columns: minmax(0, .78fr) minmax(0, 1.22fr); gap: clamp(30px, 6vw, 84px); align-items: start; }
+.hb-faq-intro h2 { margin: 14px 0 14px; color: #123453; font-size: clamp(30px, 4vw, 44px); line-height: 1.08; letter-spacing: -.045em; }
+.hb-faq-intro h2 em { color: #267456; font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
+.hb-faq-intro > p { max-width: 420px; color: #657786; font-size: 15px; line-height: 1.75; }
+.hb-faq-contact { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; color: #1f684b; font-size: 14px; font-weight: 750; }
+.hb-faq-contact:hover { text-decoration: underline; text-underline-offset: 4px; }
+.hb-faq-list { display: grid; gap: 10px; }
+.hb-faq-item { border: 1px solid #e0e9e3; border-radius: 15px; background: #fff; overflow: clip; transition: border-color .18s ease, box-shadow .18s ease; }
+.hb-faq-item[open] { border-color: #c6dbce; box-shadow: 0 8px 24px rgba(18,52,83,.045); }
+.hb-faq-item summary { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 64px; padding: 18px 20px; color: #183b53; font-size: 15px; font-weight: 750; line-height: 1.5; cursor: pointer; list-style: none; }
+.hb-faq-item summary::-webkit-details-marker { display: none; }
+.hb-faq-item summary > span { position: relative; flex: 0 0 22px; width: 22px; height: 22px; border: 1px solid #d5e4da; border-radius: 50%; background: #f4f8f5; }
+.hb-faq-item summary > span::before, .hb-faq-item summary > span::after { content: ""; position: absolute; left: 6px; top: 10px; width: 8px; height: 2px; border-radius: 2px; background: #267456; }
+.hb-faq-item summary > span::after { transform: rotate(90deg); transition: transform .18s ease; }
+.hb-faq-item[open] summary > span::after { transform: rotate(0); }
+.hb-faq-item summary:focus-visible { outline: 3px solid rgba(38,116,86,.35); outline-offset: -4px; }
+.hb-faq-item p { margin: -2px 20px 20px; max-width: 640px; color: #627584; font-size: 14px; line-height: 1.75; }
+.status-search-form, .application-form, .application-success, .status-result-card { box-shadow: 0 16px 44px rgba(18,52,83,.065); }
+.field label { color: #23445a; line-height: 1.45; }
+.field input:focus, .field select:focus, .field textarea:focus, .status-search-form input:focus { border-color: #43866a; box-shadow: 0 0 0 3px rgba(38,116,86,.12); }
+.btn:disabled, .hb-button[aria-disabled="true"] { opacity: .65; cursor: not-allowed; transform: none; box-shadow: none; }
+.hb-global-footer-inner { padding-top: 6px; padding-bottom: 6px; line-height: 1.7; }
+.hb-global-footer-links a { color: #476575 !important; font-weight: 600; }
+.hb-global-footer-links a:hover { color: #267456 !important; text-decoration: underline; }
+@media (max-width: 760px) {
+  .hb-faq-layout { grid-template-columns: 1fr; gap: 26px; }
+  .hb-faq-intro h2 { font-size: clamp(30px, 8vw, 40px); }
+  .hb-faq-item summary { min-height: 60px; padding: 16px; font-size: 14px; }
+  .hb-faq-item p { margin: -2px 16px 17px; font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hb-faq-item, .hb-faq-item summary > span::after { transition: none; }
+}
