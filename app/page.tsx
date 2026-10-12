@@ -119,6 +119,35 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="hb-section hb-faq-section" id="frequently-asked-questions">
+        <div className="hb-container hb-faq-layout">
+          <div className="hb-faq-intro">
+            <span className="hb-eyebrow"><span className="hb-eyebrow-line" /> QUICK ANSWERS</span>
+            <h2>Questions, answered<br /><em>with clarity.</em></h2>
+            <p>Find guidance on submitting a request, keeping your reference number, and getting support.</p>
+            <Link href="/chat" className="hb-faq-contact">Still need help? Contact support <span aria-hidden="true">↗</span></Link>
+          </div>
+          <div className="hb-faq-list">
+            <details className="hb-faq-item">
+              <summary>What happens after I submit an application?<span aria-hidden="true" /></summary>
+              <p>You will see a confirmation and reference number if submission succeeds. Keep the reference number and use the status page to check for updates recorded by the team.</p>
+            </details>
+            <details className="hb-faq-item">
+              <summary>Does submitting a request guarantee assistance?<span aria-hidden="true" /></summary>
+              <p>No. Submission confirms that your request was received; it does not guarantee eligibility, approval, or payment. Outcomes depend on the applicable review process.</p>
+            </details>
+            <details className="hb-faq-item">
+              <summary>How do I check my application status?<span aria-hidden="true" /></summary>
+              <p>Open the application status page and enter your reference number together with the email address used on the application.</p>
+            </details>
+            <details className="hb-faq-item">
+              <summary>What information should I never share?<span aria-hidden="true" /></summary>
+              <p>Never share passwords, bank card PINs, one-time passcodes, or account login credentials in an application or support conversation. Only provide information requested by the official form.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
       <section className="hb-disclosure">
         <div className="hb-container"><span className="hb-disclosure-icon" aria-hidden="true">i</span><p><strong>Please note:</strong> Submitting an application does not guarantee eligibility, approval, or payment. All requests are subject to the program’s review process and applicable requirements. Payment status reflects the latest information recorded by HOPEBRIDGE staff.</p></div>
       </section>
