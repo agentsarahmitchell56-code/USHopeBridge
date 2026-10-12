@@ -17,7 +17,7 @@ export default function HomePage() {
     <main className="hb-home">
       <div className="hb-topline">
         <div className="hb-container hb-topline-inner">
-          <span><span className="hb-live-dot" /> A clearer way to navigate your request</span>
+          <span><span className="hb-live-dot" /> Clear information. A structured application process.</span>
           <Link href="/status">Already applied? Track your status <span aria-hidden="true">↗</span></Link>
         </div>
       </div>
@@ -32,7 +32,7 @@ export default function HomePage() {
             <Link href="#how-it-works">How it works</Link>
             <Link href="#support">Support</Link>
             <Link href="/status">Track status</Link>
-            <Link href="/posts">Stories &amp; updates</Link>
+            <Link href="/posts">News &amp; guidance</Link>
           </nav>
           <div className="hb-nav-actions">
             <Link className="hb-login-link" href="/admin/login">Staff sign in</Link>
@@ -44,14 +44,14 @@ export default function HomePage() {
       <section className="hb-hero">
         <div className="hb-container hb-hero-grid">
           <div className="hb-hero-copy">
-            <div className="hb-eyebrow"><span className="hb-eyebrow-line" /> SUPPORT THAT STARTS WITH CLARITY</div>
-            <h1>A steadier path<br />starts <em>with a next step.</em></h1>
-            <p className="hb-hero-lead">When life feels uncertain, finding your way through a request shouldn’t. HOPEBRIDGE helps you submit your information, keep track of updates, and reach our support team in one place.</p>
+            <div className="hb-eyebrow"><span className="hb-eyebrow-line" /> A CLEAR, GUIDED PROCESS</div>
+            <h1>A clear process<br />for your <em>next step.</em></h1>
+            <p className="hb-hero-lead">HOPEBRIDGE provides a structured way to submit an assistance request, review recorded application updates, and contact the support team.</p>
             <div className="hb-hero-actions">
               <Link href="/apply" className="hb-button">Begin your application <span aria-hidden="true">→</span></Link>
               <Link href="/status" className="hb-button hb-button-light"><span className="hb-track-icon" aria-hidden="true">◎</span> Track an existing request</Link>
             </div>
-            <div className="hb-hero-note"><span className="hb-shield" aria-hidden="true">✓</span><span><strong>One step at a time.</strong> You can review your answers before submitting.</span></div>
+            <div className="hb-hero-note"><span className="hb-shield" aria-hidden="true">✓</span><span><strong>Clear steps. Helpful guidance.</strong> You can review your answers before submitting.</span></div>
           </div>
 
           <div className="hb-hero-art" aria-label="A simple illustration representing guidance and progress">
@@ -86,8 +86,8 @@ export default function HomePage() {
         <div className="hb-container">
           <div className="hb-section-heading">
             <span className="hb-eyebrow"><span className="hb-eyebrow-line" /> A SIMPLE PROCESS</span>
-            <h2>Move forward with<br /><em>more confidence.</em></h2>
-            <p>From the first form to the latest update, the essentials are easy to find and follow.</p>
+            <h2>A transparent process<br /><em>from start to status.</em></h2>
+            <p>Access the application form, status tracking, and support resources from one central website.</p>
           </div>
           <div className="hb-steps-grid">
             {steps.map((step) => <article className="hb-step-card" key={step.number}>
@@ -100,7 +100,7 @@ export default function HomePage() {
 
       <section className="hb-section hb-services-section">
         <div className="hb-container">
-          <div className="hb-services-heading"><div><span className="hb-eyebrow"><span className="hb-eyebrow-line" /> YOUR HOPEBRIDGE SPACE</span><h2>What you need,<br /><em>all in one place.</em></h2></div><p>Choose the next step that fits where you are today.</p></div>
+          <div className="hb-services-heading"><div><span className="hb-eyebrow"><span className="hb-eyebrow-line" /> YOUR HOPEBRIDGE SPACE</span><h2>Application services,<br /><em>in one place.</em></h2></div><p>Select the service relevant to your request.</p></div>
           <div className="hb-services-grid">
             {services.map((service) => <article className="hb-service-card" key={service.title}>
               <span className="hb-service-icon" aria-hidden="true">{service.icon}</span><h3>{service.title}</h3><p>{service.description}</p><Link href={service.link}>{service.linkText} <span aria-hidden="true">→</span></Link>
@@ -112,7 +112,7 @@ export default function HomePage() {
       <section className="hb-support-band" id="support">
         <div className="hb-container hb-support-inner">
           <div className="hb-support-symbol" aria-hidden="true"><span>HB</span><i>✳</i></div>
-          <div className="hb-support-copy"><span className="hb-eyebrow">HERE IF YOU NEED US</span><h2>Questions along the way?</h2><p>Start a conversation with our support team or return to your application status whenever you need an update.</p></div>
+          <div className="hb-support-copy"><span className="hb-eyebrow">HERE IF YOU NEED US</span><h2>Need assistance?</h2><p>Contact the support team for website guidance, or review the latest recorded status of your application.</p></div>
           <div className="hb-support-actions"><Link href="/chat" className="hb-button hb-button-white">Chat with support <span aria-hidden="true">→</span></Link><Link href="/status" className="hb-support-text-link">Check application status ↗</Link></div>
         </div>
       </section>
