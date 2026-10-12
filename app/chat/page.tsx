@@ -33,6 +33,7 @@ export default function ChatPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [started, setStarted] = useState(false);
+  const [chatConnection, setChatConnection] = useState<"connecting" | "connected" | "reconnecting">("connecting");
   const [conversationId, setConversationId] = useState("");
   const [chatToken, setChatToken] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -55,7 +56,8 @@ export default function ChatPage() {
         setEmail(chat.email);
         setConversationId(chat.conversationId);
         setChatToken(chat.chatToken);
-        setStarted(true);
+        setChatConnection("connecting");
+      setStarted(true);
       }
     } catch (restoreError) {
       console.error("Could not restore support chat:", restoreError);
@@ -65,31 +67,49 @@ export default function ChatPage() {
   useEffect(() => {
     if (!started || !conversationId || !chatToken) return;
     let active = true;
+    let requestInFlight = false;
 
     async function loadMessages() {
-      const { data, error: messagesError } = await supabase.rpc("get_chat_messages", {
-        p_conversation_id: conversationId,
-        p_chat_token: chatToken,
-      });
-      if (!active) return;
-      if (messagesError) {
-        console.error("Load chat messages error:", messagesError);
-        setError("We couldn't load this chat session. Please start a new conversation.");
-        return;
-      }
-      const loaded = (data as Message[]) || [];
-      setMessages(loaded);
-      for (const item of loaded) {
-        if (item.image_path && !imageUrlsRef.current[item.id]) {
-          try {
-            const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path)}&conversationId=${encodeURIComponent(conversationId)}&chatToken=${encodeURIComponent(chatToken)}`);
-            const result = await response.json();
-            if (response.ok && result.url && active) {
-              imageUrlsRef.current[item.id] = result.url;
-              setImageUrls((current) => ({ ...current, [item.id]: result.url }));
-            }
-          } catch { /* images can be retried on the next message refresh */ }
+      if (requestInFlight) return;
+      requestInFlight = true;
+      try {
+        const { data, error: messagesError } = await supabase.rpc("get_chat_messages", {
+          p_conversation_id: conversationId,
+          p_chat_token: chatToken,
+        });
+        if (!active) return;
+        if (messagesError) {
+          console.error("Load chat messages error:", messagesError);
+          setChatConnection("reconnecting");
+          return;
         }
+        const loaded = (data as Message[]) || [];
+        setMessages((current) => {
+          const merged = new Map(current.map((item) => [item.id, item]));
+          for (const item of loaded) merged.set(item.id, item);
+          return Array.from(merged.values()).sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+        });
+        setChatConnection("connected");
+        setError("");
+        for (const item of loaded) {
+          if (item.image_path && !imageUrlsRef.current[item.id]) {
+            try {
+              const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path)}&conversationId=${encodeURIComponent(conversationId)}&chatToken=${encodeURIComponent(chatToken)}`);
+              const result = await response.json();
+              if (response.ok && result.url && active) {
+                imageUrlsRef.current[item.id] = result.url;
+                setImageUrls((current) => ({ ...current, [item.id]: result.url }));
+              }
+            } catch { /* Images can be retried on the next refresh. */ }
+          }
+        }
+      } catch (loadError) {
+        console.error("Unexpected chat refresh error:", loadError);
+        if (active) setChatConnection("reconnecting");
+      } finally {
+        requestInFlight = false;
       }
     }
 
@@ -242,7 +262,7 @@ export default function ChatPage() {
           <div className="messenger-avatar" aria-hidden="true">HB</div>
           <div className="messenger-heading">
             <div className="messenger-title">HOPEBRIDGE Support</div>
-            <div className="messenger-presence"><span className="online-dot" /> Support conversation</div>
+            <div className="messenger-presence"><span className={`online-dot ${chatConnection === "connected" ? "online-dot-connected" : ""}`} />{!started ? "Support chat · No account required" : chatConnection === "connected" ? "Connected · Replies update automatically" : chatConnection === "reconnecting" ? "Reconnecting to chat…" : "Connecting to support…"}</div>
           </div>
           <Link className="messenger-info" href="/status" aria-label="Check application status" title="Check application status">i</Link>
         </header>
@@ -251,7 +271,7 @@ export default function ChatPage() {
           <section className="messenger-start">
             <div className="messenger-intro-avatar">HB</div>
             <h1>Message HOPEBRIDGE</h1>
-            <p>Start a conversation with our support team. Enter your details below and we’ll open your chat.</p>
+            <p>Start a conversation with our support team. No account or staff login is needed. Enter your details below to open your private chat.</p>
             <form className="messenger-start-form" onSubmit={startChat}>
               <label htmlFor="name">Your name</label>
               <input id="name" type="text" placeholder="Full name" value={name}
@@ -264,13 +284,14 @@ export default function ChatPage() {
                 {loading ? "Opening conversation…" : "Continue to chat"}
               </button>
             </form>
+            <p className="messenger-privacy-note">Keep this browser to return to your conversation. Your chat access is saved on this device.</p>
             <Link href="/status" className="messenger-status-link">Track an application instead</Link>
           </section>
         ) : (
           <>
             <div className="messenger-chat-context">
               <span className="context-lock" aria-hidden="true">✓</span>
-              <span><strong>You’re chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started.</small></span>
+              <span><strong>You’re chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started. You don't need a customer account; replies appear here automatically.</small></span>
             </div>
             <div className="messenger-messages" ref={messagesRef} aria-live="polite">
               <div className="chat-day-label">MESSAGES</div>
