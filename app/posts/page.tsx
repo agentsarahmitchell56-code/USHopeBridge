@@ -44,9 +44,9 @@ export default function PostsPage() {
       <section className="hb-section">
         <div className="hb-container">
           <div className="hb-section-heading">
-            <span className="hb-eyebrow"><span className="hb-eyebrow-line" /> THE HOPEBRIDGE COMMUNITY</span>
-            <h1>Stories, guidance &amp;<br /><em>encouragement.</em></h1>
-            <p>Helpful reminders, application guidance, and supportive messages to help you navigate the process.</p>
+            <span className="hb-eyebrow"><span className="hb-eyebrow-line" /> OFFICIAL INFORMATION & GUIDANCE</span>
+            <h1>Guidance and<br /><em>service updates.</em></h1>
+            <p>Official website guidance, application reminders, and information about using HOPEBRIDGE services.</p>
           </div>
           <div className="hb-steps-grid">
             {posts.map((post, index) => (
@@ -63,7 +63,7 @@ export default function PostsPage() {
             <Link href="/status" className="hb-button hb-button-light">Track your status <span aria-hidden="true">↗</span></Link>
           </div>
           <p style={{ marginTop: 28, maxWidth: 760, fontSize: 14, lineHeight: 1.7 }}>
-            These are general informational posts, not individual applicant testimonials or confirmation of assistance awarded. Submitting an application does not guarantee eligibility, approval, or payment.
+            The articles on this page are general informational content. They are not individual applicant testimonials or confirmation that assistance has been awarded. Submitting an application does not guarantee eligibility, approval, or payment.
           </p>
         </div>
       </section>
