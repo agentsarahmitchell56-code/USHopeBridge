@@ -446,9 +446,17 @@ export default function AdminDashboardPage() {
           </div>
         </header>
 
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ marginBottom: 6 }}>Applications overview</h1>
-          <p style={{ margin: 0, color: "#627d98" }}>Review submissions and track their current status. Decisions shown here must reflect actual eligibility review.</p>
+        <nav className="hb-admin-quicknav" aria-label="Staff workspace sections">
+          <a href="#applications">Applications</a>
+          <a href="#support-inbox">Support inbox</a>
+          <a href="/admin/analytics">Analytics</a>
+          {role === "admin" && <a href="/admin/team">Team &amp; permissions</a>}
+          <a href="/admin/studio">Business Studio</a>
+        </nav>
+
+        <div className="hb-admin-heading">
+          <h1>Staff workspace</h1>
+          <p>Review application requests, update recorded statuses, and reply to customers from one secure workspace.</p>
         </div>
 
         {error && <p role="alert" style={{ color: "#9f1d20", background: "#fff1f2", border: "1px solid #fecdd3", padding: 14, borderRadius: 12 }}>{error}</p>}
