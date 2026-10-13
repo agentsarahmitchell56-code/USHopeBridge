@@ -1493,3 +1493,15 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
  .hb-thread-send { width:100%; }
  .hb-thread-messages > div { max-width:96%; }
 }
+
+
+/* Inbox visibility and latest-message previews across screen sizes */
+.hb-admin-page .hb-admin-quicknav { position:sticky;top:8px;z-index:20;box-shadow:0 5px 16px rgba(18,52,83,.07); }
+.hb-admin-page .hb-admin-quicknav .hb-nav-messages { background:#eaf5ed;color:#1d6848;border:1px solid #cde4d3;font-weight:850; }
+.hb-inbox-preview { display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;margin-top:7px!important;color:#435e6a!important;font-size:12px!important;line-height:1.45!important; }
+.hb-inbox-conversation.is-selected .hb-inbox-preview { color:#245d42!important; }
+@media(max-width:760px) {
+ .hb-admin-page .hb-admin-quicknav { top:4px;margin-left:-2px;margin-right:-2px;padding:7px; }
+ .hb-inbox-preview { -webkit-line-clamp:2; }
+ .hb-inbox-thread { scroll-margin-top:75px; }
+}
