@@ -52,12 +52,27 @@ export default function ChatPage() {
       if (!saved) return;
       const chat = JSON.parse(saved) as SavedChat;
       if (chat.name && chat.email && chat.conversationId && chat.chatToken) {
-        setName(chat.name);
-        setEmail(chat.email);
-        setConversationId(chat.conversationId);
-        setChatToken(chat.chatToken);
-        setChatConnection("connecting");
-      setStarted(true);
+        // Shared phones can be used by multiple customers. Never silently reopen
+        // a saved private conversation without confirming whose chat this is.
+        const continueSavedChat = window.confirm(
+          `Continue the saved HOPEBRIDGE chat as ${chat.name}? Choose Cancel if you are a different customer using this device.`
+        );
+        if (continueSavedChat) {
+          setName(chat.name);
+          setEmail(chat.email);
+          setConversationId(chat.conversationId);
+          setChatToken(chat.chatToken);
+          setChatConnection("connecting");
+          setStarted(true);
+        } else {
+          window.localStorage.removeItem(CHAT_STORAGE_KEY);
+          setName("");
+          setEmail("");
+          setConversationId("");
+          setChatToken("");
+          setMessages([]);
+          setStarted(false);
+        }
       }
     } catch (restoreError) {
       console.error("Could not restore support chat:", restoreError);
