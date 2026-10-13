@@ -80,6 +80,14 @@ export default function Apply() {
       if (!response.ok) {
         throw new Error(result.error || "We couldn't submit your application right now. Please try again.");
       }
+      if (result.conversation_id && result.chat_token) {
+        window.localStorage.setItem("hopebridge-support-chat-v1", JSON.stringify({
+          name: values.full_name.trim(),
+          email: values.email.trim().toLowerCase(),
+          conversationId: result.conversation_id,
+          chatToken: result.chat_token,
+        }));
+      }
       setRef(result.reference_number || reference);
     } catch (err) {
       console.error("Application submission failed:", err);
