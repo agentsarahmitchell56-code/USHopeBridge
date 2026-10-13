@@ -29,10 +29,15 @@ export default function CustomerSignupPage() {
         router.replace("/account");
         router.refresh();
       } else {
-        setNotice("Account created. Check your email for a confirmation link, then sign in.");
+        setNotice("Account request received. If email confirmation is enabled, check your inbox for a confirmation link before signing in.");
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn't create your account. Please try again.");
+      const message = e instanceof Error ? e.message.toLowerCase() : "";
+      if (message.includes("rate limit") || message.includes("over_email_send_rate_limit") || message.includes("email address not authorized")) {
+        setError("HOPEBRIDGE email confirmation is currently blocked by Supabase's email sending limit. No confirmation email was sent. Please don't try more email addresses. The site owner needs to connect a dedicated email provider before customer sign-up can work reliably. You can still use support chat without an account.");
+      } else {
+        setError(e instanceof Error ? e.message : "We couldn't create your account. Please try again.");
+      }
     } finally { setBusy(false); }
   }
 
