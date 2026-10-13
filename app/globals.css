@@ -1353,7 +1353,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .hb-start-actions strong { font-size:11px; }
 .hb-start-actions small { margin-top:2px;color:#7a8b96;font-size:10px;line-height:1.5; }
 .hb-start-actions b { color:#267456;font-size:17px; }
-.hb-feed-heading { display:flex;justify-content:space-between;align-items:end;gap:12px;margin:8px 2px 0; }
+.hb-feed-heading { display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:8px 2px 0; }
 .hb-feed-heading h2 { margin:6px 0 0;color:#173b50;font-size:19px;letter-spacing:-.035em;line-height:1.25; }
 .hb-feed-heading > a { color:#286d51;font-size:10px;font-weight:800;white-space:nowrap; }
 .hb-feed-post { padding:17px 19px 0; }
