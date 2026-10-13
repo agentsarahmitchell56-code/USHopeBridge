@@ -547,15 +547,15 @@ export default function AdminDashboardPage() {
           <p style={{ color: "#718096", fontSize: 12, marginTop: 14 }}>Showing up to 200 most recent applications. Applicant data is restricted by Supabase staff policies.</p>
         </section>
 
-        <section id="support-inbox" className="card" style={{ padding: 20 }}>
+        <section id="support-inbox" className="card hb-support-inbox">
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <div><h2 style={{ margin: 0, fontSize: 22 }}>Support inbox</h2><p style={{ color: "#627d98", marginBottom: 0 }}>Open a customer conversation to read messages and reply securely.</p></div>
             <a className="btn secondary" href="/chat">Open public chat page</a>
           </div>
 
           {conversations.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No conversations found.</p> : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 18, marginTop: 18 }}>
-              <div style={{ border: "1px solid #e3ebf4", borderRadius: 12, overflow: "hidden", alignSelf: "start" }}>
+            <div className="hb-inbox-layout">
+              <div className="hb-inbox-list" aria-label="Customer conversations">
                 {conversations.map((conversation) => {
                   const isSelected = selectedConversation?.id === conversation.id;
                   return <button
@@ -563,7 +563,7 @@ export default function AdminDashboardPage() {
                     type="button"
                     onClick={() => { setSelectedConversation(conversation); setError(""); }}
                     aria-pressed={isSelected}
-                    style={{ display: "block", width: "100%", textAlign: "left", padding: 14, border: 0, borderBottom: "1px solid #edf2f7", cursor: "pointer", background: isSelected ? "#eaf2ff" : "#fff", color: "#243b53" }}
+                    className={`hb-inbox-conversation${isSelected ? " is-selected" : ""}`}
                   >
                     <strong style={{ display: "block" }}>{conversation.client_name}</strong>
                     <span style={{ display: "block", color: "#627d98", fontSize: 13, overflowWrap: "anywhere" }}>{conversation.client_email}</span>
@@ -572,7 +572,7 @@ export default function AdminDashboardPage() {
                 })}
               </div>
 
-              <div style={{ border: "1px solid #e3ebf4", borderRadius: 12, padding: 16, minWidth: 0 }}>
+              <div className="hb-inbox-thread">
                 {!selectedConversation ? (
                   <div style={{ color: "#627d98", textAlign: "center", padding: "48px 12px" }}>
                     <div style={{ fontSize: 30, marginBottom: 10 }}>💬</div>
@@ -581,11 +581,11 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   <>
-                    <div style={{ borderBottom: "1px solid #edf2f7", paddingBottom: 12, marginBottom: 12 }}>
+                    <div className="hb-thread-header">
                       <strong>{selectedConversation.client_name}</strong>
                       <div style={{ color: "#627d98", fontSize: 13, overflowWrap: "anywhere" }}>{selectedConversation.client_email}</div>
                     </div>
-                    <div ref={messagesRef} aria-live="polite" style={{ height: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "8px 2px 16px" }}>
+                    <div ref={messagesRef} aria-live="polite" className="hb-thread-messages">
                       {messagesLoading ? <p style={{ color: "#627d98" }}>Loading messages…</p> : messages.length === 0 ? <p style={{ color: "#627d98", textAlign: "center", margin: "auto 0" }}>No messages in this conversation yet.</p> : messages.map((item) => {
                         const isAgent = item.sender_type === "agent";
                         return <div key={item.id} style={{ alignSelf: isAgent ? "flex-end" : "flex-start", maxWidth: "88%", background: isAgent ? "#eaf2ff" : "#f1f5f9", color: "#243b53", padding: "10px 12px", borderRadius: 12, overflowWrap: "anywhere" }}>
@@ -597,7 +597,7 @@ export default function AdminDashboardPage() {
                         </div>;
                       })}
                     </div>
-                    <form onSubmit={sendStaffReply} style={{ display: "flex", gap: 8, alignItems: "stretch", marginTop: 12 }}>
+                    <form onSubmit={sendStaffReply} className="hb-thread-composer">
                       <textarea
                         aria-label="Write a staff reply"
                         value={replyText}
@@ -606,9 +606,9 @@ export default function AdminDashboardPage() {
                         maxLength={5000}
                         rows={2}
                         required
-                        style={{ flex: 1, minWidth: 0, resize: "vertical", padding: 12, border: "1px solid #d7e2ee", borderRadius: 10, font: "inherit" }}
+                        className="hb-thread-input"
                       />
-                      <button className="btn primary" type="submit" disabled={replySending || !replyText.trim()} style={{ alignSelf: "stretch" }}>{replySending ? "Sending…" : "Send reply"}</button>
+                      <button className="btn primary hb-thread-send" type="submit" disabled={replySending || !replyText.trim()}>{replySending ? "Sending…" : "Send reply"}</button>
                     </form>
                     <p style={{ color: "#718096", fontSize: 12, marginBottom: 0 }}>Messages are saved to the database. Keep replies focused on verified support information; never ask customers for passwords or banking login details.</p>
                   </>
