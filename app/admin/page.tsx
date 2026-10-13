@@ -432,8 +432,8 @@ export default function AdminDashboardPage() {
   if (loading || !ready) return <main className="container" style={{ paddingTop: 80 }}><p>Loading secure staff dashboard…</p></main>;
 
   return (
-    <main style={{ minHeight: "100vh", background: "#f4f7fb", padding: "24px 0 56px" }}>
-      <div className="container">
+    <main className="hb-admin-page">
+      <div className="hb-admin-container">
         <header className="hb-admin-header">
           <a href="/admin" className="brand">HOPEBRIDGE<span>STAFF DASHBOARD</span></a>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
@@ -534,7 +534,7 @@ export default function AdminDashboardPage() {
           <p style={{ color: "#718096", fontSize: 12, marginTop: 14 }}>Showing up to 200 most recent applications. Applicant data is restricted by Supabase staff policies.</p>
         </section>
 
-        <section className="card" style={{ padding: 20 }}>
+        <section id="support-inbox" className="card" style={{ padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <div><h2 style={{ margin: 0, fontSize: 22 }}>Support inbox</h2><p style={{ color: "#627d98", marginBottom: 0 }}>Open a customer conversation to read messages and reply securely.</p></div>
             <a className="btn secondary" href="/chat">Open public chat page</a>
