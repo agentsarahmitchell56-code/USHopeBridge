@@ -75,6 +75,7 @@ export default function AdminDashboardPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [notesSaving, setNotesSaving] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationPreviews, setConversationPreviews] = useState<Record<string, { message: string; sender_type: "client" | "agent"; created_at: string }>>({});
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageImageUrls, setMessageImageUrls] = useState<Record<string, string>>({});
@@ -132,6 +133,33 @@ export default function AdminDashboardPage() {
   }, [router]);
 
   useEffect(() => { void loadDashboard(); }, [loadDashboard]);
+
+  // Keep the inbox list fresh on phones and slower connections, including
+  // conversations that start after the staff dashboard was opened.
+  useEffect(() => {
+    if (!ready) return;
+    let active = true;
+    async function refreshInbox() {
+      const [conversationResult, messageResult] = await Promise.all([
+        supabase.from("conversations").select("id,client_name,client_email,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
+        supabase.from("messages").select("conversation_id,message,sender_type,created_at").order("created_at", { ascending: false }).limit(200),
+      ]);
+      if (!active) return;
+      if (!conversationResult.error && conversationResult.data) {
+        setConversations(conversationResult.data as Conversation[]);
+      }
+      if (!messageResult.error && messageResult.data) {
+        const previews: Record<string, { message: string; sender_type: "client" | "agent"; created_at: string }> = {};
+        for (const item of messageResult.data as Array<{ conversation_id: string; message: string; sender_type: "client" | "agent"; created_at: string }>) {
+          if (!previews[item.conversation_id]) previews[item.conversation_id] = item;
+        }
+        setConversationPreviews(previews);
+      }
+    }
+    void refreshInbox();
+    const inboxPollId = window.setInterval(() => void refreshInbox(), 5000);
+    return () => { active = false; window.clearInterval(inboxPollId); };
+  }, [ready]);
 
   useEffect(() => {
     if (!selectedConversation) {
@@ -452,8 +480,8 @@ export default function AdminDashboardPage() {
         </header>
 
         <nav className="hb-admin-quicknav" aria-label="Staff workspace sections">
+          <a href="#support-inbox" className="hb-nav-messages">💬 Messages</a>
           <a href="#applications">Applications</a>
-          <a href="#support-inbox">Support inbox</a>
           <a href="/admin/analytics">Analytics</a>
           {role === "admin" && <a href="/admin/team">Team &amp; permissions</a>}
           <a href="/admin/studio">Business Studio</a>
@@ -567,7 +595,7 @@ export default function AdminDashboardPage() {
                   >
                     <strong style={{ display: "block" }}>{conversation.client_name}</strong>
                     <span style={{ display: "block", color: "#627d98", fontSize: 13, overflowWrap: "anywhere" }}>{conversation.client_email}</span>
-                    <span style={{ display: "block", color: "#718096", fontSize: 12, marginTop: 5 }}>{new Date(conversation.updated_at || conversation.created_at).toLocaleString()}</span>
+                    <span className="hb-inbox-preview">{conversationPreviews[conversation.id] ? `${conversationPreviews[conversation.id].sender_type === "client" ? "Customer" : "Staff"}: ${conversationPreviews[conversation.id].message || "Attachment"}` : "No messages yet"}</span>\n                    <span style={{ display: "block", color: "#718096", fontSize: 12, marginTop: 5 }}>{new Date(conversationPreviews[conversation.id]?.created_at || conversation.updated_at || conversation.created_at).toLocaleString()}</span>
                   </button>;
                 })}
               </div>
