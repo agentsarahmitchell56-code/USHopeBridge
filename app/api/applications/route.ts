@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     const referenceNumber = "HB-" + randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
-    const { error: insertError } = await db.from("applications").insert({
+    const { data: application, error: insertError } = await db.from("applications").insert({
       reference_number: referenceNumber,
       full_name: fullName,
       email,
@@ -102,13 +102,32 @@ export async function POST(request: NextRequest) {
       requested_amount: requestedAmount || null,
       details,
       attachment_path: attachmentPath,
-    });
-    if (insertError) {
+    }).select("id").single();
+    if (insertError || !application) {
       console.error("Application database insert failed:", insertError);
       return NextResponse.json({ error: "We couldn't submit your application right now. Please try again." }, { status: 500 });
     }
 
-    return NextResponse.json({ reference_number: referenceNumber }, { status: 201 });
+    // Link the new application to a private support conversation. This makes
+    // the applicant visible in the staff inbox and lets them continue chatting
+    // without creating an account or relying on confirmation email.
+    const conversationId = randomUUID();
+    const chatToken = randomUUID();
+    const { error: conversationError } = await db.from("conversations").insert({
+      id: conversationId,
+      application_id: application.id,
+      client_name: fullName,
+      client_email: email,
+      chat_token: chatToken,
+    });
+    if (conversationError) {
+      console.error("Application support conversation creation failed:", conversationError);
+    }
+
+    return NextResponse.json({
+      reference_number: referenceNumber,
+      ...(conversationError ? {} : { conversation_id: conversationId, chat_token: chatToken }),
+    }, { status: 201 });
   } catch (error) {
     console.error("Application submission failed:", error);
     return NextResponse.json({ error: "Application submission is temporarily unavailable. Please try again later." }, { status: 503 });
