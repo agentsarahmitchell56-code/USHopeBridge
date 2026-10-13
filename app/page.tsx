@@ -36,7 +36,9 @@ export default function HomePage() {
             <Link href="/posts">Guidance library</Link>
           </nav>
           <div className="hb-nav-actions">
+            <Link className="hb-login-link" href="/account/login">Customer sign in</Link>
             <Link className="hb-login-link" href="/admin/login">Staff sign in</Link>
+            <Link className="hb-button hb-button-small" href="/account/signup">Create account</Link>
             <Link className="hb-button hb-button-small" href="/apply">Apply now <span aria-hidden="true">↗</span></Link>
           </div>
           <MobileMenu />
