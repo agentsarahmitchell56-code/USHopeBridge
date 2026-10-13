@@ -1446,3 +1446,50 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @media (prefers-reduced-motion:reduce) {
  .hb-start-actions a,.hb-shortcuts-card > a { transition:none; }
 }
+
+/* Staff inbox: clearer two-pane conversation workspace */
+.hb-support-inbox { padding:clamp(14px,2.5vw,26px)!important; }
+.hb-support-inbox > div:first-child { padding-bottom:18px;border-bottom:1px solid #e9efeb; }
+.hb-support-inbox > div:first-child h2 { color:#153950;font-size:clamp(20px,2.2vw,25px)!important;letter-spacing:-.035em; }
+.hb-support-inbox > div:first-child p { margin-top:6px;font-size:12px;line-height:1.65; }
+.hb-inbox-layout { display:grid;grid-template-columns:minmax(230px,.7fr) minmax(0,1.7fr);gap:16px;margin-top:18px;align-items:stretch; }
+.hb-inbox-list { min-width:0;max-height:620px;overflow-y:auto;border:1px solid #dfe9e3;border-radius:14px;background:#fff; }
+.hb-inbox-conversation { display:block;width:100%;padding:15px;text-align:left;border:0;border-bottom:1px solid #edf2ee;cursor:pointer;background:#fff;color:#243b53;transition:background .15s,border-color .15s; }
+.hb-inbox-conversation:last-child { border-bottom:0; }
+.hb-inbox-conversation:hover { background:#f5faf6; }
+.hb-inbox-conversation.is-selected { background:#eaf5ed;box-shadow:inset 3px 0 #287653; }
+.hb-inbox-conversation strong { display:block;font-size:13px;color:#1d4053;line-height:1.5; }
+.hb-inbox-conversation span { line-height:1.5; }
+.hb-inbox-conversation span:nth-of-type(1) { margin-top:3px;overflow-wrap:anywhere;color:#607985;font-size:11px; }
+.hb-inbox-conversation span:nth-of-type(2) { margin-top:7px;color:#84948c;font-size:10px; }
+.hb-inbox-thread { display:flex;flex-direction:column;min-width:0;min-height:480px;max-height:680px;padding:0 16px 14px;border:1px solid #dfe9e3;border-radius:14px;background:#f8fbf9;overflow:hidden; }
+.hb-thread-header { position:relative;z-index:1;display:flex;flex-direction:column;gap:4px;padding:16px 0 13px;margin-bottom:0;border-bottom:1px solid #e3ece6;background:#f8fbf9; }
+.hb-thread-header strong { color:#193e51;font-size:14px; }
+.hb-thread-header div { color:#637c87;font-size:11px;overflow-wrap:anywhere; }
+.hb-thread-messages { flex:1;min-height:280px;height:auto;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:17px 3px 20px;overscroll-behavior:contain; }
+.hb-thread-messages > div { max-width:min(82%,520px);padding:11px 14px!important;border:1px solid #e1eae4;box-shadow:0 2px 5px rgba(25,55,42,.035);border-radius:15px!important;font-size:13px;line-height:1.65; }
+.hb-thread-messages > div[style*="flex-end"] { border-color:#d3e7d9; }
+.hb-thread-messages > div > div:first-child { font-size:10px!important;letter-spacing:.02em; }
+.hb-thread-messages img { max-width:100%;height:auto;object-fit:contain; }
+.hb-thread-composer { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:end;padding-top:13px;border-top:1px solid #e1eae4; }
+.hb-thread-input { display:block;width:100%;min-height:48px;max-height:140px;box-sizing:border-box;resize:vertical;padding:12px 13px;border:1px solid #d5e2d9;border-radius:12px;background:#fff;color:#18384b;font:inherit;font-size:13px;line-height:1.5; }
+.hb-thread-input:focus { outline:2px solid #9ccbb0;outline-offset:1px;border-color:#498665; }
+.hb-thread-send { min-height:46px;align-self:stretch;padding:0 17px;white-space:nowrap;border-radius:11px; }
+.hb-support-inbox > p:last-child { font-size:11px;line-height:1.7;margin-top:13px; }
+@media(max-width:760px) {
+ .hb-inbox-layout { grid-template-columns:minmax(0,1fr);gap:12px; }
+ .hb-inbox-list { display:flex;flex-direction:row;max-height:none;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity; }
+ .hb-inbox-conversation { flex:0 0 min(76vw,270px);width:auto;min-width:0;border-bottom:0;border-right:1px solid #edf2ee;scroll-snap-align:start;padding:12px; }
+ .hb-inbox-conversation.is-selected { box-shadow:inset 0 -3px #287653; }
+ .hb-inbox-thread { min-height:430px;max-height:68vh;padding:0 12px 12px; }
+ .hb-thread-messages { min-height:220px; }
+ .hb-thread-messages > div { max-width:90%; }
+ .hb-thread-composer { grid-template-columns:minmax(0,1fr) auto;gap:7px; }
+ .hb-thread-input { font-size:16px; }
+ .hb-thread-send { padding:0 12px;font-size:12px; }
+}
+@media(max-width:390px) {
+ .hb-thread-composer { grid-template-columns:1fr; }
+ .hb-thread-send { width:100%; }
+ .hb-thread-messages > div { max-width:96%; }
+}
