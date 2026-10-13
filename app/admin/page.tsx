@@ -434,7 +434,7 @@ export default function AdminDashboardPage() {
   return (
     <main style={{ minHeight: "100vh", background: "#f4f7fb", padding: "24px 0 56px" }}>
       <div className="container">
-        <header style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+        <header className="hb-admin-header">
           <a href="/admin" className="brand">HOPEBRIDGE<span>STAFF DASHBOARD</span></a>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <StaffNotifications />
@@ -463,7 +463,7 @@ export default function AdminDashboardPage() {
           ].map(([label, value]) => <div className="card" key={String(label)} style={{ padding: 20 }}><p style={{ color: "#627d98", margin: 0, fontSize: 13 }}>{label}</p><strong style={{ display: "block", fontSize: 30, marginTop: 8 }}>{value}</strong></div>)}
         </div>
 
-        <section className="card" style={{ padding: 20, marginBottom: 24 }}>
+        <section id="applications" className="card" style={{ padding: 20, marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 14, flexWrap: "wrap", alignItems: "center", marginBottom: 16 }}>
             <h2 style={{ margin: 0, fontSize: 22 }}>Applications</h2>
             <button className="btn secondary" onClick={() => { setLoading(true); void loadDashboard(); }}>Refresh</button>
