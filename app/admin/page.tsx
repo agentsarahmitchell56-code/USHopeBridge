@@ -200,8 +200,13 @@ export default function AdminDashboardPage() {
       )
       .subscribe();
 
+    // Realtime is fast when available; polling keeps the inbox reliable on networks
+    // or Supabase projects where realtime delivery is delayed or unavailable.
+    const pollId = window.setInterval(() => void loadMessages(), 5000);
+
     return () => {
       active = false;
+      window.clearInterval(pollId);
       void supabase.removeChannel(channel);
     };
   }, [selectedConversation]);
