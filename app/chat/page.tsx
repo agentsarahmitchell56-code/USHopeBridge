@@ -45,6 +45,21 @@ export default function ChatPage() {
   const [error, setError] = useState("");
   const messagesRef = useRef<HTMLDivElement>(null);
   const imageUrlsRef = useRef<Record<string, string>>({});
+  const knownMessageIdsRef = useRef<Set<string> | null>(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">("default");
+
+  useEffect(() => {
+    setNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
+  }, []);
+
+  async function enableReplyNotifications() {
+    if (!("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+  }
 
   useEffect(() => {
     try {
@@ -99,6 +114,17 @@ export default function ChatPage() {
           return;
         }
         const loaded = (data as Message[]) || [];
+        const knownIds = knownMessageIdsRef.current;
+        if (knownIds === null) {
+          // Do not notify about messages that were already in the conversation when it opened.
+          knownMessageIdsRef.current = new Set(loaded.map((item) => item.id));
+        } else {
+          const newAgentReply = loaded.some((item) => !knownIds.has(item.id) && item.sender_type === "agent");
+          for (const item of loaded) knownIds.add(item.id);
+          if (newAgentReply && document.hidden && "Notification" in window && Notification.permission === "granted") {
+            try { new Notification("New HOPEBRIDGE reply", { body: "Support sent you a new message. Open your chat to read it.", icon: "/icon.svg", tag: `hopebridge-reply-${conversationId}` }); } catch { /* Browser may suppress notifications. */ }
+          }
+        }
         setMessages((current) => {
           const merged = new Map(current.map((item) => [item.id, item]));
           for (const item of loaded) merged.set(item.id, item);
@@ -307,7 +333,7 @@ export default function ChatPage() {
           <>
             <div className="messenger-chat-context">
               <span className="context-lock" aria-hidden="true">✓</span>
-              <span><strong>You are chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started. You do not need a customer account; replies appear here automatically.</small></span>
+              <span><strong>You are chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started. You do not need a customer account; replies appear here automatically.</small>{notificationPermission !== "granted" && notificationPermission !== "unsupported" && <button type="button" onClick={() => void enableReplyNotifications()} style={{ display: "block", marginTop: 8, padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: 8, background: "#fff", color: "#123c69", fontSize: 12, cursor: "pointer" }}>🔔 Enable reply notifications</button>}{notificationPermission === "unsupported" && <small>Browser reply notifications are not supported on this device.</small>}</span>
             </div>
             <div className="messenger-messages" ref={messagesRef} aria-live="polite">
               <div className="chat-day-label">MESSAGES</div>
