@@ -211,6 +211,7 @@ export default function ChatPage() {
       setEmail(cleanEmail);
       setConversationId(newConversationId);
       setChatToken(newChatToken);
+      knownMessageIdsRef.current = null;
       setChatConnection("connecting");
       setMessages([]);
       setStarted(true);
@@ -290,6 +291,7 @@ export default function ChatPage() {
     setEmail("");
     setConversationId("");
     setChatToken("");
+    knownMessageIdsRef.current = null;
     setMessages([]);
     setMessage(""); setImageFile(null); imageUrlsRef.current = {}; setImageUrls({});
     setStarted(false);
@@ -333,7 +335,7 @@ export default function ChatPage() {
           <>
             <div className="messenger-chat-context">
               <span className="context-lock" aria-hidden="true">✓</span>
-              <span><strong>You are chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started. You do not need a customer account; replies appear here automatically.</small>{notificationPermission !== "granted" && notificationPermission !== "unsupported" && <button type="button" onClick={() => void enableReplyNotifications()} style={{ display: "block", marginTop: 8, padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: 8, background: "#fff", color: "#123c69", fontSize: 12, cursor: "pointer" }}>🔔 Enable reply notifications</button>}{notificationPermission === "unsupported" && <small>Browser reply notifications are not supported on this device.</small>}</span>
+              <span><strong>You are chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started. You do not need a customer account; replies appear here automatically.</small>{(notificationPermission === "default") && <button type="button" onClick={() => void enableReplyNotifications()} style={{ display: "block", marginTop: 8, padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: 8, background: "#fff", color: "#123c69", fontSize: 12, cursor: "pointer" }}>🔔 Enable reply notifications</button>}{notificationPermission === "denied" && <small>Notifications are blocked in your browser settings. You can still see replies when you reopen this chat.</small>}{notificationPermission === "unsupported" && <small>Browser reply notifications are not supported on this device.</small>}</span>
             </div>
             <div className="messenger-messages" ref={messagesRef} aria-live="polite">
               <div className="chat-day-label">MESSAGES</div>
