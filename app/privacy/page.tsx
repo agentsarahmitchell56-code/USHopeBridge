@@ -84,6 +84,22 @@ export default function PrivacyPolicyPage() {
             is verified before fulfilling requests.
           </p>
 
+          <h2>Analytics and advertising</h2>
+          <p>
+            The site is intended to record a limited, first-party operational
+            signal when an application is successfully stored. That signal is
+            designed not to include applicant names, contact details, request
+            details, requested amounts, application reference numbers, chat
+            content, or IP addresses. Hosting and server logs may be processed
+            by the website provider under its own service terms. No third-party
+            advertising pixel or conversion tag should be enabled unless the
+            operator first updates this notice to accurately describe the
+            provider, data collected, purposes, retention, choices, and any
+            required consent. Sensitive application information must not be
+            sent to advertising platforms or placed in URLs or analytics event
+            parameters.
+          </p>
+
           <h2>Children</h2>
           <p>
             Do not submit information on behalf of a child unless you are
