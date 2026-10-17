@@ -124,6 +124,15 @@ export async function POST(request: NextRequest) {
       console.error("Application support conversation creation failed:", conversationError);
     }
 
+    // Privacy-safe first-party conversion signal: no applicant data, reference,
+    // request details, IP address, or identifiers are written to this event.
+    // This is an operational log signal, not third-party ad tracking.
+    console.info("HOPEBRIDGE_CONVERSION", JSON.stringify({
+      event: "application_submitted",
+      source: "application_api",
+      occurred_at: new Date().toISOString(),
+    }));
+
     return NextResponse.json({
       reference_number: referenceNumber,
       ...(conversationError ? {} : { conversation_id: conversationId, chat_token: chatToken }),
