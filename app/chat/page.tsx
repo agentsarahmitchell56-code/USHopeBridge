@@ -39,6 +39,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -51,6 +52,35 @@ export default function ChatPage() {
   useEffect(() => {
     setNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
   }, []);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreviewUrl("");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(imageFile);
+    setImagePreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [imageFile]);
+
+  function chooseImage(file: File | null) {
+    setError("");
+    if (!file) {
+      setImageFile(null);
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setImageFile(null);
+      setError("Choose a JPG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size < 1 || file.size > 5 * 1024 * 1024) {
+      setImageFile(null);
+      setError("Choose an image smaller than 5 MB.");
+      return;
+    }
+    setImageFile(file);
+  }
 
   async function enableReplyNotifications() {
     if (!("Notification" in window)) {
@@ -293,7 +323,7 @@ export default function ChatPage() {
     setChatToken("");
     knownMessageIdsRef.current = null;
     setMessages([]);
-    setMessage(""); setImageFile(null); imageUrlsRef.current = {}; setImageUrls({});
+    setMessage(""); setImageFile(null); setImagePreviewUrl(""); imageUrlsRef.current = {}; setImageUrls({});
     setStarted(false);
     setError("");
   }
@@ -367,10 +397,18 @@ export default function ChatPage() {
               })}
             </div>
             {error && <div role="alert" className="messenger-error messenger-error-inline">{error}</div>}
+            {imageFile && imagePreviewUrl && (
+              <div className="messenger-image-preview" style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderTop: "1px solid #e5eaf0", background: "#f8fafc" }}>
+                <Image src={imagePreviewUrl} alt="Preview of image selected to send" width={72} height={72} unoptimized style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 10 }} />
+                <div style={{ flex: 1, minWidth: 0 }}><strong style={{ display: "block", fontSize: 13 }}>Image ready to send</strong><span style={{ display: "block", fontSize: 12, overflowWrap: "anywhere", color: "#526174" }}>{imageFile.name}</span><span style={{ fontSize: 12, color: "#526174" }}>You can add a message or send the image alone.</span></div>
+                <button type="button" onClick={() => setImageFile(null)} disabled={sending} aria-label="Remove selected image" style={{ border: 0, background: "transparent", padding: 8, cursor: "pointer", fontSize: 20, color: "#526174" }}>×</button>
+              </div>
+            )}
             <form className="messenger-composer" onSubmit={sendMessage}>
-              <label title="Attach image" style={{ display: "grid", placeItems: "center", padding: "0 8px", cursor: "pointer", fontSize: 20 }}>
-                <span aria-hidden="true">＋</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setImageFile(e.target.files?.[0] || null)} style={{ display: "none" }} disabled={sending} />
+              <label htmlFor="chat-image-upload" title="Choose an image to send" aria-label="Choose an image to send" style={{ display: "grid", placeItems: "center", padding: "0 8px", cursor: sending ? "not-allowed" : "pointer", fontSize: 20 }}>
+                <span aria-hidden="true">＋</span>
               </label>
+              <input id="chat-image-upload" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { chooseImage(e.target.files?.[0] || null); e.currentTarget.value = ""; }} style={{ display: "none" }} disabled={sending} />
               <input aria-label="Type a message" type="text" placeholder={imageFile ? `Image: ${imageFile.name}` : "Aa"} value={message}
                 onChange={(e) => setMessage(e.target.value)} maxLength={5000} disabled={sending} />
               <button type="submit" className="messenger-send" disabled={sending || (!message.trim() && !imageFile)} aria-label="Send message" title="Send message">
