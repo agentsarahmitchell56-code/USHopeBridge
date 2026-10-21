@@ -286,6 +286,7 @@ export default function ChatPage() {
           form.append("purpose", "chat");
           form.append("conversationId", id);
           form.append("chatToken", token);
+          form.append("message", cleanMessage);
           const response = await fetch("/api/uploads", { method: "POST", body: form });
           const result = await response.json();
           return { response, result };
@@ -330,55 +331,11 @@ export default function ChatPage() {
         if (!uploaded.response.ok) {
           throw new Error(uploaded.result?.error || "Image upload failed. Please try again.");
         }
-        let result = await supabase.rpc("send_chat_image", {
-          p_conversation_id: activeConversationId,
-          p_chat_token: activeChatToken,
-          p_image_path: uploaded.result.path,
-          p_image_type: uploaded.result.type,
-          p_message: cleanMessage,
-        });
-
-        // The upload endpoint and database RPC both validate the chat token.
-        // If the upload passed but the RPC rejects the saved session, renew the
-        // conversation and retry the full upload + message insert once.
-        if (result.error && result.error.message.toLowerCase().includes("invalid chat session")) {
-          const renewResponse = await fetch("/api/chat/conversations", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase() }),
-          });
-          const renewed = await renewResponse.json();
-          if (!renewResponse.ok || !renewed.conversation_id || !renewed.chat_token) {
-            throw new Error(renewed.error || "Your chat session expired. Please start a new conversation.");
-          }
-
-          activeConversationId = renewed.conversation_id as string;
-          activeChatToken = renewed.chat_token as string;
-          window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({
-            name: name.trim(),
-            email: email.trim().toLowerCase(),
-            conversationId: activeConversationId,
-            chatToken: activeChatToken,
-          } satisfies SavedChat));
-          setConversationId(activeConversationId);
-          setChatToken(activeChatToken);
-          setMessages([]);
-          knownMessageIdsRef.current = null;
-          setChatConnection("connecting");
-
-          uploaded = await uploadImage(activeConversationId, activeChatToken);
-          if (!uploaded.response.ok) {
-            throw new Error(uploaded.result?.error || "Image upload failed. Please try again.");
-          }
-          result = await supabase.rpc("send_chat_image", {
-            p_conversation_id: activeConversationId,
-            p_chat_token: activeChatToken,
-            p_image_path: uploaded.result.path,
-            p_image_type: uploaded.result.type,
-            p_message: cleanMessage,
-          });
+        // The upload API now validates the session and saves the image message server-side.
+        if (!uploaded.result.message_id) {
+          throw new Error("The image was uploaded, but the chat message was not confirmed. Please try again.");
         }
-        sendError = result.error;
+        sendError = null;
       } else {
         const result = await supabase.rpc("send_chat_message", {
           p_conversation_id: activeConversationId,
