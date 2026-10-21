@@ -65,13 +65,17 @@ export async function POST(request: NextRequest) {
     if (!(file instanceof File) || !["application", "chat"].includes(purpose)) {
       return NextResponse.json({ error: "Choose a valid image and upload destination." }, { status: 400 });
     }
-    if (!allowedTypes.has(file.type) || file.size < 1 || file.size > MAX_FILE_BYTES) {
+    if (file.size < 1 || file.size > MAX_FILE_BYTES) {
       return NextResponse.json({ error: "Upload a JPG, PNG, or WebP image up to 5 MB." }, { status: 400 });
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer());
-    if (!hasExpectedSignature(file.type, bytes)) {
-      return NextResponse.json({ error: "The image contents do not match the selected file type." }, { status: 415 });
+    // Trust the detected file signature rather than the browser-supplied MIME type.
+    // Android gallery providers sometimes send an empty or generic file.type.
+    const detectedType = (["image/jpeg", "image/png", "image/webp"] as const)
+      .find((type) => hasExpectedSignature(type, bytes));
+    if (!detectedType) {
+      return NextResponse.json({ error: "Unsupported image format. Choose a JPG, PNG, or WebP image." }, { status: 415 });
     }
 
     const db = adminClient();
@@ -93,10 +97,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const path = folder + "/" + crypto.randomUUID() + "." + extByType[file.type];
-    const { error } = await db.storage.from("hopebridge-private-uploads").upload(path, bytes, { contentType: file.type, upsert: false });
+    const path = folder + "/" + crypto.randomUUID() + "." + extByType[detectedType];
+    const { error } = await db.storage.from("hopebridge-private-uploads").upload(path, bytes, { contentType: detectedType, upsert: false });
     if (error) return NextResponse.json({ error: "The image could not be saved. Please try again." }, { status: 500 });
-    return NextResponse.json({ path, type: file.type });
+    return NextResponse.json({ path, type: detectedType });
   } catch (error) {
     console.error("Private upload failed:", error);
     return NextResponse.json({ error: "Secure uploads are temporarily unavailable. Please try again later." }, { status: 503 });
