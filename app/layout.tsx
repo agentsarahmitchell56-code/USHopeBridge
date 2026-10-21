@@ -1,5 +1,7 @@
 import Link from "next/link";
 import PWAInstall from "./pwa-install";
+import FloatingSupportButton from "./floating-support-button";
+import "./community-enhancements.css";
 import "./globals.css";
 
 export const metadata = {
@@ -53,6 +55,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <FloatingSupportButton />
         <PWAInstall />
         <footer className="footer">
           <div className="container hb-global-footer-inner">
