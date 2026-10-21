@@ -1505,3 +1505,180 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
  .hb-inbox-preview { -webkit-line-clamp:2; }
  .hb-inbox-thread { scroll-margin-top:75px; }
 }
+
+
+/* HOPEBRIDGE 2026 polish: clearer hierarchy, accessible focus, responsive interactions */
+.hb-community-page {
+  --hb-ink: #123453;
+  --hb-green: #216b4b;
+  --hb-mint: #eaf5ee;
+  --hb-border: #dce8e1;
+  --hb-muted: #617786;
+  background: #f4f7f5;
+  color: var(--hb-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.hb-community-page a { text-underline-offset: 3px; }
+.hb-community-page a:focus-visible,
+.hb-community-page summary:focus-visible,
+.hb-community-page button:focus-visible {
+  outline: 3px solid #7dbb97;
+  outline-offset: 3px;
+}
+.hb-skip-link {
+  position: fixed;
+  z-index: 2000;
+  top: 10px;
+  left: 10px;
+  transform: translateY(-160%);
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #123453;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 8px 28px rgba(18,52,83,.2);
+}
+.hb-skip-link:focus { transform: translateY(0); }
+.hb-community-page .hb-topline { font-size: 11px; letter-spacing: .01em; }
+.hb-community-page .hb-topline-inner { min-height: 38px; }
+.hb-community-page .hb-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255,255,255,.94);
+  border-bottom: 1px solid rgba(220,232,225,.9);
+  backdrop-filter: saturate(160%) blur(16px);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+}
+.hb-community-page .hb-nav { min-height: 76px; }
+.hb-community-page .hb-brand { flex-shrink: 0; }
+.hb-community-page .hb-nav-links a {
+  position: relative;
+  padding: 10px 0;
+  color: #486271;
+  font-size: 12px;
+  font-weight: 750;
+  transition: color .18s ease;
+}
+.hb-community-page .hb-nav-links a:hover { color: var(--hb-green); }
+.hb-community-page .hb-nav-links a::after {
+  position: absolute;
+  right: 0;
+  bottom: 3px;
+  left: 0;
+  height: 2px;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  border-radius: 3px;
+  background: #2e8059;
+  transition: transform .18s ease;
+}
+.hb-community-page .hb-nav-links a:hover::after { transform: scaleX(1); }
+.hb-community-page .hb-nav-actions { gap: 7px; }
+.hb-community-page .hb-login-link {
+  padding: 9px 8px;
+  border-radius: 9px;
+  color: #476271;
+  font-size: 11px;
+  font-weight: 750;
+}
+.hb-community-page .hb-login-link:hover { background: #eff6f1; color: var(--hb-green); }
+.hb-community-page .hb-button {
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: linear-gradient(135deg,#276f4f,#174f3b);
+  box-shadow: 0 4px 10px rgba(25,88,60,.12);
+  font-weight: 800;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.hb-community-page .hb-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(25,88,60,.18);
+}
+.hb-community-page .hb-button-light {
+  border-color: #dbe8df;
+  background: #fff;
+  color: #225c42;
+  box-shadow: none;
+}
+.hb-community-page .hb-page-cover { overflow: hidden; }
+.hb-community-page .hb-page-cover-art {
+  background:
+    radial-gradient(ellipse at 78% 10%,rgba(186,226,198,.24),transparent 33%),
+    linear-gradient(115deg,#102e49 0%,#174e43 58%,#5e9a78 100%);
+}
+.hb-community-page .hb-page-profile { padding-bottom: 26px; }
+.hb-community-page .hb-page-avatar {
+  border-color: #fff;
+  box-shadow: 0 12px 30px rgba(18,52,83,.14);
+}
+.hb-community-page .hb-profile-meta span { display: inline-flex; align-items: center; }
+.hb-community-page .hb-community-main { padding-top: 30px; }
+.hb-community-page .hb-social-card {
+  border-color: var(--hb-border);
+  border-radius: 17px;
+  box-shadow: 0 5px 18px rgba(24,56,43,.035);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.hb-community-page .hb-start-card { padding: 22px; }
+.hb-community-page .hb-start-actions a { min-height: 68px; }
+.hb-community-page .hb-feed-post-body p,
+.hb-community-page .hb-about-card > p,
+.hb-community-page .hb-help-card p,
+.hb-community-page .hb-trust-card p,
+.hb-community-page .hb-next-step-card p { font-size: 13px; }
+.hb-community-page .hb-feed-post-body h3 { font-size: 16px; line-height: 1.4; }
+.hb-community-page .hb-feed-heading { margin-bottom: 1px; }
+.hb-community-page .hb-feed-heading h2 { font-size: clamp(19px,2vw,23px); }
+.hb-community-page .hb-post-tag { display: inline-block; padding: 5px 8px; border-radius: 6px; background: #eff7f1; }
+.hb-community-page .hb-services-grid { gap: 18px; }
+.hb-community-page .hb-service-card {
+  border: 1px solid var(--hb-border);
+  border-radius: 18px;
+  box-shadow: 0 7px 22px rgba(24,56,43,.035);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.hb-community-page .hb-service-card:hover {
+  transform: translateY(-3px);
+  border-color: #bfd9c8;
+  box-shadow: 0 15px 34px rgba(24,56,43,.08);
+}
+.hb-community-page .hb-step-card { border: 1px solid var(--hb-border); border-radius: 17px; }
+.hb-community-page .hb-faq-item { border-color: var(--hb-border); }
+.hb-community-page .hb-disclosure { line-height: 1.75; }
+.hb-community-page #services,
+.hb-community-page #how-it-works,
+.hb-community-page #community-feed,
+.hb-community-page #frequently-asked-questions { scroll-margin-top: 100px; }
+@media (max-width: 1100px) {
+  .hb-community-page .hb-nav-links { gap: 14px; }
+  .hb-community-page .hb-nav-actions .hb-login-link { display: none; }
+}
+@media (max-width: 760px) {
+  .hb-community-page .hb-header { position: relative; }
+  .hb-community-page .hb-nav { min-height: 68px; }
+  .hb-community-page .hb-page-profile { padding-bottom: 20px; }
+  .hb-community-page .hb-start-card { padding: 17px; }
+  .hb-community-page .hb-social-card { box-shadow: 0 3px 12px rgba(24,56,43,.03); }
+  .hb-community-page .hb-community-main { padding-top: 14px; }
+  .hb-community-page .hb-feed-post-body p,
+  .hb-community-page .hb-about-card > p,
+  .hb-community-page .hb-help-card p,
+  .hb-community-page .hb-trust-card p,
+  .hb-community-page .hb-next-step-card p { font-size: 12px; }
+}
+@media (max-width: 420px) {
+  .hb-community-page .hb-page-profile-copy h1 { font-size: 18px; }
+  .hb-community-page .hb-profile-actions { gap: 7px; }
+  .hb-community-page .hb-profile-actions .hb-button { min-height: 42px; }
+  .hb-community-page .hb-start-actions a { padding: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hb-community-page *,
+  .hb-community-page *::before,
+  .hb-community-page *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
