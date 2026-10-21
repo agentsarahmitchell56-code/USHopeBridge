@@ -39,6 +39,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -51,6 +52,49 @@ export default function ChatPage() {
   useEffect(() => {
     setNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
   }, []);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreviewUrl("");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(imageFile);
+    setImagePreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [imageFile]);
+
+  async function chooseImage(file: File | null) {
+    setError("");
+    if (!file) {
+      setImageFile(null);
+      return;
+    }
+    if (file.size < 1 || file.size > 5 * 1024 * 1024) {
+      setImageFile(null);
+      setError("Choose an image smaller than 5 MB.");
+      return;
+    }
+
+    // Some Android gallery/file-picker providers report an empty or generic MIME
+    // type for real images. Detect the format from its bytes instead.
+    try {
+      const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+      const isJpeg = bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+      const isPng = bytes.length >= 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((value, index) => bytes[index] === value);
+      const isWebp = bytes.length >= 12
+        && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF"
+        && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
+      if (!isJpeg && !isPng && !isWebp) {
+        setImageFile(null);
+        setError("This image format isn't supported. Please choose a JPG, PNG, or WebP image.");
+        return;
+      }
+      setImageFile(file);
+    } catch {
+      setImageFile(null);
+      setError("We couldn't read that image. Please choose another JPG, PNG, or WebP file.");
+    }
+  }
 
   async function enableReplyNotifications() {
     if (!("Notification" in window)) {
@@ -231,35 +275,71 @@ export default function ChatPage() {
     setSending(true);
     setError("");
     try {
+      let activeConversationId = conversationId;
+      let activeChatToken = chatToken;
       let sendError: { message: string } | null = null;
 
       if (imageFile) {
-        try {
+        const uploadImage = async (id: string, token: string) => {
           const form = new FormData();
           form.append("file", imageFile);
           form.append("purpose", "chat");
-          form.append("conversationId", conversationId);
-          form.append("chatToken", chatToken);
+          form.append("conversationId", id);
+          form.append("chatToken", token);
+          form.append("message", cleanMessage);
           const response = await fetch("/api/uploads", { method: "POST", body: form });
-          const upload = await response.json();
-          if (!response.ok) throw new Error(upload.error || "Image upload failed.");
-          const result = await supabase.rpc("send_chat_image", {
-            p_conversation_id: conversationId,
-            p_chat_token: chatToken,
-            p_image_path: upload.path,
-            p_image_type: imageFile.type,
-            p_message: cleanMessage,
-          });
-          sendError = result.error;
-        } catch (uploadError) {
-          sendError = {
-            message: uploadError instanceof Error ? uploadError.message : "Image upload failed.",
-          };
+          const result = await response.json();
+          return { response, result };
+        };
+
+        let uploaded = await uploadImage(activeConversationId, activeChatToken);
+
+        // A restored chat can contain a stale token (for example, after browser
+        // storage was cleared or a conversation was replaced). Renew the session
+        // once and retry the upload, instead of leaving the customer stuck.
+        if (uploaded.response.status === 401 || uploaded.response.status === 403) {
+          const detail = String(uploaded.result?.error || "").toLowerCase();
+          if (detail.includes("chat session") || detail.includes("access denied")) {
+            const renewResponse = await fetch("/api/chat/conversations", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase() }),
+            });
+            const renewed = await renewResponse.json();
+            if (renewResponse.ok && renewed.conversation_id && renewed.chat_token) {
+              activeConversationId = renewed.conversation_id as string;
+              activeChatToken = renewed.chat_token as string;
+              const savedChat: SavedChat = {
+                name: name.trim(),
+                email: email.trim().toLowerCase(),
+                conversationId: activeConversationId,
+                chatToken: activeChatToken,
+              };
+              window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(savedChat));
+              setConversationId(activeConversationId);
+              setChatToken(activeChatToken);
+              setMessages([]);
+              knownMessageIdsRef.current = null;
+              setChatConnection("connecting");
+              uploaded = await uploadImage(activeConversationId, activeChatToken);
+            } else {
+              throw new Error(renewed.error || "Your chat session expired. Please start a new conversation.");
+            }
+          }
         }
+
+        if (!uploaded.response.ok) {
+          throw new Error(uploaded.result?.error || "Image upload failed. Please try again.");
+        }
+        // The upload API now validates the session and saves the image message server-side.
+        if (!uploaded.result.message_id) {
+          throw new Error("The image was uploaded, but the chat message was not confirmed. Please try again.");
+        }
+        sendError = null;
       } else {
         const result = await supabase.rpc("send_chat_message", {
-          p_conversation_id: conversationId,
-          p_chat_token: chatToken,
+          p_conversation_id: activeConversationId,
+          p_chat_token: activeChatToken,
           p_message: cleanMessage,
         });
         sendError = result.error;
@@ -272,14 +352,16 @@ export default function ChatPage() {
         setMessage("");
         setImageFile(null);
         const { data } = await supabase.rpc("get_chat_messages", {
-          p_conversation_id: conversationId,
-          p_chat_token: chatToken,
+          p_conversation_id: activeConversationId,
+          p_chat_token: activeChatToken,
         });
         if (data) setMessages((data as Message[]) || []);
       }
     } catch (sendException) {
       console.error("Unexpected send message error:", sendException);
-      setError("We couldn't send your message because of a connection issue. Please try again.");
+      setError(sendException instanceof Error
+        ? sendException.message
+        : "We couldn't send your message because of a connection issue. Please try again.");
     } finally {
       setSending(false);
     }
@@ -293,7 +375,7 @@ export default function ChatPage() {
     setChatToken("");
     knownMessageIdsRef.current = null;
     setMessages([]);
-    setMessage(""); setImageFile(null); imageUrlsRef.current = {}; setImageUrls({});
+    setMessage(""); setImageFile(null); setImagePreviewUrl(""); imageUrlsRef.current = {}; setImageUrls({});
     setStarted(false);
     setError("");
   }
@@ -367,10 +449,18 @@ export default function ChatPage() {
               })}
             </div>
             {error && <div role="alert" className="messenger-error messenger-error-inline">{error}</div>}
+            {imageFile && imagePreviewUrl && (
+              <div className="messenger-image-preview" style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderTop: "1px solid #e5eaf0", background: "#f8fafc" }}>
+                <Image src={imagePreviewUrl} alt="Preview of image selected to send" width={72} height={72} unoptimized style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 10 }} />
+                <div style={{ flex: 1, minWidth: 0 }}><strong style={{ display: "block", fontSize: 13 }}>Image ready to send</strong><span style={{ display: "block", fontSize: 12, overflowWrap: "anywhere", color: "#526174" }}>{imageFile.name}</span><span style={{ fontSize: 12, color: "#526174" }}>You can add a message or send the image alone.</span></div>
+                <button type="button" onClick={() => setImageFile(null)} disabled={sending} aria-label="Remove selected image" style={{ border: 0, background: "transparent", padding: 8, cursor: "pointer", fontSize: 20, color: "#526174" }}>×</button>
+              </div>
+            )}
             <form className="messenger-composer" onSubmit={sendMessage}>
-              <label title="Attach image" style={{ display: "grid", placeItems: "center", padding: "0 8px", cursor: "pointer", fontSize: 20 }}>
-                <span aria-hidden="true">＋</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setImageFile(e.target.files?.[0] || null)} style={{ display: "none" }} disabled={sending} />
+              <label htmlFor="chat-image-upload" title="Choose an image to send" aria-label="Choose an image to send" style={{ display: "grid", placeItems: "center", padding: "0 8px", cursor: sending ? "not-allowed" : "pointer", fontSize: 20 }}>
+                <span aria-hidden="true">＋</span>
               </label>
+              <input id="chat-image-upload" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { chooseImage(e.target.files?.[0] || null); e.currentTarget.value = ""; }} style={{ display: "none" }} disabled={sending} />
               <input aria-label="Type a message" type="text" placeholder={imageFile ? `Image: ${imageFile.name}` : "Aa"} value={message}
                 onChange={(e) => setMessage(e.target.value)} maxLength={5000} disabled={sending} />
               <button type="submit" className="messenger-send" disabled={sending || (!message.trim() && !imageFile)} aria-label="Send message" title="Send message">

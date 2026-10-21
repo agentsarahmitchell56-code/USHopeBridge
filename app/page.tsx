@@ -15,7 +15,7 @@ const services = [
 
 export default function HomePage() {
   return (
-    <main className="hb-home hb-community-page">
+    <main id="main-content" className="hb-home hb-community-page">\n      <a className="hb-skip-link" href="#main-content">Skip to main content</a>
       <div className="hb-topline">
         <div className="hb-container hb-topline-inner">
           <span><span className="hb-live-dot" /> Clear information. A structured application process.</span>

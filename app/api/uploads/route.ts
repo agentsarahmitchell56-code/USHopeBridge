@@ -65,13 +65,17 @@ export async function POST(request: NextRequest) {
     if (!(file instanceof File) || !["application", "chat"].includes(purpose)) {
       return NextResponse.json({ error: "Choose a valid image and upload destination." }, { status: 400 });
     }
-    if (!allowedTypes.has(file.type) || file.size < 1 || file.size > MAX_FILE_BYTES) {
+    if (file.size < 1 || file.size > MAX_FILE_BYTES) {
       return NextResponse.json({ error: "Upload a JPG, PNG, or WebP image up to 5 MB." }, { status: 400 });
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer());
-    if (!hasExpectedSignature(file.type, bytes)) {
-      return NextResponse.json({ error: "The image contents do not match the selected file type." }, { status: 415 });
+    // Trust the detected file signature rather than the browser-supplied MIME type.
+    // Android gallery providers sometimes send an empty or generic file.type.
+    const detectedType = (["image/jpeg", "image/png", "image/webp"] as const)
+      .find((type) => hasExpectedSignature(type, bytes));
+    if (!detectedType) {
+      return NextResponse.json({ error: "Unsupported image format. Choose a JPG, PNG, or WebP image." }, { status: 415 });
     }
 
     const db = adminClient();
@@ -81,8 +85,15 @@ export async function POST(request: NextRequest) {
       const conversationId = String(form.get("conversationId") || "");
       const chatToken = String(form.get("chatToken") || "");
       if (!conversationId || !chatToken) return NextResponse.json({ error: "Chat session required." }, { status: 401 });
-      const { data: conversation } = await db.from("conversations").select("id,chat_token").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
-      if (!conversation) return NextResponse.json({ error: "Invalid chat session." }, { status: 403 });
+      const { data: conversation, error: sessionError } = await db.from("conversations").select("id").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
+      if (sessionError) {
+        console.error("Chat upload session lookup failed:", { code: sessionError.code });
+        return NextResponse.json({ error: "We couldn't verify this chat right now. Please try again." }, { status: 503 });
+      }
+      if (!conversation) {
+        console.warn("Chat upload session rejected:", { conversationIdPresent: Boolean(conversationId), tokenPresent: Boolean(chatToken) });
+        return NextResponse.json({ error: "Your chat session needs to be refreshed. Please try sending the image again." }, { status: 403 });
+      }
       folder = "chat";
     }
 
@@ -93,10 +104,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const path = folder + "/" + crypto.randomUUID() + "." + extByType[file.type];
-    const { error } = await db.storage.from("hopebridge-private-uploads").upload(path, bytes, { contentType: file.type, upsert: false });
-    if (error) return NextResponse.json({ error: "The image could not be saved. Please try again." }, { status: 500 });
-    return NextResponse.json({ path, type: file.type });
+    const path = folder + "/" + crypto.randomUUID() + "." + extByType[detectedType];
+    const storage = db.storage.from("hopebridge-private-uploads");
+    const { error: storageError } = await storage.upload(path, bytes, { contentType: detectedType, upsert: false });
+    if (storageError) return NextResponse.json({ error: "The image could not be saved. Please try again." }, { status: 500 });
+
+    // For customer chat, save the image message on the server after validating
+    // the exact same session. This avoids a second browser-side RPC session check
+    // that can reject an otherwise valid upload when client/RPC state diverges.
+    if (validPurpose === "chat") {
+      const conversationId = String(form.get("conversationId") || "");
+      const chatToken = String(form.get("chatToken") || "");
+      const message = String(form.get("message") || "").trim() || "Photo attachment";
+      if (message.length > 5000) {
+        await storage.remove([path]);
+        return NextResponse.json({ error: "Message must be 5000 characters or fewer." }, { status: 400 });
+      }
+
+      // The session was validated before upload. Avoid a redundant token lookup
+      // after the private object is stored; a second lookup can create a false
+      // rejection and orphan the customer's image on transient database errors.
+      const { data: savedMessage, error: messageError } = await db.from("messages").insert({
+        conversation_id: conversationId,
+        sender_type: "client",
+        sender_id: null,
+        message,
+        image_path: path,
+        image_type: detectedType,
+      }).select("id").single();
+
+      if (messageError || !savedMessage) {
+        console.error("Chat image message insert failed:", messageError);
+        await storage.remove([path]);
+        return NextResponse.json({ error: "The image uploaded, but the chat message could not be saved. Please try again." }, { status: 500 });
+      }
+      return NextResponse.json({ path, type: detectedType, message_id: savedMessage.id });
+    }
+
+    return NextResponse.json({ path, type: detectedType });
   } catch (error) {
     console.error("Private upload failed:", error);
     return NextResponse.json({ error: "Secure uploads are temporarily unavailable. Please try again later." }, { status: 503 });
