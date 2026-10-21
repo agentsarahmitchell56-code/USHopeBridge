@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     if (validPurpose === "chat") {
       const conversationId = String(form.get("conversationId") || "");
       const chatToken = String(form.get("chatToken") || "");
-      const message = String(form.get("message") || "").trim();
+      const message = String(form.get("message") || "").trim() || "Photo attachment";
       if (message.length > 5000) {
         await storage.remove([path]);
         return NextResponse.json({ error: "Message must be 5000 characters or fewer." }, { status: 400 });
