@@ -98,8 +98,45 @@ export async function POST(request: NextRequest) {
     }
 
     const path = folder + "/" + crypto.randomUUID() + "." + extByType[detectedType];
-    const { error } = await db.storage.from("hopebridge-private-uploads").upload(path, bytes, { contentType: detectedType, upsert: false });
-    if (error) return NextResponse.json({ error: "The image could not be saved. Please try again." }, { status: 500 });
+    const storage = db.storage.from("hopebridge-private-uploads");
+    const { error: storageError } = await storage.upload(path, bytes, { contentType: detectedType, upsert: false });
+    if (storageError) return NextResponse.json({ error: "The image could not be saved. Please try again." }, { status: 500 });
+
+    // For customer chat, save the image message on the server after validating
+    // the exact same session. This avoids a second browser-side RPC session check
+    // that can reject an otherwise valid upload when client/RPC state diverges.
+    if (validPurpose === "chat") {
+      const conversationId = String(form.get("conversationId") || "");
+      const chatToken = String(form.get("chatToken") || "");
+      const message = String(form.get("message") || "").trim();
+      if (message.length > 5000) {
+        await storage.remove([path]);
+        return NextResponse.json({ error: "Message must be 5000 characters or fewer." }, { status: 400 });
+      }
+
+      const { data: conversation } = await db.from("conversations").select("id").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
+      if (!conversation) {
+        await storage.remove([path]);
+        return NextResponse.json({ error: "Invalid chat session. Start a new conversation and try again." }, { status: 403 });
+      }
+
+      const { data: savedMessage, error: messageError } = await db.from("messages").insert({
+        conversation_id: conversationId,
+        sender_type: "client",
+        sender_id: null,
+        message,
+        image_path: path,
+        image_type: detectedType,
+      }).select("id").single();
+
+      if (messageError || !savedMessage) {
+        console.error("Chat image message insert failed:", messageError);
+        await storage.remove([path]);
+        return NextResponse.json({ error: "The image uploaded, but the chat message could not be saved. Please try again." }, { status: 500 });
+      }
+      return NextResponse.json({ path, type: detectedType, message_id: savedMessage.id });
+    }
+
     return NextResponse.json({ path, type: detectedType });
   } catch (error) {
     console.error("Private upload failed:", error);
