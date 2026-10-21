@@ -1,0 +1,56 @@
+/* Persistent support shortcut on every public page */
+.hb-floating-support {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 8px 18px 8px 9px;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #246c50, #164c3b);
+  color: #fff !important;
+  box-shadow: 0 10px 28px rgba(18,52,45,.28);
+  font-size: 13px;
+  font-weight: 800;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.hb-floating-support:hover {
+  color: #fff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(18,52,45,.34);
+}
+.hb-floating-support:focus-visible { outline: 3px solid #a6dfbe; outline-offset: 3px; }
+.hb-floating-support-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.16);
+  font-size: 19px;
+}
+.hb-floating-support-status {
+  width: 8px;
+  height: 8px;
+  margin-left: -3px;
+  border: 2px solid #164c3b;
+  border-radius: 50%;
+  background: #a8e3b9;
+}
+@media (max-width: 600px) {
+  .hb-floating-support {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    min-height: 50px;
+    padding: 7px 14px 7px 8px;
+    font-size: 12px;
+  }
+  .hb-floating-support-icon { width: 34px; height: 34px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hb-floating-support { transition: none; }
+}
