@@ -85,8 +85,15 @@ export async function POST(request: NextRequest) {
       const conversationId = String(form.get("conversationId") || "");
       const chatToken = String(form.get("chatToken") || "");
       if (!conversationId || !chatToken) return NextResponse.json({ error: "Chat session required." }, { status: 401 });
-      const { data: conversation } = await db.from("conversations").select("id,chat_token").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
-      if (!conversation) return NextResponse.json({ error: "Invalid chat session." }, { status: 403 });
+      const { data: conversation, error: sessionError } = await db.from("conversations").select("id").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
+      if (sessionError) {
+        console.error("Chat upload session lookup failed:", { code: sessionError.code });
+        return NextResponse.json({ error: "We couldn't verify this chat right now. Please try again." }, { status: 503 });
+      }
+      if (!conversation) {
+        console.warn("Chat upload session rejected:", { conversationIdPresent: Boolean(conversationId), tokenPresent: Boolean(chatToken) });
+        return NextResponse.json({ error: "Your chat session needs to be refreshed. Please try sending the image again." }, { status: 403 });
+      }
       folder = "chat";
     }
 
@@ -114,12 +121,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Message must be 5000 characters or fewer." }, { status: 400 });
       }
 
-      const { data: conversation } = await db.from("conversations").select("id").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
-      if (!conversation) {
-        await storage.remove([path]);
-        return NextResponse.json({ error: "Invalid chat session. Start a new conversation and try again." }, { status: 403 });
-      }
-
+      // The session was validated before upload. Avoid a redundant token lookup
+      // after the private object is stored; a second lookup can create a false
+      // rejection and orphan the customer's image on transient database errors.
       const { data: savedMessage, error: messageError } = await db.from("messages").insert({
         conversation_id: conversationId,
         sender_type: "client",
