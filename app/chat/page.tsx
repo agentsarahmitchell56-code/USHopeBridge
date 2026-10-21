@@ -275,35 +275,73 @@ export default function ChatPage() {
     setSending(true);
     setError("");
     try {
+      let activeConversationId = conversationId;
+      let activeChatToken = chatToken;
       let sendError: { message: string } | null = null;
 
       if (imageFile) {
-        try {
+        const uploadImage = async (id: string, token: string) => {
           const form = new FormData();
           form.append("file", imageFile);
           form.append("purpose", "chat");
-          form.append("conversationId", conversationId);
-          form.append("chatToken", chatToken);
+          form.append("conversationId", id);
+          form.append("chatToken", token);
           const response = await fetch("/api/uploads", { method: "POST", body: form });
-          const upload = await response.json();
-          if (!response.ok) throw new Error(upload.error || "Image upload failed.");
-          const result = await supabase.rpc("send_chat_image", {
-            p_conversation_id: conversationId,
-            p_chat_token: chatToken,
-            p_image_path: upload.path,
-            p_image_type: upload.type,
-            p_message: cleanMessage,
-          });
-          sendError = result.error;
-        } catch (uploadError) {
-          sendError = {
-            message: uploadError instanceof Error ? uploadError.message : "Image upload failed.",
-          };
+          const result = await response.json();
+          return { response, result };
+        };
+
+        let uploaded = await uploadImage(activeConversationId, activeChatToken);
+
+        // A restored chat can contain a stale token (for example, after browser
+        // storage was cleared or a conversation was replaced). Renew the session
+        // once and retry the upload, instead of leaving the customer stuck.
+        if (uploaded.response.status === 401 || uploaded.response.status === 403) {
+          const detail = String(uploaded.result?.error || "").toLowerCase();
+          if (detail.includes("chat session") || detail.includes("access denied")) {
+            const renewResponse = await fetch("/api/chat/conversations", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase() }),
+            });
+            const renewed = await renewResponse.json();
+            if (renewResponse.ok && renewed.conversation_id && renewed.chat_token) {
+              activeConversationId = renewed.conversation_id as string;
+              activeChatToken = renewed.chat_token as string;
+              const savedChat: SavedChat = {
+                name: name.trim(),
+                email: email.trim().toLowerCase(),
+                conversationId: activeConversationId,
+                chatToken: activeChatToken,
+              };
+              window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(savedChat));
+              setConversationId(activeConversationId);
+              setChatToken(activeChatToken);
+              setMessages([]);
+              knownMessageIdsRef.current = null;
+              setChatConnection("connecting");
+              uploaded = await uploadImage(activeConversationId, activeChatToken);
+            } else {
+              throw new Error(renewed.error || "Your chat session expired. Please start a new conversation.");
+            }
+          }
         }
+
+        if (!uploaded.response.ok) {
+          throw new Error(uploaded.result?.error || "Image upload failed. Please try again.");
+        }
+        const result = await supabase.rpc("send_chat_image", {
+          p_conversation_id: activeConversationId,
+          p_chat_token: activeChatToken,
+          p_image_path: uploaded.result.path,
+          p_image_type: uploaded.result.type,
+          p_message: cleanMessage,
+        });
+        sendError = result.error;
       } else {
         const result = await supabase.rpc("send_chat_message", {
-          p_conversation_id: conversationId,
-          p_chat_token: chatToken,
+          p_conversation_id: activeConversationId,
+          p_chat_token: activeChatToken,
           p_message: cleanMessage,
         });
         sendError = result.error;
@@ -316,14 +354,16 @@ export default function ChatPage() {
         setMessage("");
         setImageFile(null);
         const { data } = await supabase.rpc("get_chat_messages", {
-          p_conversation_id: conversationId,
-          p_chat_token: chatToken,
+          p_conversation_id: activeConversationId,
+          p_chat_token: activeChatToken,
         });
         if (data) setMessages((data as Message[]) || []);
       }
     } catch (sendException) {
       console.error("Unexpected send message error:", sendException);
-      setError("We couldn't send your message because of a connection issue. Please try again.");
+      setError(sendException instanceof Error
+        ? sendException.message
+        : "We couldn't send your message because of a connection issue. Please try again.");
     } finally {
       setSending(false);
     }
