@@ -1,5 +1,15 @@
 # HOPEBRIDGE Independent Platform + Meta Integration Plan
 
+## Customer journey requirements (owner-approved)
+- Customer account creation and login are optional convenience features, never a prerequisite for applying or contacting support.
+- The public flow is: optional Sign up / Log in → application form → submission confirmation with reference number → status tracking and authorized amount/status updates.
+- Show “Application submitted successfully” only after the server confirms the application was saved.
+- Use an approved status message such as “Congratulations, your application has been approved” only when staff have actually changed the application to Approved. Do not imply approval at submission time.
+- Show an assistance amount only when staff have recorded a verified/authorized amount; never invent or automatically promise an amount.
+- Keep a floating “Chat with Support” button visible across public pages and on mobile, including the form, submission confirmation, and status tracking pages.
+- Customer support chat must not require staff login. Staff authentication remains mandatory only for staff/admin tools. If customer identity verification is needed for private application details, use a reference number plus a suitable verification step rather than forcing a full customer account.
+- Test the whole journey on narrow mobile screens as well as desktop.
+
 ## Goal
 Keep HOPEBRIDGE usable independently of Facebook while connecting to Facebook only through Meta-authorized APIs. This project must not attempt to bypass Page restrictions, automate around enforcement, or promise immunity from restrictions.
 
@@ -45,7 +55,8 @@ Keep HOPEBRIDGE usable independently of Facebook while connecting to Facebook on
 
 ## First implementation checklist
 1. Fix and regression-test application submission first.
-2. Verify chat and status tracking independently.
-3. Audit RLS, upload validation, and staff authorization.
-4. Add opt-in audience capture and a content library.
-5. Implement Meta integration only after the independent core passes tests.
+2. Verify the public no-login chat flow and keep the floating chat button visible.
+3. Verify status tracking and approved amount display.
+4. Audit RLS, upload validation, and staff authorization.
+5. Add opt-in audience capture and a content library.
+6. Implement Meta integration only after the independent core passes tests.
