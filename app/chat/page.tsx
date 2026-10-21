@@ -63,15 +63,10 @@ export default function ChatPage() {
     return () => URL.revokeObjectURL(previewUrl);
   }, [imageFile]);
 
-  function chooseImage(file: File | null) {
+  async function chooseImage(file: File | null) {
     setError("");
     if (!file) {
       setImageFile(null);
-      return;
-    }
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setImageFile(null);
-      setError("Choose a JPG, PNG, or WebP image.");
       return;
     }
     if (file.size < 1 || file.size > 5 * 1024 * 1024) {
@@ -79,7 +74,26 @@ export default function ChatPage() {
       setError("Choose an image smaller than 5 MB.");
       return;
     }
-    setImageFile(file);
+
+    // Some Android gallery/file-picker providers report an empty or generic MIME
+    // type for real images. Detect the format from its bytes instead.
+    try {
+      const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+      const isJpeg = bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+      const isPng = bytes.length >= 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((value, index) => bytes[index] === value);
+      const isWebp = bytes.length >= 12
+        && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF"
+        && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
+      if (!isJpeg && !isPng && !isWebp) {
+        setImageFile(null);
+        setError("This image format isn't supported. Please choose a JPG, PNG, or WebP image.");
+        return;
+      }
+      setImageFile(file);
+    } catch {
+      setImageFile(null);
+      setError("We couldn't read that image. Please choose another JPG, PNG, or WebP file.");
+    }
   }
 
   async function enableReplyNotifications() {
@@ -277,7 +291,7 @@ export default function ChatPage() {
             p_conversation_id: conversationId,
             p_chat_token: chatToken,
             p_image_path: upload.path,
-            p_image_type: imageFile.type,
+            p_image_type: upload.type,
             p_message: cleanMessage,
           });
           sendError = result.error;
