@@ -39,8 +39,8 @@ export default function Apply() {
     if (step === 2) {
       if (!values.assistance_type) return setError("Please choose the type of assistance you need.");
       if (values.details.trim().length < 10) return setError("Please explain your request in at least 10 characters.");
-      if (attachment && (!["image/jpeg", "image/png", "image/webp"].includes(attachment.type) || attachment.size > 5 * 1024 * 1024)) {
-        return setError("Choose a JPG, PNG, or WebP image smaller than 5 MB.");
+      if (attachment && (attachment.size < 1 || attachment.size > 5 * 1024 * 1024)) {
+        return setError("Choose an image between 1 byte and 5 MB. Supported formats are JPG, PNG, and WebP.");
       }
     }
     setStep((old) => Math.min(3, old + 1));
