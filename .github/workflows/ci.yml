@@ -2,7 +2,7 @@ name: HOPEBRIDGE CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, "redesign/**"]
   push:
     branches: [main, "redesign/**"]
 
