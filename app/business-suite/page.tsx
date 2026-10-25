@@ -183,8 +183,8 @@ export default function BusinessSuitePage() {
             </section>
             <section style={card}>
               <h2 style={{ marginTop: 0, fontSize: 19 }}>Customer communication</h2>
-              <p style={{ color: "#65676b", lineHeight: 1.6 }}>Customers can contact your business by email from the public page. A secure in-app inbox with customer conversation history, replies, and notifications is the next integration step; it must use token-verified server endpoints so customer messages are not exposed to other page owners.</p>
-              {current.contact_email ? <a className="btn" href={"mailto:" + encodeURIComponent(current.contact_email) + "?subject=" + encodeURIComponent("Customer enquiry — " + current.name)}>Test customer contact</a> : <p>Add a contact email to enable direct customer enquiries.</p>}
+              <p style={{ color: "#65676b", lineHeight: 1.6 }}>Manage private messages from customers who contact your public business pages. Customers do not need a HOPEBRIDGE account.</p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}><Link className="btn" href="/business-suite/inbox">Open customer inbox</Link>{current.contact_email && <a className="btn secondary" href={"mailto:" + encodeURIComponent(current.contact_email) + "?subject=" + encodeURIComponent("Customer enquiry — " + current.name)}>Email contact</a>}</div>
             </section>
           </> : <section style={card}><h2 style={{ marginTop: 0 }}>Welcome to Business Suite</h2><p>Create your first page using the form. You can then publish updates and share its public link with customers.</p></section>}
         </section>
