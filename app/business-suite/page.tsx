@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
@@ -11,8 +12,8 @@ type BusinessPage = {
 };
 type PagePost = { id: string; page_id: string; body: string; created_at: string };
 
-const field: React.CSSProperties = { width: "100%", border: "1px solid #d0d7de", borderRadius: 10, padding: "12px 13px", background: "#fff", color: "#1c1e21", font: "inherit" };
-const card: React.CSSProperties = { background: "#fff", border: "1px solid #e4e6eb", borderRadius: 14, padding: 20, boxShadow: "0 1px 2px #0000000b" };
+const field: CSSProperties = { width: "100%", border: "1px solid #d0d7de", borderRadius: 10, padding: "12px 13px", background: "#fff", color: "#1c1e21", font: "inherit" };
+const card: CSSProperties = { background: "#fff", border: "1px solid #e4e6eb", borderRadius: 14, padding: 20, boxShadow: "0 1px 2px #0000000b" };
 
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -130,7 +131,7 @@ export default function BusinessSuitePage() {
       <p style={{ marginTop: 0, color: "#65676b", lineHeight: 1.6 }}>Create a public business page, publish updates, and give customers a direct way to contact you.</p>
       {error && <p role="alert" style={{ background: "#fff0f0", color: "#a61b1b", padding: 12, borderRadius: 10 }}>{error}</p>}
       {notice && <p role="status" style={{ background: "#e8f7ee", color: "#176b47", padding: 12, borderRadius: 10 }}>{notice}</p>}
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(250px, .8fr) minmax(0, 1.7fr)", gap: 18, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: 18, alignItems: "start" }}>
         <aside style={{ display: "grid", gap: 16 }}>
           <section style={card}>
             <h2 style={{ marginTop: 0, fontSize: 18 }}>Your pages <span style={{ color: "#65676b", fontSize: 13 }}>({pages.length})</span></h2>
