@@ -22,7 +22,9 @@ export default function CustomerLoginPage() {
         email: email.trim().toLowerCase(), password,
       });
       if (signInError) throw signInError;
-      router.replace("/account");
+      const requestedNext = new URLSearchParams(window.location.search).get("next");
+      // Only allow this known internal destination; never redirect to an arbitrary URL.
+      router.replace(requestedNext === "/business-suite" ? "/business-suite" : "/account");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error && /confirm/i.test(e.message)
