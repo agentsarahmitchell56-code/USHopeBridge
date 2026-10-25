@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 type Post = { id: number; category: string; title: string; body: string; date: string; likes: number };
 
@@ -40,12 +41,12 @@ export default function CommunityPage() {
         @media(max-width:700px) { .topbar { height:58px; padding:0 16px; } .toplinks { gap:10px; } .toplinks a { font-size:12px; } .hero { margin:10px 8px 0; border-radius:10px; } .cover { height:205px; padding:20px; } .profile { padding:0 16px 18px; gap:12px; flex-wrap:wrap; align-items:center; } .avatar { width:86px; height:86px; font-size:25px; margin-top:-30px; } .identity { min-width:calc(100% - 105px); padding-top:8px; } .identity h2 { font-size:22px; } .identity p { font-size:12px; } .actions { width:100%; padding:0; } .actions .btn { flex:1; } .tabs { padding:0 4px; } .tab { flex:1; padding:15px 6px; font-size:13px; } .layout { grid-template-columns:1fr; gap:0; margin-top:12px; padding:0 8px; } .layout aside { order:2; } .layout section { order:1; } .card { padding:16px; } }
       `}</style>
       <header className="topbar">
-        <a className="brand" href="/" aria-label="HOPEBRIDGE home">HOPE<span>BRIDGE</span></a>
-        <nav className="toplinks"><a href="/">Home</a><a href="/apply">Apply</a><a href="/status">Track status</a></nav>
+        <Link className="brand" href="/" aria-label="HOPEBRIDGE home">HOPE<span>BRIDGE</span></Link>
+        <nav className="toplinks"><Link href="/">Home</Link><Link href="/apply">Apply</Link><Link href="/status">Track status</Link></nav>
       </header>
       <section className="hero">
         <div className="cover"><div className="covercopy"><div className="eyebrow">COMMUNITY • INFORMATION • SUPPORT</div><h1>Support starts with clear information.</h1><p>Practical guidance to help you navigate the HOPEBRIDGE application process safely and confidently.</p></div></div>
-        <div className="profile"><div className="avatar" aria-label="HOPEBRIDGE logo">HB</div><div className="identity"><h2>HOPEBRIDGE Community</h2><p>Official community information page · Application guidance and support</p><div className="stats"><strong>Community updates</strong> · Public information</div></div><div className="actions"><button className="btn primary" onClick={() => { setFollowing(!following); setNotice(following ? "You unfollowed community updates on this device." : "You are following community updates on this device."); }}>{following ? "✓ Following" : "+ Follow"}</button><a className="btn secondary" style={{textDecoration:"none",display:"inline-flex",alignItems:"center"}} href="/chat">Message support</a></div></div>
+        <div className="profile"><div className="avatar" aria-label="HOPEBRIDGE logo">HB</div><div className="identity"><h2>HOPEBRIDGE Community</h2><p>Official community information page · Application guidance and support</p><div className="stats"><strong>Community updates</strong> · Public information</div></div><div className="actions"><button className="btn primary" onClick={() => { setFollowing(!following); setNotice(following ? "You unfollowed community updates on this device." : "You are following community updates on this device."); }}>{following ? "✓ Following" : "+ Follow"}</button><Link className="btn secondary" style={{textDecoration:"none",display:"inline-flex",alignItems:"center"}} href="/chat">Message support</Link></div></div>
         <div className="tabs" role="tablist" aria-label="Community sections">{(["All","Photos","Reels"] as const).map(t=><button key={t} role="tab" aria-selected={tab===t} className={`tab ${tab===t?"active":""}`} onClick={()=>{setTab(t); if(t!=="All")setNotice(t+" posts are not available yet. Showing verified text updates instead.");}}>{t}</button>)}</div>
       </section>
       <div className="layout">
@@ -60,7 +61,7 @@ export default function CommunityPage() {
           {posts.length ? posts.map(post=><article className="card post" key={post.id}><div className="posthead"><div className="miniavatar">HB</div><div><strong>HOPEBRIDGE Community</strong><small>{post.date}</small></div><span className="badge">{post.category}</span></div><h3>{post.title}</h3><p>{post.body}</p><div className="postactions"><button onClick={()=>setLiked(prev=>prev.includes(post.id)?prev.filter(id=>id!==post.id):[...prev,post.id])}>{liked.includes(post.id)?"♥ Liked":"♡ Like"} · {post.likes+(liked.includes(post.id)?1:0)}</button><button onClick={()=>setNotice("For private questions, please use Message support. Public comments are not enabled on this page.")}>▢ Comment</button><button onClick={()=>{if(typeof navigator!=="undefined"&&navigator.share) navigator.share({title:post.title,text:post.body,url:window.location.href}).catch(()=>{}); else setNotice("Copy this page link from your browser to share the community.");}}>↗ Share</button></div></article>) : <div className="empty">No updates match your search.</div>}
         </section>
       </div>
-      <footer className="footer">HOPEBRIDGE Community · Information only · No guaranteed outcomes<br/><br/><a href="/">Home</a><a href="/apply">Apply</a><a href="/status">Track application</a><a href="/chat">Contact support</a><a href="/privacy">Privacy</a></footer>
+      <footer className="footer">HOPEBRIDGE Community · Information only · No guaranteed outcomes<br/><br/><Link href="/">Home</Link><Link href="/apply">Apply</Link><Link href="/status">Track application</Link><Link href="/chat">Contact support</Link><Link href="/privacy">Privacy</Link></footer>
     </main>
   );
 }
