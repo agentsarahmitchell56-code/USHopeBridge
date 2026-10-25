@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PWAInstall from "./pwa-install";
 import "./globals.css";
+import "./social-refresh.css";
 
 export const metadata = {
   metadataBase: new URL("https://us-hope-bridge.vercel.app"),
@@ -41,7 +42,7 @@ export const metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#123c69",
+  themeColor: "#1877f2",
 };
 
 export default function RootLayout({
@@ -58,10 +59,11 @@ export default function RootLayout({
           <div className="container hb-global-footer-inner">
             <span>© {new Date().getFullYear()} HOPEBRIDGE Financial Assistance. All rights reserved.</span>
             <nav aria-label="Legal and support links" className="hb-global-footer-links">
-              <Link href="/privacy" style={{ color: "#1464f4" }}>Privacy Policy</Link>
-              <Link href="/terms" style={{ color: "#1464f4" }}>Terms &amp; Conditions</Link>
-              <Link href="/apply" style={{ color: "#1464f4" }}>Apply</Link>
-              <Link href="/status" style={{ color: "#1464f4" }}>Track application</Link>
+              <Link href="/privacy">Privacy Policy</Link>
+              <Link href="/terms">Terms &amp; Conditions</Link>
+              <Link href="/apply">Apply</Link>
+              <Link href="/status">Track application</Link>
+              <Link href="/chat">Contact support</Link>
             </nav>
           </div>
         </footer>
