@@ -223,6 +223,26 @@ export default function ChatPage() {
     }
   }
 
+  function handleImageSelection(file: File | null) {
+    setError("");
+    if (!file) {
+      setImageFile(null);
+      return;
+    }
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      setImageFile(null);
+      setError("Please choose a JPG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size < 1 || file.size > 5 * 1024 * 1024) {
+      setImageFile(null);
+      setError("Please choose an image smaller than 5 MB.");
+      return;
+    }
+    setImageFile(file);
+  }
+
   async function sendMessage(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const cleanMessage = message.trim();
@@ -367,11 +387,18 @@ export default function ChatPage() {
               })}
             </div>
             {error && <div role="alert" className="messenger-error messenger-error-inline">{error}</div>}
+            {imageFile && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "9px 12px", margin: "0 12px 8px", border: "1px solid #cbd5e1", borderRadius: 10, background: "#f8fafc", fontSize: 13 }}>
+              <span style={{ overflowWrap: "anywhere" }}>📎 {imageFile.name} · {(imageFile.size / 1024 / 1024).toFixed(2)} MB · Ready to send</span>
+              <button type="button" onClick={() => setImageFile(null)} disabled={sending} aria-label="Remove selected image" style={{ border: 0, background: "transparent", fontSize: 18, cursor: "pointer" }}>×</button>
+            </div>}
+            {sending && <p role="status" style={{ margin: "0 12px 8px", fontSize: 13, color: "#52667a" }}>Uploading and sending… Please keep this chat open.</p>}
             <form className="messenger-composer" onSubmit={sendMessage}>
-              <label title="Attach image" style={{ display: "grid", placeItems: "center", padding: "0 8px", cursor: "pointer", fontSize: 20 }}>
-                <span aria-hidden="true">＋</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setImageFile(e.target.files?.[0] || null)} style={{ display: "none" }} disabled={sending} />
+              <label title="Attach image" style={{ display: "grid", placeItems: "center", padding: "0 10px", cursor: sending ? "not-allowed" : "pointer", fontSize: 20, position: "relative", minWidth: 42, minHeight: 42, borderRadius: 10, background: "#f1f5f9", color: "#123c69" }}>
+                <span aria-hidden="true">＋</span>
+                <span style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>Choose an image</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { handleImageSelection(e.target.files?.[0] || null); e.currentTarget.value = ""; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: sending ? "not-allowed" : "pointer" }} disabled={sending} aria-label="Attach an image" />
               </label>
-              <input aria-label="Type a message" type="text" placeholder={imageFile ? `Image: ${imageFile.name}` : "Aa"} value={message}
+              <input aria-label="Type a message" type="text" placeholder={imageFile ? `Image selected: ${imageFile.name}` : "Aa"} value={message}
                 onChange={(e) => setMessage(e.target.value)} maxLength={5000} disabled={sending} />
               <button type="submit" className="messenger-send" disabled={sending || (!message.trim() && !imageFile)} aria-label="Send message" title="Send message">
                 {sending ? "…" : "➤"}
