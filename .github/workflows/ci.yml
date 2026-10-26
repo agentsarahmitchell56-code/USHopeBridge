@@ -53,8 +53,10 @@ jobs:
             echo "Checking $route"
             curl --fail --silent --show-error "http://127.0.0.1:3000$route" -o "/tmp/hopebridge-route.html"
             test -s /tmp/hopebridge-route.html
-            if grep -Eqi '<title>[^<]*404|This page could not be found' /tmp/hopebridge-route.html; then
-              echo "Unexpected not-found page for $route"
+            # Check the document title only. Framework/client bundles may include
+            # generic not-found text even when the requested route rendered correctly.
+            if grep -Eqi '<title>[^<]*404' /tmp/hopebridge-route.html; then
+              echo "Unexpected 404 document title for $route"
               exit 1
             fi
           done <<'ROUTES'
