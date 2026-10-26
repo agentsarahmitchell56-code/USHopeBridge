@@ -47,7 +47,7 @@ jobs:
           done
 
           test -s /tmp/hopebridge-home.html
-          grep -qi "A clear place to submit a request" /tmp/hopebridge-home.html
+          grep -qi "HOPEBRIDGE Financial Assistance" /tmp/hopebridge-home.html
 
           while IFS='|' read -r route expected; do
             echo "Checking $route"
