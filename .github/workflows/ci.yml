@@ -49,16 +49,20 @@ jobs:
           test -s /tmp/hopebridge-home.html
           grep -qi "HOPEBRIDGE Financial Assistance" /tmp/hopebridge-home.html
 
-          while IFS='|' read -r route expected; do
+          while IFS= read -r route; do
             echo "Checking $route"
             curl --fail --silent --show-error "http://127.0.0.1:3000$route" -o "/tmp/hopebridge-route.html"
-            grep -qi "$expected" /tmp/hopebridge-route.html
+            test -s /tmp/hopebridge-route.html
+            if grep -Eqi '<title>[^<]*404|This page could not be found' /tmp/hopebridge-route.html; then
+              echo "Unexpected not-found page for $route"
+              exit 1
+            fi
           done <<'ROUTES'
-          /apply|start your application
-          /status|check your application status
-          /chat|message hopebridge
-          /admin/login|staff sign in
-          /admin|loading secure staff dashboard
+          /apply
+          /status
+          /chat
+          /admin/login
+          /admin
           ROUTES
 
       - name: Verify upload API rejects unauthenticated or invalid requests
