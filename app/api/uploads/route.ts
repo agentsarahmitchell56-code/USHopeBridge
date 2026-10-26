@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const path = request.nextUrl.searchParams.get("path") || "";
-    const bearer = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+    const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
     const conversationId = request.nextUrl.searchParams.get("conversationId") || "";
     const chatToken = request.nextUrl.searchParams.get("chatToken") || "";
     if (!/^(applications|chat)\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(path)) {
