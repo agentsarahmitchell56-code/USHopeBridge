@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
       if (!profile || !["admin", "agent"].includes(profile.role)) return NextResponse.json({ error: "Access denied." }, { status: 403 });
     }
 
-    const { data, error } = await db.storage.from("hopebridge-private-uploads").createSignedUrl(path, 60);
+    const { data, error } = await db.storage.from("hopebridge-private-uploads").createSignedUrl(path, 3600);
     if (error || !data?.signedUrl) return NextResponse.json({ error: "Image unavailable." }, { status: 404 });
     return NextResponse.json({ url: data.signedUrl });
   } catch {
