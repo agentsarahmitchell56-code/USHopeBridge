@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import "./workspace.css";
 
 const navGroups = [
   { label: "WORKSPACE", items: [{ icon: "▦", label: "Overview" }, { icon: "▤", label: "Applications" }, { icon: "✉", label: "Inbox", badge: "3" }, { icon: "▣", label: "Customers" }] },
