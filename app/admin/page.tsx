@@ -595,7 +595,8 @@ export default function AdminDashboardPage() {
                   >
                     <strong style={{ display: "block" }}>{conversation.client_name}</strong>
                     <span style={{ display: "block", color: "#627d98", fontSize: 13, overflowWrap: "anywhere" }}>{conversation.client_email}</span>
-                    <span className="hb-inbox-preview">{conversationPreviews[conversation.id] ? `${conversationPreviews[conversation.id].sender_type === "client" ? "Customer" : "Staff"}: ${conversationPreviews[conversation.id].message || "Attachment"}` : "No messages yet"}</span>\n                    <span style={{ display: "block", color: "#718096", fontSize: 12, marginTop: 5 }}>{new Date(conversationPreviews[conversation.id]?.created_at || conversation.updated_at || conversation.created_at).toLocaleString()}</span>
+                    <span className="hb-inbox-preview">{conversationPreviews[conversation.id] ? `${conversationPreviews[conversation.id].sender_type === "client" ? "Customer" : "Staff"}: ${conversationPreviews[conversation.id].message || "Attachment"}` : "No messages yet"}</span>
+                    <span style={{ display: "block", color: "#718096", fontSize: 12, marginTop: 5 }}>{new Date(conversationPreviews[conversation.id]?.created_at || conversation.updated_at || conversation.created_at).toLocaleString()}</span>
                   </button>;
                 })}
               </div>
