@@ -287,7 +287,20 @@ export default function ChatPage() {
 
       if (sendError) {
         console.error("Send message error:", sendError);
-        setError(sendError.message || "Your message could not be sent. Please try again.");
+        const details = sendError.message || "Your message could not be sent. Please try again.";
+        if (/invalid chat session|chat session required|conversation.*not found/i.test(details)) {
+          window.localStorage.removeItem(CHAT_STORAGE_KEY);
+          setStarted(false);
+          setConversationId("");
+          setChatToken("");
+          setMessages([]);
+          setImageFile(null);
+          setError("This chat session has expired or is no longer valid. Please start a new chat to continue.");
+        } else if (/failed to fetch|networkerror|load failed|fetch failed/i.test(details)) {
+          setError("Connection to support was interrupted. Check your internet connection and try again. Your selected image has been kept.");
+        } else {
+          setError(details);
+        }
       } else {
         setMessage("");
         setImageFile(null);
@@ -299,7 +312,18 @@ export default function ChatPage() {
       }
     } catch (sendException) {
       console.error("Unexpected send message error:", sendException);
-      setError("We couldn't send your message because of a connection issue. Please try again.");
+      const details = sendException instanceof Error ? sendException.message : "";
+      if (/invalid chat session|chat session required|conversation.*not found/i.test(details)) {
+        window.localStorage.removeItem(CHAT_STORAGE_KEY);
+        setStarted(false);
+        setConversationId("");
+        setChatToken("");
+        setMessages([]);
+        setImageFile(null);
+        setError("This chat session has expired or is no longer valid. Please start a new chat to continue.");
+      } else {
+        setError("We couldn't send your message because the connection was interrupted. Check your internet connection and try again.");
+      }
     } finally {
       setSending(false);
     }
