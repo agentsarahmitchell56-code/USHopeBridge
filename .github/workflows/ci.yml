@@ -47,7 +47,7 @@ jobs:
           done
 
           test -s /tmp/hopebridge-home.html
-          grep -qi "HOPEBRIDGE Financial Assistance" /tmp/hopebridge-home.html
+          grep -Eqi "<title>[^<]*HOPEBRIDGE" /tmp/hopebridge-home.html
 
           while IFS= read -r route; do
             echo "Checking $route"
