@@ -1515,3 +1515,56 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .hb-page-cover-art{position:relative;overflow:hidden}
 .hb-banner-image{display:block;width:100%;height:100%;min-height:230px;max-height:390px;object-fit:cover;object-position:center}
 @media(max-width:640px){.hb-logo-image{width:44px;height:44px}.hb-banner-image{min-height:180px;max-height:230px;object-position:center}}
+
+
+/* HOPEBRIDGE 2026 brand system: readable type, consistent contrast and spacing */
+:root {
+  --hb-navy: #123c69;
+  --hb-blue: #1464f4;
+  --hb-ink: #17324d;
+  --hb-muted: #52677d;
+  --hb-line: #dce5ef;
+  --hb-surface: #ffffff;
+  --hb-page: #f4f7fb;
+}
+body { color:var(--hb-ink); background:var(--hb-page); }
+.hb-home { color:var(--hb-ink); font-size:16px; line-height:1.65; }
+.hb-home p { color:var(--hb-muted); line-height:1.7; }
+.hb-home h1,.hb-home h2,.hb-home h3 { color:var(--hb-navy); line-height:1.2; }
+.hb-brand-copy { color:var(--hb-navy); font-weight:850; letter-spacing:.015em; line-height:1.2; }
+.hb-brand-copy small { display:block; margin-top:4px; color:#52677d; font-size:10px; font-weight:750; letter-spacing:.13em; }
+.hb-page-profile-copy h1 { font-size:clamp(25px,3vw,36px); line-height:1.18; letter-spacing:-.025em; }
+.hb-page-profile-copy p { max-width:660px; font-size:16px; line-height:1.7; }
+.hb-eyebrow,.hb-post-tag { color:#1559b7; font-weight:800; letter-spacing:.105em; }
+.hb-social-card,.hb-service-card,.hb-step-card { color:var(--hb-ink); border-color:var(--hb-line); }
+.hb-social-card h2,.hb-feed-heading h2,.hb-service-card h3,.hb-step-card h3 { color:var(--hb-navy); }
+.hb-social-card p,.hb-service-card p,.hb-step-card p { color:#4c6278; font-size:14px; line-height:1.75; }
+.hb-feed-card-heading strong,.hb-about-row strong,.hb-start-actions strong { color:#173b5b; font-size:14px; }
+.hb-feed-card-heading small,.hb-about-row small,.hb-start-actions small { color:#536b80; font-size:12px; line-height:1.5; }
+.hb-feed-post-body h3 { color:#173b5b; font-size:19px; line-height:1.35; }
+.hb-feed-post-body p { color:#435c73; font-size:15px; line-height:1.75; }
+.hb-community-smallprint { color:#53677b; font-size:12px; line-height:1.7; }
+.hb-button { min-height:44px; font-size:14px; font-weight:800; letter-spacing:.005em; }
+.hb-nav-links a,.hb-login-link { color:#344f69; font-size:13px; font-weight:700; }
+.hb-nav-links a:hover,.hb-login-link:hover { color:var(--hb-blue); }
+.hb-feed-post-footer,.hb-feed-post-footer a,.hb-shortcuts-card > a { color:#31536f; font-size:12px; font-weight:700; }
+.hb-community-main { background:#f4f7fb; }
+.hb-social-card { background:#fff; box-shadow:0 3px 14px rgba(18,60,105,.045); }
+.hb-admin-page { color:#17324d; font-size:14px; line-height:1.65; }
+.hb-admin-page h1,.hb-admin-page h2,.hb-admin-page h3 { color:#123c69; line-height:1.25; }
+.hb-admin-page p,.hb-admin-page label,.hb-admin-page small { color:#4d6378; line-height:1.65; }
+.hb-admin-page input,.hb-admin-page select,.hb-admin-page textarea { color:#17324d; font-size:14px; }
+.hb-admin-page input::placeholder,.hb-admin-page textarea::placeholder { color:#718399; opacity:1; }
+.hb-admin-page button,.hb-admin-page a { font-weight:700; }
+.hb-home a:focus-visible,.hb-admin-page a:focus-visible,.hb-admin-page button:focus-visible,
+.hb-home button:focus-visible,.hb-home input:focus-visible,.hb-home textarea:focus-visible {
+  outline:3px solid #77a9f8; outline-offset:3px;
+}
+@media(max-width:640px) {
+  .hb-home { font-size:15px; }
+  .hb-page-profile-copy h1 { font-size:23px; }
+  .hb-page-profile-copy p { font-size:14px; }
+  .hb-feed-post-body h3 { font-size:17px; }
+  .hb-feed-post-body p,.hb-social-card p { font-size:14px; }
+  .hb-button { min-height:44px; }
+}
