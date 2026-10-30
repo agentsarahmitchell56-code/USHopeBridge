@@ -254,27 +254,53 @@ export default function ChatPage() {
       let sendError: { message: string } | null = null;
 
       if (imageFile) {
+        let uploadedPath = "";
         try {
           const form = new FormData();
           form.append("file", imageFile);
           form.append("purpose", "chat");
           form.append("conversationId", conversationId);
           form.append("chatToken", chatToken);
-          const response = await fetch("/api/uploads", { method: "POST", body: form });
-          const upload = await response.json();
-          if (!response.ok) throw new Error(upload.error || "Image upload failed.");
-          const result = await supabase.rpc("send_chat_image", {
-            p_conversation_id: conversationId,
-            p_chat_token: chatToken,
-            p_image_path: upload.path,
-            p_image_type: imageFile.type,
-            p_message: cleanMessage,
-          });
-          sendError = result.error;
+          let response: Response;
+          try {
+            response = await fetch("/api/uploads", { method: "POST", body: form });
+          } catch {
+            throw new Error("The image upload request could not reach HOPEBRIDGE. Check your connection and try again.");
+          }
+          const upload = await response.json().catch(() => null) as { path?: string; error?: string } | null;
+          if (!response.ok) {
+            throw new Error(upload?.error || `Image upload failed (HTTP ${response.status}). Please try again.`);
+          }
+          if (!upload?.path || typeof upload.path !== "string") {
+            throw new Error("The upload server did not confirm that the image was saved. Please try again.");
+          }
+          uploadedPath = upload.path;
         } catch (uploadError) {
           sendError = {
-            message: uploadError instanceof Error ? uploadError.message : "Image upload failed.",
+            message: uploadError instanceof Error ? uploadError.message : "The image could not be uploaded. Please try again.",
           };
+        }
+
+        if (!sendError && uploadedPath) {
+          try {
+            const result = await supabase.rpc("send_chat_image", {
+              p_conversation_id: conversationId,
+              p_chat_token: chatToken,
+              p_image_path: uploadedPath,
+              p_image_type: imageFile.type,
+              p_message: cleanMessage,
+            });
+            sendError = result.error;
+            if (sendError) {
+              sendError = {
+                message: `The image was uploaded, but it could not be added to your conversation: ${sendError.message}`,
+              };
+            }
+          } catch {
+            sendError = {
+              message: "The image was uploaded, but HOPEBRIDGE could not post it to the conversation. Your selected image has been kept; please retry or contact support.",
+            };
+          }
         }
       } else {
         const result = await supabase.rpc("send_chat_message", {
