@@ -26,7 +26,7 @@ export default function HomePage() {
       <header className="hb-header">
         <div className="hb-container hb-nav">
           <Link href="/" className="hb-brand" aria-label="HOPEBRIDGE home">
-            <span className="hb-brand-mark" aria-hidden="true"><span /><span /><span /></span>
+            <img className="hb-logo-image" src="/images/hopebridge-logo.svg" alt="HOPEBRIDGE Financial Assistance" />
             <span className="hb-brand-copy">HOPEBRIDGE<small>FINANCIAL ASSISTANCE</small></span>
           </Link>
           <nav className="hb-nav-links" aria-label="Main navigation">
@@ -46,13 +46,9 @@ export default function HomePage() {
       </header>
 
       <section className="hb-page-cover">
-        <div className="hb-page-cover-art" aria-hidden="true">
-          <span className="hb-cover-orb hb-cover-orb-one" /><span className="hb-cover-orb hb-cover-orb-two" />
-          <span className="hb-cover-line hb-cover-line-one" /><span className="hb-cover-line hb-cover-line-two" />
-          <span className="hb-cover-wordmark">HOPE<span>BRIDGE</span></span>
-        </div>
+        <div className="hb-page-cover-art"><img className="hb-banner-image" src="/images/hopebridge-banner.svg" alt="HOPEBRIDGE Financial Assistance — Support Today, Stronger Tomorrow" /></div>
         <div className="hb-container hb-page-profile">
-          <div className="hb-page-avatar" aria-hidden="true"><span className="hb-brand-mark"><span /><span /><span /></span></div>
+          <div className="hb-page-avatar"><img className="hb-logo-image hb-avatar-logo" src="/images/hopebridge-logo.svg" alt="HOPEBRIDGE logo" /></div>
           <div className="hb-page-profile-copy">
             <span className="hb-eyebrow"><span className="hb-eyebrow-line" /> OFFICIAL WEBSITE</span>
             <h1>HOPEBRIDGE Financial Assistance</h1>
