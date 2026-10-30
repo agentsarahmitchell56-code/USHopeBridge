@@ -1505,3 +1505,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
  .hb-inbox-preview { -webkit-line-clamp:2; }
  .hb-inbox-thread { scroll-margin-top:75px; }
 }
+
+
+/* HOPEBRIDGE brand assets */
+.hb-logo-image{display:block;width:54px;height:54px;object-fit:contain;flex:0 0 auto}
+.hb-brand{display:flex;align-items:center;gap:12px}
+.hb-page-avatar{display:grid;place-items:center;overflow:hidden}
+.hb-avatar-logo{width:100%;height:100%;object-fit:contain}
+.hb-page-cover-art{position:relative;overflow:hidden}
+.hb-banner-image{display:block;width:100%;height:100%;min-height:230px;max-height:390px;object-fit:cover;object-position:center}
+@media(max-width:640px){.hb-logo-image{width:44px;height:44px}.hb-banner-image{min-height:180px;max-height:230px;object-position:center}}
