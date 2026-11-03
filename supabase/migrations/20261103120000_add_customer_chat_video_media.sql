@@ -25,12 +25,12 @@ begin
   end if;
 
   valid_media :=
-    (p_media_type = 'image/jpeg' and p_media_path ~ '^chat/[0-9a-f-]{36}\\.jpg$') or
-    (p_media_type = 'image/png' and p_media_path ~ '^chat/[0-9a-f-]{36}\\.png$') or
-    (p_media_type = 'image/webp' and p_media_path ~ '^chat/[0-9a-f-]{36}\\.webp$') or
-    (p_media_type = 'video/mp4' and p_media_path ~ '^chat/[0-9a-f-]{36}\\.mp4$') or
-    (p_media_type = 'video/webm' and p_media_path ~ '^chat/[0-9a-f-]{36}\\.webm$') or
-    (p_media_type = 'video/quicktime' and p_media_path ~ '^chat/[0-9a-f-]{36}\\.mov$');
+    (p_media_type = 'image/jpeg' and p_media_path ~ '^chat/[0-9a-f-]{36}[.]jpg$') or
+    (p_media_type = 'image/png' and p_media_path ~ '^chat/[0-9a-f-]{36}[.]png$') or
+    (p_media_type = 'image/webp' and p_media_path ~ '^chat/[0-9a-f-]{36}[.]webp$') or
+    (p_media_type = 'video/mp4' and p_media_path ~ '^chat/[0-9a-f-]{36}[.]mp4$') or
+    (p_media_type = 'video/webm' and p_media_path ~ '^chat/[0-9a-f-]{36}[.]webm$') or
+    (p_media_type = 'video/quicktime' and p_media_path ~ '^chat/[0-9a-f-]{36}[.]mov$');
 
   if not coalesce(valid_media, false) then
     raise exception 'Invalid chat attachment' using errcode = '22023';
