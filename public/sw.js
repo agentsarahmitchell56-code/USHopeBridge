@@ -61,3 +61,36 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch {
+    payload = { title: "HOPEBRIDGE", body: event.data ? event.data.text() : "You have a new notification." };
+  }
+  const title = typeof payload.title === "string" ? payload.title : "HOPEBRIDGE";
+  const options = {
+    body: typeof payload.body === "string" ? payload.body : "You have a new update.",
+    icon: "/icon.svg",
+    badge: "/icon.svg",
+    data: { url: typeof payload.url === "string" && payload.url.startsWith("/") ? payload.url : "/" },
+    tag: typeof payload.tag === "string" ? payload.tag : "hopebridge-notification",
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const destination = event.notification.data && event.notification.data.url;
+  const target = typeof destination === "string" && destination.startsWith("/") ? destination : "/";
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of windows) {
+      if ("focus" in client) {
+        await client.focus();
+        if ("navigate" in client) await client.navigate(target);
+        return;
+      }
+    }
+    await self.clients.openWindow(target);
+  })());
+});
