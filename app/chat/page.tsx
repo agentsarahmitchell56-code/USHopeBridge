@@ -437,7 +437,7 @@ export default function ChatPage() {
                       {!mine && !grouped && <div className="message-sender">HOPEBRIDGE Support</div>}
                       <div className={`messenger-bubble ${mine ? "messenger-bubble-mine" : "messenger-bubble-agent"}`}>
                         {item.message && <span style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.message}</span>}
-                        {item.image_path && imageUrls[item.id] && <a href={imageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={imageUrls[item.id]} alt="Customer attachment" width={480} height={320} unoptimized style={{ display: "block", maxWidth: "100%", maxHeight: 260, width: "auto", height: "auto", objectFit: "contain", borderRadius: 10, marginTop: item.message ? 8 : 0 }} /></a>}
+                        {item.image_path && imageUrls[item.id] && (item.image_type?.startsWith("video/") ? <video controls playsInline preload="metadata" src={imageUrls[item.id]} style={{ display: "block", maxWidth: "100%", maxHeight: 280, width: "100%", borderRadius: 10, marginTop: item.message ? 8 : 0 }} /> : <a href={imageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={imageUrls[item.id]} alt="Customer attachment" width={480} height={320} unoptimized style={{ display: "block", maxWidth: "100%", maxHeight: 260, width: "auto", height: "auto", objectFit: "contain", borderRadius: 10, marginTop: item.message ? 8 : 0 }} /></a>)}
                         {item.image_path && !imageUrls[item.id] && <span style={{ fontSize: 12 }}>Loading attached image…</span>}
                       </div>
                       <time className={`message-time ${mine ? "message-time-mine" : ""}`} dateTime={item.created_at}>{formatMessageTime(item.created_at)}</time>
