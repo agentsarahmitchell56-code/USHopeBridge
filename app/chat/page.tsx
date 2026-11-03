@@ -38,7 +38,7 @@ export default function ChatPage() {
   const [chatToken, setChatToken] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -248,57 +248,64 @@ export default function ChatPage() {
     }
   }
 
-  function handleImageSelection(file: File | null) {
+  function handleMediaSelection(file: File | null) {
     setError("");
     if (!file) {
-      setImageFile(null);
+      setMediaFile(null);
       return;
     }
-    const allowed = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) {
-      setImageFile(null);
-      setError("Please choose a JPG, PNG, or WebP image.");
+    const imageTypes = ["image/jpeg", "image/png", "image/webp"];
+    const videoTypes = ["video/mp4", "video/webm", "video/quicktime"];
+    const isImage = imageTypes.includes(file.type);
+    const isVideo = videoTypes.includes(file.type);
+    if (!isImage && !isVideo) {
+      setMediaFile(null);
+      setError("Choose JPG, PNG, WebP, MP4, WebM, or MOV media.");
       return;
     }
-    if (file.size < 1 || file.size > 5 * 1024 * 1024) {
-      setImageFile(null);
-      setError("Please choose an image smaller than 5 MB.");
+    if (file.size < 1 || file.size > (isImage ? 5 : 25) * 1024 * 1024) {
+      setMediaFile(null);
+      setError(isImage ? "Images must be 5 MB or smaller." : "Videos must be 25 MB or smaller.");
       return;
     }
-    setImageFile(file);
+    setMediaFile(file);
   }
 
   async function sendMessage(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const cleanMessage = message.trim();
-    if ((!cleanMessage && !imageFile) || !conversationId || !chatToken || sending) return;
+    if ((!cleanMessage && !mediaFile) || !conversationId || !chatToken || sending) return;
 
     setSending(true);
     setError("");
     try {
       let sendError: { message: string } | null = null;
 
-      if (imageFile) {
+      if (mediaFile) {
         try {
-          const form = new FormData();
-          form.append("file", imageFile);
-          form.append("purpose", "chat");
-          form.append("conversationId", conversationId);
-          form.append("chatToken", chatToken);
-          const response = await fetch("/api/uploads", { method: "POST", body: form });
-          const upload = await response.json();
-          if (!response.ok) throw new Error(upload.error || "Image upload failed.");
-          const result = await supabase.rpc("send_chat_image", {
+          // Request a signed upload token, then send bytes directly to Supabase
+          // Storage. This avoids Vercel's serverless request-body limit for video.
+          const signResponse = await fetch("/api/uploads/sign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ purpose: "chat", audience: "customer", conversationId, chatToken, mediaType: mediaFile.type, size: mediaFile.size }),
+          });
+          const upload = await signResponse.json();
+          if (!signResponse.ok || !upload.path || !upload.token) throw new Error(upload.error || "Could not prepare the attachment upload.");
+          const storageResult = await supabase.storage.from("hopebridge-private-uploads")
+            .uploadToSignedUrl(upload.path, upload.token, mediaFile, { contentType: mediaFile.type, upsert: false });
+          if (storageResult.error) throw new Error(storageResult.error.message || "The attachment could not be uploaded.");
+          const result = await supabase.rpc("send_chat_media", {
             p_conversation_id: conversationId,
             p_chat_token: chatToken,
-            p_image_path: upload.path,
-            p_image_type: imageFile.type,
+            p_media_path: upload.path,
+            p_media_type: mediaFile.type,
             p_message: cleanMessage,
           });
           sendError = result.error;
         } catch (uploadError) {
           sendError = {
-            message: uploadError instanceof Error ? uploadError.message : "Image upload failed.",
+            message: uploadError instanceof Error ? uploadError.message : "Attachment upload failed.",
           };
         }
       } else {
@@ -319,7 +326,7 @@ export default function ChatPage() {
           setConversationId("");
           setChatToken("");
           setMessages([]);
-          setImageFile(null);
+          setMediaFile(null);
           setError("This chat session has expired or is no longer valid. Please start a new chat to continue.");
         } else if (/failed to fetch|networkerror|load failed|fetch failed/i.test(details)) {
           setError("Connection to support was interrupted. Check your internet connection and try again. Your selected image has been kept.");
@@ -328,14 +335,14 @@ export default function ChatPage() {
         }
       } else {
         setMessage("");
-        setImageFile(null);
+        setMediaFile(null);
         // The message is already saved. Notification delivery is best-effort and
         // must never turn a successful chat send into a visible send failure.
         try {
           await fetch("/api/notifications/staff-message", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ conversationId, chatToken, message: cleanMessage, hasAttachment: !!imageFile }),
+            body: JSON.stringify({ conversationId, chatToken, message: cleanMessage, hasAttachment: !!mediaFile }),
           });
         } catch (notificationError) {
           console.warn("Staff message notification could not be delivered:", notificationError);
@@ -355,7 +362,7 @@ export default function ChatPage() {
         setConversationId("");
         setChatToken("");
         setMessages([]);
-        setImageFile(null);
+        setMediaFile(null);
         setError("This chat session has expired or is no longer valid. Please start a new chat to continue.");
       } else {
         setError("We couldn't send your message because the connection was interrupted. Check your internet connection and try again.");
@@ -373,7 +380,7 @@ export default function ChatPage() {
     setChatToken("");
     knownMessageIdsRef.current = null;
     setMessages([]);
-    setMessage(""); setImageFile(null); imageUrlsRef.current = {}; setImageUrls({});
+    setMessage(""); setMediaFile(null); imageUrlsRef.current = {}; setImageUrls({});
     setStarted(false);
     setError("");
   }
@@ -447,20 +454,20 @@ export default function ChatPage() {
               })}
             </div>
             {error && <div role="alert" className="messenger-error messenger-error-inline">{error}</div>}
-            {imageFile && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "9px 12px", margin: "0 12px 8px", border: "1px solid #cbd5e1", borderRadius: 10, background: "#f8fafc", fontSize: 13 }}>
-              <span style={{ overflowWrap: "anywhere" }}>📎 {imageFile.name} · {(imageFile.size / 1024 / 1024).toFixed(2)} MB · Ready to send</span>
-              <button type="button" onClick={() => setImageFile(null)} disabled={sending} aria-label="Remove selected image" style={{ border: 0, background: "transparent", fontSize: 18, cursor: "pointer" }}>×</button>
+            {mediaFile && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "9px 12px", margin: "0 12px 8px", border: "1px solid #cbd5e1", borderRadius: 10, background: "#f8fafc", fontSize: 13 }}>
+              <span style={{ overflowWrap: "anywhere" }}>📎 {mediaFile.name} · {(mediaFile.size / 1024 / 1024).toFixed(2)} MB · Ready to send</span>
+              <button type="button" onClick={() => setMediaFile(null)} disabled={sending} aria-label="Remove selected image" style={{ border: 0, background: "transparent", fontSize: 18, cursor: "pointer" }}>×</button>
             </div>}
             {sending && <p role="status" style={{ margin: "0 12px 8px", fontSize: 13, color: "#52667a" }}>Uploading and sending… Please keep this chat open.</p>}
             <form className="messenger-composer" onSubmit={sendMessage}>
-              <label title="Attach image" style={{ display: "grid", placeItems: "center", padding: "0 10px", cursor: sending ? "not-allowed" : "pointer", fontSize: 20, position: "relative", minWidth: 42, minHeight: 42, borderRadius: 10, background: "#f1f5f9", color: "#123c69" }}>
+              <label title="Attach photo or video" style={{ display: "grid", placeItems: "center", padding: "0 10px", cursor: sending ? "not-allowed" : "pointer", fontSize: 20, position: "relative", minWidth: 42, minHeight: 42, borderRadius: 10, background: "#f1f5f9", color: "#123c69" }}>
                 <span aria-hidden="true">＋</span>
-                <span style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>Choose an image</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { handleImageSelection(e.target.files?.[0] || null); e.currentTarget.value = ""; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: sending ? "not-allowed" : "pointer" }} disabled={sending} aria-label="Attach an image" />
+                <span style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>Choose a photo or video</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" onChange={(e) => { handleMediaSelection(e.target.files?.[0] || null); e.currentTarget.value = ""; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: sending ? "not-allowed" : "pointer" }} disabled={sending} aria-label="Attach a photo or video" />
               </label>
-              <input aria-label="Type a message" type="text" placeholder={imageFile ? `Image selected: ${imageFile.name}` : "Aa"} value={message}
+              <input aria-label="Type a message" type="text" placeholder={mediaFile ? `Attachment selected: ${mediaFile.name}` : "Aa"} value={message}
                 onChange={(e) => setMessage(e.target.value)} maxLength={5000} disabled={sending} />
-              <button type="submit" className="messenger-send" disabled={sending || (!message.trim() && !imageFile)} aria-label="Send message" title="Send message">
+              <button type="submit" className="messenger-send" disabled={sending || (!message.trim() && !mediaFile)} aria-label="Send message" title="Send message">
                 {sending ? "…" : "➤"}
               </button>
             </form>

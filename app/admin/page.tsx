@@ -260,14 +260,18 @@ export default function AdminDashboardPage() {
 
       let savedMessage: Message | null = null;
       if (replyMedia) {
-        const uploadForm = new FormData();
-        uploadForm.append("file", replyMedia);
-        uploadForm.append("purpose", "chat");
-        uploadForm.append("audience", "staff");
-        uploadForm.append("conversationId", selectedConversation.id);
-        const uploadResponse = await fetch("/api/uploads", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` }, body: uploadForm });
-        const uploadResult = await uploadResponse.json();
-        if (!uploadResponse.ok || !uploadResult.path) throw new Error(uploadResult.error || "The attachment could not be uploaded.");
+        // Send attachment bytes directly to private Supabase Storage so larger
+        // videos are not blocked by Vercel's serverless request-body limit.
+        const signResponse = await fetch("/api/uploads/sign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ purpose: "chat", audience: "staff", conversationId: selectedConversation.id, mediaType: replyMedia.type, size: replyMedia.size }),
+        });
+        const uploadResult = await signResponse.json();
+        if (!signResponse.ok || !uploadResult.path || !uploadResult.token) throw new Error(uploadResult.error || "Could not prepare the attachment upload.");
+        const storageResult = await supabase.storage.from("hopebridge-private-uploads")
+          .uploadToSignedUrl(uploadResult.path, uploadResult.token, replyMedia, { contentType: replyMedia.type, upsert: false });
+        if (storageResult.error) throw new Error(storageResult.error.message || "The attachment could not be uploaded.");
 
         const response = await fetch("/api/chat/staff-message", {
           method: "POST",
