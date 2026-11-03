@@ -329,6 +329,17 @@ export default function ChatPage() {
       } else {
         setMessage("");
         setImageFile(null);
+        // The message is already saved. Notification delivery is best-effort and
+        // must never turn a successful chat send into a visible send failure.
+        try {
+          await fetch("/api/notifications/staff-message", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conversationId, chatToken, message: cleanMessage, hasAttachment: !!imageFile }),
+          });
+        } catch (notificationError) {
+          console.warn("Staff message notification could not be delivered:", notificationError);
+        }
         const { data } = await supabase.rpc("get_chat_messages", {
           p_conversation_id: conversationId,
           p_chat_token: chatToken,
