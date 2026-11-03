@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const bytes = new Uint8Array(await file.arrayBuffer());
     if (!hasExpectedSignature(file.type, bytes)) {
-      return NextResponse.json({ error: "The image contents do not match the selected file type." }, { status: 415 });
+      return NextResponse.json({ error: "The file contents do not match the selected media type." }, { status: 415 });
     }
 
     const db = adminClient();
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     const path = folder + "/" + crypto.randomUUID() + "." + extByType[file.type];
     const { error } = await db.storage.from("hopebridge-private-uploads").upload(path, bytes, { contentType: file.type, upsert: false });
-    if (error) return NextResponse.json({ error: "The image could not be saved. Please try again." }, { status: 500 });
+    if (error) return NextResponse.json({ error: "The media file could not be saved. Please try again." }, { status: 500 });
     return NextResponse.json({ path, type: file.type, mediaKind: isVideo ? "video" : "image" });
   } catch (error) {
     console.error("Private upload failed:", error);
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
     const conversationId = request.nextUrl.searchParams.get("conversationId") || "";
     const chatToken = request.nextUrl.searchParams.get("chatToken") || "";
-    if (!/^(applications|chat)\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(path)) {
+    if (!/^(applications|chat)\/[0-9a-f-]{36}\.(jpg|png|webp|mp4|webm|mov)$/i.test(path)) {
       return NextResponse.json({ error: "Access denied." }, { status: 401 });
     }
 
