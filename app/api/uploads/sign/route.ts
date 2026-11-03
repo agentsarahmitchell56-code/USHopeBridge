@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     const ip = clientIp(request);
     if (!ip) return NextResponse.json({ error: "Upload could not be safely rate-limited." }, { status: 503 });
-    const keyHash = (await import("node:crypto")).createHmac("sha256", serviceKey)
+    const keyHash = createHmac("sha256", serviceKey)
       .update("upload:chat:" + ip).digest("hex");
     const { data: allowed, error: limitError } = await db.rpc("consume_upload_rate_limit", {
       p_key_hash: keyHash, p_limit: 20, p_window_seconds: 3600,
