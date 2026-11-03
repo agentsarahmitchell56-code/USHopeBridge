@@ -373,16 +373,30 @@ export default function AdminDashboardPage() {
       setSavingId("");
       return;
     }
-    const { error: updateError } = await supabase
-      .from("applications")
-      .update({ status, reviewed_by: authData.user.id, reviewed_at: new Date().toISOString() })
-      .eq("id", application.id);
-
-    if (updateError) {
-      setError("Status update failed. Your account may not have permission to update applications.");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    let updateError: string | null = null;
+    let updated: Application | null = null;
+    if (!accessToken) {
+      updateError = "Your staff session has expired. Please sign in again.";
     } else {
-      const updated = { ...application, status, reviewed_by: authData.user.id, reviewed_at: new Date().toISOString() };
-      setApplications((current) => current.map((item) => item.id === application.id ? { ...item, ...updated } : item));
+      try {
+        const response = await fetch("/api/applications/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ applicationId: application.id, status }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result.application) updateError = result.error || "Status update failed.";
+        else updated = { ...application, ...result.application };
+      } catch {
+        updateError = "Status update could not reach the server. Check your connection and try again.";
+      }
+    }
+    if (updateError) {
+      setError(updateError);
+    } else if (updated) {
+      setApplications((current) => current.map((item) => item.id === application.id ? updated! : item));
       if (selectedApplication?.id === application.id) setSelectedApplication(updated);
     }
     setSavingId("");
