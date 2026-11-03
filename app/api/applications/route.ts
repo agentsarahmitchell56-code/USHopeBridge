@@ -1,6 +1,7 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendHopebridgeEmail, sendHopebridgePush } from "../../../lib/notification-delivery";
 
 export const runtime = "nodejs";
 
@@ -123,6 +124,19 @@ export async function POST(request: NextRequest) {
     if (conversationError) {
       console.error("Application support conversation creation failed:", conversationError);
     }
+
+    // Notifications are best-effort: delivery problems must never undo a saved application.
+    await sendHopebridgeEmail(
+      `New HOPEBRIDGE application: ${referenceNumber}`,
+      `A new financial assistance application was submitted.\\n\\nApplicant: ${fullName}\\nEmail: ${email}\\nAssistance type: ${assistanceType}\\nReference: ${referenceNumber}\\n\\nOpen the staff dashboard: https://us-hope-bridge.vercel.app/admin`,
+    );
+    const { data: staffProfiles, error: staffLookupError } = await db.from("profiles")
+      .select("id").in("role", ["admin", "agent"]);
+    if (staffLookupError) console.error("Could not load staff notification recipients:", staffLookupError);
+    await Promise.all((staffProfiles || []).map((staff) => sendHopebridgePush(
+      { staffUserId: staff.id },
+      { title: "New HOPEBRIDGE application", body: `${fullName} submitted ${assistanceType}.`, url: "/admin", tag: `application-${application.id}` },
+    )));
 
     return NextResponse.json({
       reference_number: referenceNumber,
