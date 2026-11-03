@@ -80,6 +80,7 @@ export default function AdminDashboardPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageImageUrls, setMessageImageUrls] = useState<Record<string, string>>({});
   const [replyText, setReplyText] = useState("");
+  const [replyMedia, setReplyMedia] = useState<File | null>(null);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [replySending, setReplySending] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -248,64 +249,69 @@ export default function AdminDashboardPage() {
   async function sendStaffReply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const cleanMessage = replyText.trim();
-    if (!selectedConversation || !cleanMessage || replySending) return;
-
+    if (!selectedConversation || (!cleanMessage && !replyMedia) || replySending) return;
     setReplySending(true);
     setError("");
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (authError || !authData.user || !accessToken) throw new Error("Your staff session has expired. Please sign in again.");
 
-    if (authError || !authData.user) {
-      setError("Your staff session has expired. Please sign in again.");
-      setReplySending(false);
-      return;
-    }
+      let savedMessage: Message | null = null;
+      if (replyMedia) {
+        const uploadForm = new FormData();
+        uploadForm.append("file", replyMedia);
+        uploadForm.append("purpose", "chat");
+        uploadForm.append("audience", "staff");
+        uploadForm.append("conversationId", selectedConversation.id);
+        const uploadResponse = await fetch("/api/uploads", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` }, body: uploadForm });
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResponse.ok || !uploadResult.path) throw new Error(uploadResult.error || "The attachment could not be uploaded.");
 
-    const { data: messageId, error: insertError } = await supabase.rpc("send_staff_chat_message", {
-      p_conversation_id: selectedConversation.id,
-      p_message: cleanMessage,
-    });
-
-    if (insertError || !messageId) {
-      console.error("Staff reply error:", insertError);
-      setError(insertError?.message || "The reply was not saved. Please refresh the dashboard and try again.");
-    } else {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session?.access_token) {
+        const response = await fetch("/api/chat/staff-message", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ conversationId: selectedConversation.id, message: cleanMessage, mediaPath: uploadResult.path, mediaType: replyMedia.type }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result.message) throw new Error(result.error || "The attachment message could not be sent.");
+        savedMessage = result.message as Message;
+      } else {
+        const { data: messageId, error: insertError } = await supabase.rpc("send_staff_chat_message", {
+          p_conversation_id: selectedConversation.id,
+          p_message: cleanMessage,
+        });
+        if (insertError || !messageId) throw new Error(insertError?.message || "The reply was not saved. Please try again.");
+        savedMessage = { id: messageId as string, conversation_id: selectedConversation.id, sender_type: "agent", sender_id: authData.user.id, message: cleanMessage, created_at: new Date().toISOString() };
+        try {
           await fetch("/api/notifications/customer-reply", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${sessionData.session.access_token}`,
-            },
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
             body: JSON.stringify({ conversationId: selectedConversation.id }),
           });
-        }
-      } catch (notificationError) {
-        console.warn("Customer push notification could not be delivered:", notificationError);
+        } catch (notificationError) { console.warn("Customer push notification could not be delivered:", notificationError); }
       }
-      setReplyText("");
-      const now = new Date().toISOString();
-      const newMessage: Message = {
-        id: messageId as string,
-        conversation_id: selectedConversation.id,
-        sender_type: "agent",
-        sender_id: authData.user.id,
-        message: cleanMessage,
-        created_at: now,
-      };
-      setMessages((current) =>
-        current.some((item) => item.id === newMessage.id)
-          ? current
-          : [...current, newMessage].sort(
-              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-            )
-      );
-      setConversations((current) => current
-        .map((item) => item.id === selectedConversation.id ? { ...item, updated_at: now } : item)
-        .sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()));
+      if (savedMessage) {
+        setMessages((current) => current.some((item) => item.id === savedMessage!.id) ? current : [...current, savedMessage!]);
+        setReplyText("");
+        setReplyMedia(null);
+        setConversations((current) => current.map((item) => item.id === selectedConversation.id ? { ...item, updated_at: savedMessage!.created_at } : item)
+          .sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()));
+        if (savedMessage.image_path) {
+          const mediaResponse = await fetch(`/api/uploads?path=${encodeURIComponent(savedMessage.image_path)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+          const mediaResult = await mediaResponse.json();
+          if (mediaResponse.ok && mediaResult.url) {
+            messageImageUrlsRef.current[savedMessage.id] = mediaResult.url;
+            setMessageImageUrls((current) => ({ ...current, [savedMessage!.id]: mediaResult.url }));
+          }
+        }
+      }
+    } catch (sendError) {
+      setError(sendError instanceof Error ? sendError.message : "The message could not be sent. Please try again.");
+    } finally {
+      setReplySending(false);
     }
-    setReplySending(false);
   }
 
   useEffect(() => {
