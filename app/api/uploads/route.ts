@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       const { data: conversation } = await db.from("conversations").select("id,chat_token").eq("id", conversationId).maybeSingle();
       if (!conversation) return NextResponse.json({ error: "Conversation not found." }, { status: 404 });
       if (audience === "staff") {
-        const bearer = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+        const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
         if (!bearer) return NextResponse.json({ error: "Staff sign-in required." }, { status: 401 });
         const { data: authData, error: authError } = await db.auth.getUser(bearer);
         if (authError || !authData.user) return NextResponse.json({ error: "Staff session expired." }, { status: 401 });
