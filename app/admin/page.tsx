@@ -655,25 +655,40 @@ export default function AdminDashboardPage() {
                         return <div key={item.id} style={{ alignSelf: isAgent ? "flex-end" : "flex-start", maxWidth: "88%", background: isAgent ? "#eaf2ff" : "#f1f5f9", color: "#243b53", padding: "10px 12px", borderRadius: 12, overflowWrap: "anywhere" }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: isAgent ? "#1554ad" : "#52667a", marginBottom: 4 }}>{isAgent ? "HOPEBRIDGE staff" : "Customer"}</div>
                           {item.message && <div style={{ whiteSpace: "pre-wrap" }}>{item.message}</div>}
-                          {item.image_path && messageImageUrls[item.id] && <a href={messageImageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={messageImageUrls[item.id]} alt="Customer attachment" width={480} height={320} unoptimized onError={() => { delete messageImageUrlsRef.current[item.id]; setMessageImageUrls((current) => { const next = { ...current }; delete next[item.id]; return next; }); }} style={{ display: "block", maxWidth: "100%", maxHeight: 220, width: "auto", height: "auto", borderRadius: 9, marginTop: item.message ? 8 : 0 }} /></a>}
+                          {item.image_path && messageImageUrls[item.id] && (item.image_type?.startsWith("video/") ? <video controls playsInline preload="metadata" src={messageImageUrls[item.id]} style={{ display: "block", maxWidth: "100%", maxHeight: 280, borderRadius: 9, marginTop: item.message ? 8 : 0 }} /> : <a href={messageImageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={messageImageUrls[item.id]} alt="Customer attachment" width={480} height={320} unoptimized onError={() => { delete messageImageUrlsRef.current[item.id]; setMessageImageUrls((current) => { const next = { ...current }; delete next[item.id]; return next; }); }} style={{ display: "block", maxWidth: "100%", maxHeight: 220, width: "auto", height: "auto", borderRadius: 9, marginTop: item.message ? 8 : 0 }} /></a>)}
                           {item.image_path && !messageImageUrls[item.id] && <button type="button" className="btn secondary" style={{ fontSize: 12, marginTop: 6, padding: "6px 9px" }} onClick={async () => { const { data: session } = await supabase.auth.getSession(); const accessToken = session.session?.access_token; if (!accessToken) { setError("Your staff session has expired. Please sign in again."); return; } try { const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path!)}`, { headers: { Authorization: `Bearer ${accessToken}` } }); const result = await response.json(); if (response.ok && result.url) { messageImageUrlsRef.current[item.id] = result.url; setMessageImageUrls((current) => ({ ...current, [item.id]: result.url })); setError(""); } else { setError(result.error || "Attachment could not be opened. Refresh and try again."); } } catch { setError("Could not load the attachment. Check your connection and try again."); } }}>Retry image</button>}
                           <div style={{ fontSize: 10, color: "#718096", marginTop: 5 }}>{new Date(item.created_at).toLocaleString()}</div>
                         </div>;
                       })}
                     </div>
+                    {replyMedia && <div style={{ fontSize: 12, padding: "7px 10px", background: "#f1f5f9", borderRadius: 8, marginBottom: 8 }}>📎 {replyMedia.name} · {(replyMedia.size / 1024 / 1024).toFixed(1)} MB <button type="button" onClick={() => setReplyMedia(null)} disabled={replySending} style={{ marginLeft: 8, border: 0, background: "transparent", cursor: "pointer" }}>Remove</button></div>}
                     <form onSubmit={sendStaffReply} className="hb-thread-composer">
+                      <label title="Attach a photo or video" style={{ display: "grid", placeItems: "center", minWidth: 42, minHeight: 42, borderRadius: 9, background: "#f1f5f9", color: "#123c69", cursor: replySending ? "not-allowed" : "pointer", fontSize: 21 }}>
+                        ＋
+                        <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" disabled={replySending} aria-label="Attach a photo or video" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} onChange={(event) => {
+                          const file = event.currentTarget.files?.[0] || null;
+                          event.currentTarget.value = "";
+                          if (!file) return;
+                          const isImage = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+                          const isVideo = ["video/mp4", "video/webm", "video/quicktime"].includes(file.type);
+                          if (!isImage && !isVideo) { setError("Choose a JPG, PNG, WebP, MP4, WebM, or MOV file."); return; }
+                          if (file.size > (isImage ? 5 : 25) * 1024 * 1024) { setError(isImage ? "Images must be 5 MB or smaller." : "Videos must be 25 MB or smaller."); return; }
+                          setError("");
+                          setReplyMedia(file);
+                        }} />
+                      </label>
                       <textarea
                         aria-label="Write a staff reply"
                         value={replyText}
                         onChange={(event) => setReplyText(event.target.value)}
-                        placeholder="Write a reply to the customer…"
+                        placeholder="Write a reply or attach media…"
                         maxLength={5000}
                         rows={2}
-                        required
                         className="hb-thread-input"
                       />
-                      <button className="btn primary hb-thread-send" type="submit" disabled={replySending || !replyText.trim()}>{replySending ? "Sending…" : "Send reply"}</button>
+                      <button className="btn primary hb-thread-send" type="submit" disabled={replySending || (!replyText.trim() && !replyMedia)}>{replySending ? "Sending…" : "Send"}</button>
                     </form>
+                    <p style={{ color: "#718096", fontSize: 11, margin: "6px 0 0" }}>Photos up to 5 MB · Videos up to 25 MB</p>
                     <p style={{ color: "#718096", fontSize: 12, marginBottom: 0 }}>Messages are saved to the database. Keep replies focused on verified support information; never ask customers for passwords or banking login details.</p>
                   </>
                 )}
