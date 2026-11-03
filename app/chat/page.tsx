@@ -53,12 +53,37 @@ export default function ChatPage() {
   }, []);
 
   async function enableReplyNotifications() {
-    if (!("Notification" in window)) {
-      setNotificationPermission("unsupported");
-      return;
+    try {
+      if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+        setNotificationPermission("unsupported");
+        return;
+      }
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission !== "granted") return;
+      if (!conversationId || !chatToken) {
+        setError("Open your support conversation before enabling reply alerts.");
+        return;
+      }
+      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!publicKey) { setError("Push notifications are not configured yet."); return; }
+      const registration = await navigator.serviceWorker.ready;
+      const existing = await registration.pushManager.getSubscription();
+      const subscription = existing || await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: Uint8Array.from(atob(publicKey.replace(/-/g, "+").replace(/_/g, "/")), (char) => char.charCodeAt(0)),
+      });
+      const response = await fetch("/api/notifications/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audience: "customer", conversationId, chatToken, subscription: subscription.toJSON() }),
+      });
+      if (!response.ok) throw new Error("We could not save your notification settings.");
+      setError("");
+    } catch (notificationError) {
+      console.error("Could not enable chat reply notifications:", notificationError);
+      setError(notificationError instanceof Error ? notificationError.message : "Notifications could not be enabled.");
     }
-    const permission = await Notification.requestPermission();
-    setNotificationPermission(permission);
   }
 
   useEffect(() => {
