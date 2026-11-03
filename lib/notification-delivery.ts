@@ -11,7 +11,7 @@ function adminClient() {
   return createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-export async function sendHopebridgeEmail(subject: string, text: string) {
+export async function sendHopebridgeEmail(subject: string, text: string, recipient?: string) {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, HOPEBRIDGE_NOTIFICATION_EMAIL } = process.env;
   if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !HOPEBRIDGE_NOTIFICATION_EMAIL) {
     console.warn("HOPEBRIDGE email notifications are not configured.");
@@ -26,7 +26,7 @@ export async function sendHopebridgeEmail(subject: string, text: string) {
     });
     await transporter.sendMail({
       from: { name: "HOPEBRIDGE Notifications", address: SMTP_USER },
-      to: HOPEBRIDGE_NOTIFICATION_EMAIL,
+      to: recipient || HOPEBRIDGE_NOTIFICATION_EMAIL,
       subject,
       text,
     });
