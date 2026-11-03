@@ -269,6 +269,21 @@ export default function AdminDashboardPage() {
       console.error("Staff reply error:", insertError);
       setError(insertError?.message || "The reply was not saved. Please refresh the dashboard and try again.");
     } else {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.access_token) {
+          await fetch("/api/notifications/customer-reply", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${sessionData.session.access_token}`,
+            },
+            body: JSON.stringify({ conversationId: selectedConversation.id }),
+          });
+        }
+      } catch (notificationError) {
+        console.warn("Customer push notification could not be delivered:", notificationError);
+      }
       setReplyText("");
       const now = new Date().toISOString();
       const newMessage: Message = {
