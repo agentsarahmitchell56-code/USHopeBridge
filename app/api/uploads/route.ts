@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
-const MAX_MULTIPART_BYTES = MAX_FILE_BYTES + 64 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
+const MAX_MULTIPART_BYTES = MAX_VIDEO_BYTES + 64 * 1024;
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -13,8 +14,9 @@ function adminClient() {
   return createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const extByType: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const videoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+const extByType: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "video/mp4": "mp4", "video/webm": "webm", "video/quicktime": "mov" };
 
 function clientIp(request: NextRequest) {
   // Vercel supplies x-real-ip; x-forwarded-for is a fallback for other trusted proxies.
@@ -34,6 +36,8 @@ function hasExpectedSignature(type: string, bytes: Uint8Array) {
       && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF"
       && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
   }
+  if (type === "video/mp4" || type === "video/quicktime") return bytes.length >= 12 && String.fromCharCode(...bytes.slice(4, 8)) === "ftyp";
+  if (type === "video/webm") return bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3;
   return false;
 }
 
@@ -56,7 +60,7 @@ export async function POST(request: NextRequest) {
   try {
     const contentLength = Number(request.headers.get("content-length") || 0);
     if (contentLength > MAX_MULTIPART_BYTES) {
-      return NextResponse.json({ error: "Upload a JPG, PNG, or WebP image up to 5 MB." }, { status: 413 });
+      return NextResponse.json({ error: "Images can be up to 5 MB. MP4, WebM, or MOV videos can be up to 25 MB." }, { status: 413 });
     }
 
     const form = await request.formData();
@@ -65,8 +69,11 @@ export async function POST(request: NextRequest) {
     if (!(file instanceof File) || !["application", "chat"].includes(purpose)) {
       return NextResponse.json({ error: "Choose a valid image and upload destination." }, { status: 400 });
     }
-    if (!allowedTypes.has(file.type) || file.size < 1 || file.size > MAX_FILE_BYTES) {
-      return NextResponse.json({ error: "Upload a JPG, PNG, or WebP image up to 5 MB." }, { status: 400 });
+    const isImage = imageTypes.has(file.type);
+    const isVideo = videoTypes.has(file.type);
+    const maxBytes = isImage ? MAX_IMAGE_BYTES : isVideo ? MAX_VIDEO_BYTES : 0;
+    if (!maxBytes || file.size < 1 || file.size > maxBytes) {
+      return NextResponse.json({ error: "Images: JPG, PNG, or WebP up to 5 MB. Videos: MP4, WebM, or MOV up to 25 MB." }, { status: 400 });
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer());
@@ -80,9 +87,20 @@ export async function POST(request: NextRequest) {
     if (validPurpose === "chat") {
       const conversationId = String(form.get("conversationId") || "");
       const chatToken = String(form.get("chatToken") || "");
-      if (!conversationId || !chatToken) return NextResponse.json({ error: "Chat session required." }, { status: 401 });
-      const { data: conversation } = await db.from("conversations").select("id,chat_token").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
-      if (!conversation) return NextResponse.json({ error: "Invalid chat session." }, { status: 403 });
+      const audience = String(form.get("audience") || "customer");
+      if (!conversationId) return NextResponse.json({ error: "Chat session required." }, { status: 401 });
+      const { data: conversation } = await db.from("conversations").select("id,chat_token").eq("id", conversationId).maybeSingle();
+      if (!conversation) return NextResponse.json({ error: "Conversation not found." }, { status: 404 });
+      if (audience === "staff") {
+        const bearer = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+        if (!bearer) return NextResponse.json({ error: "Staff sign-in required." }, { status: 401 });
+        const { data: authData, error: authError } = await db.auth.getUser(bearer);
+        if (authError || !authData.user) return NextResponse.json({ error: "Staff session expired." }, { status: 401 });
+        const { data: profile } = await db.from("profiles").select("role").eq("id", authData.user.id).maybeSingle();
+        if (!profile || !["admin", "agent"].includes(profile.role)) return NextResponse.json({ error: "Staff access required." }, { status: 403 });
+      } else {
+        if (!chatToken || conversation.chat_token !== chatToken) return NextResponse.json({ error: "Invalid chat session." }, { status: 403 });
+      }
       folder = "chat";
     }
 
@@ -96,7 +114,7 @@ export async function POST(request: NextRequest) {
     const path = folder + "/" + crypto.randomUUID() + "." + extByType[file.type];
     const { error } = await db.storage.from("hopebridge-private-uploads").upload(path, bytes, { contentType: file.type, upsert: false });
     if (error) return NextResponse.json({ error: "The image could not be saved. Please try again." }, { status: 500 });
-    return NextResponse.json({ path, type: file.type });
+    return NextResponse.json({ path, type: file.type, mediaKind: isVideo ? "video" : "image" });
   } catch (error) {
     console.error("Private upload failed:", error);
     return NextResponse.json({ error: "Secure uploads are temporarily unavailable. Please try again later." }, { status: 503 });
