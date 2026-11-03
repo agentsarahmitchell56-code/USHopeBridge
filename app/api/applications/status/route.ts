@@ -38,6 +38,11 @@ export async function POST(request: NextRequest) {
       `HOPEBRIDGE application status updated: ${application.reference_number || application.id}`,
       `An application status was updated.\n\nApplicant: ${application.full_name}\nReference: ${application.reference_number || "Not assigned"}\nNew status: ${label}\n\nOpen the staff dashboard: https://us-hope-bridge.vercel.app/admin`,
     );
+    await sendHopebridgeEmail(
+      `Your HOPEBRIDGE application status was updated: ${application.reference_number || application.id}`,
+      `Hello ${application.full_name},\n\nThe recorded status of your HOPEBRIDGE financial assistance application has changed to: ${label}.\n\nReference: ${application.reference_number || "Not assigned"}\n\nPlease visit https://us-hope-bridge.vercel.app/status to check your application. This update does not guarantee approval or funding.\n\nHOPEBRIDGE Financial Assistance`,
+      application.email,
+    );
     const { data: staff } = await db.from("profiles").select("id").in("role", ["admin", "agent"]);
     await Promise.all((staff || []).map((person) => sendHopebridgePush(
       { staffUserId: person.id },
