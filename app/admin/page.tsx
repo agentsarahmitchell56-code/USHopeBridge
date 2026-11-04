@@ -260,19 +260,33 @@ export default function AdminDashboardPage() {
 
       let savedMessage: Message | null = null;
       if (replyMedia) {
-        const uploadForm = new FormData();
-        uploadForm.append("file", replyMedia);
-        uploadForm.append("purpose", "chat");
-        uploadForm.append("audience", "staff");
-        uploadForm.append("conversationId", selectedConversation.id);
-        const uploadResponse = await fetch("/api/uploads", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` }, body: uploadForm });
-        const uploadResult = await uploadResponse.json();
-        if (!uploadResponse.ok || !uploadResult.path) throw new Error(uploadResult.error || "The attachment could not be uploaded.");
+        // Obtain a short-lived upload token, then send the file directly to Supabase.
+        // This bypasses Vercel's serverless request-body limit for larger videos.
+        const prepareResponse = await fetch("/api/uploads/sign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ conversationId: selectedConversation.id, contentType: replyMedia.type, size: replyMedia.size }),
+        });
+        const prepareResult = await prepareResponse.json();
+        if (!prepareResponse.ok || !prepareResult.path || !prepareResult.token) {
+          throw new Error(prepareResult.error || "The secure upload could not be prepared.");
+        }
+
+        const { error: storageError } = await supabase.storage
+          .from("hopebridge-private-uploads")
+          .uploadToSignedUrl(prepareResult.path, prepareResult.token, replyMedia, {
+            contentType: replyMedia.type,
+            upsert: false,
+          });
+        if (storageError) {
+          console.error("Direct staff media upload failed:", storageError);
+          throw new Error("The video could not be uploaded to secure storage. Try a smaller MP4 file or check your connection.");
+        }
 
         const response = await fetch("/api/chat/staff-message", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({ conversationId: selectedConversation.id, message: cleanMessage, mediaPath: uploadResult.path, mediaType: replyMedia.type }),
+          body: JSON.stringify({ conversationId: selectedConversation.id, message: cleanMessage, mediaPath: prepareResult.path, mediaType: replyMedia.type }),
         });
         const result = await response.json();
         if (!response.ok || !result.message) throw new Error(result.error || "The attachment message could not be sent.");
