@@ -2,9 +2,21 @@ import Link from "next/link";
 import MobileMenu from "./mobile-menu";
 
 const updates = [
-  { tag: "APPLICATION GUIDE", title: "Before you submit your request", body: "Take a moment to review your contact details and answers. Clear, accurate information helps the team understand the request.", icon: "✓" },
-  { tag: "STATUS REMINDER", title: "Keep your reference number safe", body: "After a successful submission, save the reference number shown on screen. Use it with your application email to check recorded updates.", icon: "↗" },
-  { tag: "SAFETY NOTICE", title: "Protect your private information", body: "Never share passwords, card PINs, one-time passcodes, or banking login credentials in a form or support conversation.", icon: "⌑" },
+  { tag: "APPLICATION GUIDE", title: "Before you submit your request", body: "Check your name, contact details, and answers carefully. Clear and accurate information helps the team understand what you have submitted.", icon: "✓" },
+  { tag: "STATUS REMINDER", title: "Keep your reference number safe", body: "After a successful submission, save the reference number shown on screen. You will need it to check recorded updates.", icon: "↗" },
+  { tag: "SAFETY NOTICE", title: "Protect your private information", body: "Never share passwords, bank card PINs, one-time passcodes, or banking login credentials in a form or support conversation.", icon: "⌑" },
+  { tag: "SUPPORT GUIDE", title: "How to contact the support team", body: "Open the support chat, enter your name and email address, then send your question. Keep the same browser if you want to return to the conversation.", icon: "✉" },
+  { tag: "APPLICATION GUIDE", title: "Give clear details about your request", body: "Explain your circumstances in your own words. Include relevant facts and avoid sending information that is not needed to understand your request.", icon: "▤" },
+  { tag: "STATUS REMINDER", title: "What an application status means", body: "The status page displays information currently recorded by the team. If something is unclear, contact support and quote your reference number.", icon: "◎" },
+  { tag: "PRIVACY NOTICE", title: "Use a device you trust", body: "If you use a shared phone or computer, sign out of your account when finished and do not save passwords on a device other people use.", icon: "⌑" },
+  { tag: "SUPPORT GUIDE", title: "Sending a message that is easy to answer", body: "Describe the issue, mention the page you were using, and include your application reference only when it is relevant. Never send passwords or verification codes.", icon: "✉" },
+  { tag: "APPLICATION GUIDE", title: "Review your information before sending", body: "A quick review can help catch spelling mistakes, incorrect contact details, or missing answers before you submit the form.", icon: "✓" },
+  { tag: "STATUS REMINDER", title: "Check your email address", body: "Use the same email address you entered on your application when checking its status. Make sure the spelling is correct.", icon: "@" },
+  { tag: "SAFETY NOTICE", title: "Be cautious of unexpected payment requests", body: "Do not send money, gift cards, card details, or one-time passcodes to anyone claiming they can guarantee approval or release funds.", icon: "!" },
+  { tag: "SUPPORT GUIDE", title: "If an attachment will not send", body: "Check your connection and file type and size, then try again. If the problem continues, send a text description through support chat.", icon: "＋" },
+  { tag: "APPLICATION GUIDE", title: "Only submit information you can verify", body: "Make sure the details in your request are accurate and that you are authorised to share any documents you attach.", icon: "▤" },
+  { tag: "PRIVACY NOTICE", title: "Understand how to use your reference", body: "Your reference number helps locate your submitted request. Keep it private and share it only through the official website when needed.", icon: "⌑" },
+  { tag: "SERVICE UPDATE", title: "Use the official website for updates", body: "Return to this website to submit a request, check recorded application information, or contact support. Be careful with unofficial links and impersonators.", icon: "↗" },
 ];
 
 const services = [
