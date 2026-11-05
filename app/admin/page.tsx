@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { uploadChatMediaResumable } from "../../lib/chat-media-upload";
 import StaffNotifications from "../components/staff-notifications";
 import Image from "next/image";
 
@@ -272,16 +273,7 @@ export default function AdminDashboardPage() {
           throw new Error(prepareResult.error || "The secure upload could not be prepared.");
         }
 
-        const { error: storageError } = await supabase.storage
-          .from("hopebridge-private-uploads")
-          .uploadToSignedUrl(prepareResult.path, prepareResult.token, replyMedia, {
-            contentType: replyMedia.type,
-            upsert: false,
-          });
-        if (storageError) {
-          console.error("Direct staff media upload failed:", storageError);
-          throw new Error("The video could not be uploaded to secure storage. Try a smaller MP4 file or check your connection.");
-        }
+        await uploadChatMediaResumable(replyMedia, prepareResult.path, prepareResult.token);
 
         const response = await fetch("/api/chat/staff-message", {
           method: "POST",
