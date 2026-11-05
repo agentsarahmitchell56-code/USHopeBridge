@@ -509,7 +509,7 @@ export default function AdminDashboardPage() {
     <main className="hb-admin-page">
       <div className="hb-admin-container">
         <header className="hb-admin-header">
-          <a href="/admin" className="brand">HOPEBRIDGE<span>STAFF DASHBOARD</span></a>
+          <a href="/admin" className="brand">HOPEBRIDGE<span>BUSINESS SUITE</span></a>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <StaffNotifications />
             <a href="/admin/analytics" className="btn secondary">Analytics</a>
@@ -529,8 +529,8 @@ export default function AdminDashboardPage() {
         </nav>
 
         <div className="hb-admin-heading">
-          <h1>Staff workspace</h1>
-          <p>Review application requests, update recorded statuses, and reply to customers from one secure workspace.</p>
+          <h1>Business inbox</h1>
+          <p>Manage customer conversations first, then review applications and service activity from one secure workspace.</p>
         </div>
 
         {error && <p role="alert" style={{ color: "#9f1d20", background: "#fff1f2", border: "1px solid #fecdd3", padding: 14, borderRadius: 12 }}>{error}</p>}
@@ -618,7 +618,7 @@ export default function AdminDashboardPage() {
 
         <section id="support-inbox" className="card hb-support-inbox">
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-            <div><h2 style={{ margin: 0, fontSize: 22 }}>Support inbox</h2><p style={{ color: "#627d98", marginBottom: 0 }}>Open a customer conversation to read messages and reply securely.</p></div>
+            <div><h2 style={{ margin: 0, fontSize: 22 }}>Messages</h2><p style={{ color: "#627d98", marginBottom: 0 }}>Your customer conversations, attachments, and replies in one shared inbox.</p></div>
             <a className="btn secondary" href="/chat">Open public chat page</a>
           </div>
 
