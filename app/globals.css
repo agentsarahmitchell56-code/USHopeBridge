@@ -1568,3 +1568,88 @@ body { color:var(--hb-ink); background:var(--hb-page); }
   .hb-feed-post-body p,.hb-social-card p { font-size:14px; }
   .hb-button { min-height:44px; }
 }
+
+
+/* HOPEBRIDGE 2026 — Business Suite-inspired customer and staff workspace */
+.hb-home.hb-community-page { background:#f0f2f5; color:#1c2b3a; }
+.hb-topline { background:#102d50; color:#eaf2ff; }
+.hb-topline a { color:#fff; }
+.hb-header { background:#fff; border-bottom:1px solid #dce3ec; box-shadow:0 1px 2px rgba(15,35,60,.05); }
+.hb-nav { min-height:68px; }
+.hb-nav-links a,.hb-login-link { color:#344b63; font-weight:650; }
+.hb-page-cover { background:#f0f2f5; padding-bottom:0; }
+.hb-page-cover-art { max-width:1180px; margin:0 auto; border-radius:0 0 14px 14px; overflow:hidden; }
+.hb-banner-image { display:block; width:100%; }
+.hb-page-profile { background:#fff; border:1px solid #e0e6ee; border-top:0; border-radius:0 0 14px 14px; padding:22px 28px 20px; }
+.hb-page-avatar { border:5px solid #fff; box-shadow:0 1px 5px rgba(16,42,67,.16); }
+.hb-page-profile-copy h1 { color:#142b45; letter-spacing:-.035em; }
+.hb-profile-actions .hb-button,.hb-button { border-radius:9px; font-weight:750; }
+.hb-community-main { padding:22px 0 46px; }
+.hb-community-grid { display:grid; grid-template-columns:minmax(220px,.78fr) minmax(380px,1.55fr) minmax(220px,.78fr); gap:18px; align-items:start; }
+.hb-social-card { background:#fff; border:1px solid #e0e6ee; border-radius:12px; box-shadow:0 1px 2px rgba(16,42,67,.045); }
+.hb-social-card h2,.hb-social-card h3 { color:#1c2b3a; }
+.hb-feed-card-heading { gap:11px; }
+.hb-feed-avatar { background:#173f6b; color:#fff; border-radius:50%; }
+.hb-feed-post { padding:18px; }
+.hb-feed-post-body { border-radius:10px; }
+.hb-feed-post-footer { border-top:1px solid #edf0f4; }
+.hb-start-actions a { border-radius:10px; background:#f6f8fb; }
+.hb-start-actions a:hover,.hb-shortcuts-card a:hover { background:#edf4fc; }
+.hb-community-smallprint { color:#617286; }
+.hb-feed-heading h2,.hb-services-heading h2,.hb-section-heading h2 { color:#18324f; }
+.hb-services-section { background:#fff; }
+.hb-service-card,.hb-step-card { border:1px solid #e0e6ee; border-radius:12px; box-shadow:0 1px 2px rgba(16,42,67,.04); }
+.hb-support-band { background:#173f6b; }
+.hb-faq-item { border-bottom:1px solid #e1e7ef; }
+.hb-disclosure { background:#eaf0f7; }
+
+/* Staff workspace: denser inbox, clearer hierarchy, touch-friendly controls */
+.hb-admin-page { background:#f0f2f5; min-height:100vh; color:#1c2b3a; }
+.hb-admin-container { max-width:1500px; }
+.hb-admin-header { background:#fff; border:1px solid #e0e6ee; border-radius:12px; padding:18px 22px; box-shadow:0 1px 3px rgba(16,42,67,.05); }
+.hb-admin-heading { color:#173653; }
+.hb-admin-quicknav { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 20px; }
+.hb-admin-quicknav a,.hb-admin-quicknav button { border-radius:9px; padding:10px 13px; font-weight:700; }
+.hb-admin-page .card { border:1px solid #e0e6ee; border-radius:12px; box-shadow:0 1px 3px rgba(16,42,67,.045); }
+.hb-admin-page .btn { border-radius:9px; min-height:40px; }
+.hb-admin-page input,.hb-admin-page select,.hb-admin-page textarea { font:inherit; }
+.hb-support-inbox { overflow:hidden; padding:0; }
+.hb-support-inbox > div:first-child { padding:20px 22px; border-bottom:1px solid #e4eaf1; background:#fff; }
+.hb-inbox-layout { display:grid; grid-template-columns:minmax(260px,340px) minmax(0,1fr); min-height:590px; gap:0; background:#fff; }
+.hb-inbox-list { border-right:1px solid #e2e8f0; overflow-y:auto; max-height:720px; background:#fff; }
+.hb-inbox-conversation { display:block; width:100%; text-align:left; padding:15px 16px; border:0; border-bottom:1px solid #edf1f5; background:#fff; color:#26384a; cursor:pointer; transition:background .15s ease; }
+.hb-inbox-conversation:hover { background:#f5f8fc; }
+.hb-inbox-conversation.is-selected { background:#eaf2ff; box-shadow:inset 3px 0 #1877f2; }
+.hb-inbox-conversation strong { font-size:14px; color:#1c2b3a; }
+.hb-inbox-preview { display:block; margin-top:6px; color:#52667a; font-size:12px; line-height:1.45; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hb-inbox-thread { min-width:0; display:flex; flex-direction:column; background:#f7f9fc; }
+.hb-thread-header { position:sticky; top:0; z-index:1; padding:16px 20px; background:#fff; border-bottom:1px solid #e2e8f0; }
+.hb-thread-messages { display:flex; flex-direction:column; gap:12px; min-height:360px; max-height:560px; overflow-y:auto; padding:20px; }
+.hb-thread-messages > div { box-shadow:0 1px 2px rgba(20,40,65,.07); }
+.hb-thread-composer { display:flex; gap:9px; align-items:flex-end; padding:12px 14px; background:#fff; border-top:1px solid #e2e8f0; }
+.hb-thread-input { min-width:0; flex:1; border:1px solid #d5dee8; border-radius:18px; padding:12px 15px; resize:vertical; background:#f7f9fc; outline:none; }
+.hb-thread-input:focus { border-color:#1877f2; box-shadow:0 0 0 3px rgba(24,119,242,.12); }
+.hb-thread-send { min-width:76px; }
+@media (max-width:1050px) {
+ .hb-community-grid { grid-template-columns:minmax(190px,.75fr) minmax(0,1.5fr); }
+ .hb-community-right { display:none; }
+}
+@media (max-width:700px) {
+ .hb-community-grid { display:flex; flex-direction:column; gap:14px; }
+ .hb-community-sidebar,.hb-community-feed { width:100%; }
+ .hb-community-sidebar { order:2; }
+ .hb-community-feed { order:1; }
+ .hb-page-profile { padding:16px; }
+ .hb-page-profile-copy h1 { font-size:22px; }
+ .hb-profile-actions { display:flex; flex-wrap:wrap; gap:8px; }
+ .hb-profile-actions .hb-button { flex:1; min-width:140px; }
+ .hb-admin-header { padding:14px; }
+ .hb-inbox-layout { display:flex; flex-direction:column; min-height:0; }
+ .hb-inbox-list { display:flex; flex-direction:row; overflow-x:auto; overflow-y:hidden; max-height:none; border-right:0; border-bottom:1px solid #e2e8f0; }
+ .hb-inbox-conversation { flex:0 0 220px; width:220px; border-right:1px solid #edf1f5; border-bottom:0; }
+ .hb-inbox-thread { min-height:55vh; }
+ .hb-thread-messages { min-height:260px; max-height:48vh; padding:14px; }
+ .hb-thread-composer { position:sticky; bottom:0; gap:6px; padding:9px; }
+ .hb-thread-input { font-size:16px; }
+ .hb-thread-send { min-width:64px; padding-inline:10px; }
+}
