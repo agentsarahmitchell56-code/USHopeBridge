@@ -1568,3 +1568,117 @@ body { color:var(--hb-ink); background:var(--hb-page); }
   .hb-feed-post-body p,.hb-social-card p { font-size:14px; }
   .hb-button { min-height:44px; }
 }
+
+
+/* HOPEBRIDGE Business Suite-inspired redesign — chat-first workspace */
+:root {
+  --hb-blue:#1769e8;
+  --hb-blue-dark:#124fb4;
+  --hb-ink:#172b4d;
+  --hb-muted:#66758a;
+  --hb-border:#e4e9f1;
+  --hb-canvas:#f3f6fb;
+  --hb-surface:#fff;
+  --hb-radius:16px;
+}
+body { background:var(--hb-canvas); color:var(--hb-ink); }
+.hb-admin-page { min-height:100vh; padding:18px 0 42px; background:#f3f6fb; }
+.hb-admin-page > .hb-admin-container { width:min(100% - 32px,1560px); max-width:1560px; display:flex; flex-direction:column; gap:14px; }
+.hb-admin-page .hb-admin-header { order:1; margin:0; padding:13px 18px; border:1px solid var(--hb-border); border-radius:14px; box-shadow:0 2px 10px rgba(22,42,74,.035); }
+.hb-admin-page .hb-admin-header .brand { color:#142e53; font-size:19px; }
+.hb-admin-page .hb-admin-header .brand span { color:#78869a; }
+.hb-admin-page .hb-admin-quicknav { order:2; position:sticky; top:0; z-index:30; margin:0; padding:6px; gap:5px; border:1px solid var(--hb-border); border-radius:13px; box-shadow:0 4px 15px rgba(22,42,74,.06); }
+.hb-admin-page .hb-admin-quicknav a { min-height:40px; padding:8px 15px; border-radius:9px; color:#52627a; font-size:13px; }
+.hb-admin-page .hb-admin-quicknav a.hb-nav-messages,
+.hb-admin-page .hb-admin-quicknav a:hover { background:#eaf2ff; color:#1559c5; }
+.hb-admin-page .hb-admin-heading { order:3; margin:0; padding:8px 2px 2px; }
+.hb-admin-page .hb-admin-heading h1 { font-size:clamp(25px,3vw,32px); color:#172b4d; }
+.hb-admin-page .hb-admin-heading p { color:#68778d; font-size:14px; }
+.hb-admin-page > .hb-admin-container > .grid3 { order:4; gap:12px; margin:0!important; }
+.hb-admin-page > .hb-admin-container > .grid3 > .card { min-height:92px; padding:16px 18px!important; border:1px solid var(--hb-border); border-radius:13px; box-shadow:none; }
+.hb-admin-page > .hb-admin-container > .grid3 > .card strong { font-size:27px!important; color:#172b4d; }
+.hb-admin-page #support-inbox { order:5; margin:0; padding:0!important; overflow:hidden; border:1px solid var(--hb-border); border-radius:16px; background:#fff; box-shadow:0 4px 20px rgba(22,42,74,.045); }
+.hb-admin-page #support-inbox > div:first-child { padding:18px 20px; border-bottom:1px solid #edf0f5; background:#fff; }
+.hb-admin-page #support-inbox h2 { color:#172b4d; font-size:20px!important; }
+.hb-admin-page #support-inbox > div:first-child p { margin-top:4px; color:#78869a; font-size:13px; }
+.hb-admin-page #support-inbox > p { padding:24px; }
+.hb-admin-page .hb-inbox-layout { grid-template-columns:minmax(260px,340px) minmax(0,1fr); gap:0; margin:0; min-height:650px; }
+.hb-admin-page .hb-inbox-list { max-height:740px; border:0; border-right:1px solid var(--hb-border); border-radius:0; background:#fff; }
+.hb-admin-page .hb-inbox-conversation { padding:17px 18px; border-bottom:1px solid #f0f2f6; }
+.hb-admin-page .hb-inbox-conversation:hover { background:#f7f9fd; }
+.hb-admin-page .hb-inbox-conversation.is-selected { background:#edf4ff; box-shadow:inset 3px 0 #1769e8; }
+.hb-admin-page .hb-inbox-conversation strong { color:#203451; font-size:14px; }
+.hb-admin-page .hb-inbox-conversation span:nth-of-type(1) { color:#7b8798; font-size:12px; }
+.hb-admin-page .hb-inbox-conversation .hb-inbox-preview { display:block; margin-top:8px; color:#586981; font-size:12px; }
+.hb-admin-page .hb-inbox-thread { min-height:650px; max-height:740px; padding:0 20px 16px; border:0; border-radius:0; background:#fff; }
+.hb-admin-page .hb-thread-header { padding:17px 0 14px; background:#fff; border-bottom:1px solid #edf0f5; }
+.hb-admin-page .hb-thread-header strong { color:#172b4d; font-size:15px; }
+.hb-admin-page .hb-thread-messages { padding:22px 5px; background:#fff; }
+.hb-admin-page .hb-thread-messages > div { max-width:min(78%,560px); border:1px solid #e7ebf2; border-radius:17px!important; }
+.hb-admin-page .hb-thread-messages > div[style*="flex-end"] { background:#eaf2ff!important; border-color:#d7e6ff; }
+.hb-admin-page .hb-thread-composer { padding:14px 0 0; border-top:1px solid #edf0f5; grid-template-columns:44px minmax(0,1fr) auto; }
+.hb-admin-page .hb-thread-input { min-height:48px; border-color:#e1e6ee; border-radius:24px; padding:13px 17px; background:#f5f7fa; }
+.hb-admin-page .hb-thread-send { min-width:78px; border-radius:24px; background:#1769e8; }
+.hb-admin-page #applications { order:6; margin:0!important; padding:22px!important; border:1px solid var(--hb-border); border-radius:16px; background:#fff; box-shadow:0 4px 20px rgba(22,42,74,.035); }
+.hb-admin-page #applications h2 { color:#172b4d; }
+.hb-admin-page #applications table { border-collapse:separate!important; border-spacing:0; }
+.hb-admin-page #applications table th { background:#f5f7fb!important; color:#637189; }
+.hb-admin-page #applications table td { color:#394b65; }
+.hb-admin-page .card { border-color:var(--hb-border); box-shadow:0 3px 14px rgba(22,42,74,.035); }
+.hb-admin-page .btn { border-radius:10px; }
+.hb-admin-page .btn.primary { background:#1769e8; }
+.hb-admin-page .btn.secondary { border-color:#e0e6ef; color:#3d5270; background:#fff; }
+.hb-admin-page .btn.secondary:hover { background:#f4f7fc; }
+.hb-home.hb-community-page { background:#f2f5fa; }
+.hb-home .hb-topline { background:#102d54; }
+.hb-home .hb-header { background:#fff; border-bottom:1px solid #e7ebf2; }
+.hb-home .hb-page-cover { background:#fff; }
+.hb-home .hb-community-grid { align-items:start; gap:20px; }
+.hb-home .hb-social-card { border:1px solid #e4e9f1; border-radius:15px; box-shadow:0 2px 10px rgba(22,42,74,.035); }
+.hb-home .hb-page-profile-copy h1 { color:#172b4d; }
+.hb-home .hb-button { background:#1769e8; border-radius:10px; }
+.hb-home .hb-button-light { background:#eaf2ff; color:#1559c5; }
+.hb-home .hb-start-actions a { border-radius:11px; }
+.hb-home .hb-feed-post { margin-bottom:15px; }
+.messenger-page { min-height:calc(100vh - 80px); padding:24px 14px; background:#f2f5fa; }
+.messenger-shell { max-width:900px; min-height:680px; border:1px solid #e1e7f0; border-radius:16px; box-shadow:0 5px 24px rgba(22,42,74,.07); }
+.messenger-header { border-bottom:1px solid #e9edf4; }
+.messenger-avatar,.messenger-intro-avatar,.messenger-small-avatar,.message-avatar { background:linear-gradient(145deg,#2479ef,#1555bd); }
+.messenger-primary,.messenger-send { background:#1769e8; }
+.messenger-chat-context { background:#f7f9fc; }
+.messenger-messages { background:#fff; }
+.messenger-bubble-agent { background:#eef1f6; }
+.messenger-composer { background:#fff; }
+@media(max-width:900px) {
+ .hb-admin-page .hb-inbox-layout { grid-template-columns:minmax(230px,290px) minmax(0,1fr); }
+}
+@media(max-width:760px) {
+ .hb-admin-page { padding:8px 0 25px; }
+ .hb-admin-page > .hb-admin-container { width:100%; gap:9px; }
+ .hb-admin-page .hb-admin-header { margin:0 10px; padding:12px; border-radius:12px; }
+ .hb-admin-page .hb-admin-quicknav { top:0; margin:0 10px; overflow-x:auto; flex-wrap:nowrap; scrollbar-width:none; }
+ .hb-admin-page .hb-admin-quicknav a { flex:0 0 auto; white-space:nowrap; }
+ .hb-admin-page .hb-admin-heading { padding:10px 14px 3px; }
+ .hb-admin-page > .hb-admin-container > .grid3 { padding:0 10px; grid-template-columns:repeat(2,minmax(0,1fr))!important; }
+ .hb-admin-page > .hb-admin-container > .grid3 > .card { min-height:76px; padding:12px!important; }
+ .hb-admin-page > .hb-admin-container > .grid3 > .card strong { font-size:23px!important; }
+ .hb-admin-page #support-inbox { margin:0 10px!important; border-radius:13px; }
+ .hb-admin-page #support-inbox > div:first-child { padding:14px; }
+ .hb-admin-page .hb-inbox-layout { grid-template-columns:minmax(0,1fr); }
+ .hb-admin-page .hb-inbox-list { display:flex; flex-direction:row; max-height:none; overflow-x:auto; overflow-y:hidden; border-right:0; border-bottom:1px solid var(--hb-border); }
+ .hb-admin-page .hb-inbox-conversation { flex:0 0 min(78vw,270px); width:auto; border-right:1px solid #edf0f5; border-bottom:0; scroll-snap-align:start; }
+ .hb-admin-page .hb-inbox-conversation.is-selected { box-shadow:inset 0 -3px #1769e8; }
+ .hb-admin-page .hb-inbox-thread { min-height:62vh; max-height:72vh; padding:0 13px 12px; }
+ .hb-admin-page .hb-thread-messages { min-height:230px; }
+ .hb-admin-page .hb-thread-messages > div { max-width:92%; }
+ .hb-admin-page .hb-thread-composer { grid-template-columns:40px minmax(0,1fr) auto; gap:6px; }
+ .hb-admin-page .hb-thread-input { font-size:16px; }
+ .hb-admin-page .hb-thread-send { min-width:62px; padding:0 11px; }
+ .hb-admin-page #applications { margin:0 10px!important; padding:15px!important; }
+ .messenger-page { padding:0; min-height:calc(100dvh - 60px); }
+ .messenger-shell { max-width:none; min-height:calc(100dvh - 60px); border-radius:0; border:0; box-shadow:none; }
+}
+@media(max-width:390px) {
+ .hb-admin-page .hb-thread-composer { grid-template-columns:38px minmax(0,1fr); }
+ .hb-admin-page .hb-thread-send { grid-column:2; width:100%; }
+}
