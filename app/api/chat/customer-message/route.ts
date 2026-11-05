@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendHopebridgePush } from "../../../../lib/notification-delivery";
 
 export const runtime = "nodejs";
 const MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm", "video/quicktime"]);
@@ -34,11 +33,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "The attachment uploaded, but the message could not be saved. Please retry sending." }, { status: 500 });
     }
     await db.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
-    await sendHopebridgePush({ audience: "staff" }, {
-      title: "New HOPEBRIDGE customer message",
-      body: message || (mediaType.startsWith("video/") ? "Sent a video attachment." : "Sent an image attachment."),
-      url: "/admin", tag: "hopebridge-staff-message",
-    });
     return NextResponse.json({ message: saved }, { status: 201 });
   } catch (error) {
     console.error("Customer chat message failed:", error);
