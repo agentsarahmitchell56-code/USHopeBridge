@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "../../lib/supabase";
+import { uploadChatMediaResumable } from "../../lib/chat-media-upload";
 
 type Message = {
   id: string;
@@ -287,15 +288,7 @@ export default function ChatPage() {
         if (!prepareResponse.ok || !prepareResult.path || !prepareResult.token) {
           throw new Error(prepareResult.error || "Secure upload could not be prepared.");
         }
-        const { error: storageError } = await supabase.storage
-          .from("hopebridge-private-uploads")
-          .uploadToSignedUrl(prepareResult.path, prepareResult.token, imageFile, {
-            contentType: imageFile.type, upsert: false,
-          });
-        if (storageError) {
-          console.error("Customer direct media upload failed:", storageError);
-          throw new Error("The attachment could not be uploaded. Check your connection and try again.");
-        }
+        await uploadChatMediaResumable(imageFile, prepareResult.path, prepareResult.token);
         const response = await fetch("/api/chat/customer-message", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
