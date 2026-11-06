@@ -64,7 +64,7 @@ export default function HomePage() {
             <p>HOPEBRIDGE provides an online place to submit financial assistance requests, review recorded application updates and contact the support team.</p>
             <div className="hb-profile-detail"><span>◎</span><div><strong>Website services</strong><small>Applications · Status tracking · Support</small></div></div>
             <div className="hb-profile-detail"><span>⌖</span><div><strong>Online service</strong><small>Access the website from your phone or computer</small></div></div>
-            <Link href="/about" className="hb-profile-text-link">More information →</Link>
+            <button type="button" className="hb-profile-inline-button" onClick={() => setActiveTab("About")}>More information →</button>
           </section>
           <section className="hb-profile-card hb-profile-shortcuts">
             <SectionTitle eyebrow="QUICK LINKS" title="Your workspace" />
