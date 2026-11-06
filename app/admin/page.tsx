@@ -75,6 +75,7 @@ export default function AdminDashboardPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [notesSaving, setNotesSaving] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationSearch, setConversationSearch] = useState("");
   const [conversationPreviews, setConversationPreviews] = useState<Record<string, { message: string; sender_type: "client" | "agent"; created_at: string }>>({});
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -454,6 +455,16 @@ export default function AdminDashboardPage() {
     return matchesStatus && matchesSearch;
   }), [applications, filter, search]);
 
+  const visibleConversations = useMemo(() => {
+    const query = conversationSearch.trim().toLowerCase();
+    if (!query) return conversations;
+    return conversations.filter((conversation) => {
+      const preview = conversationPreviews[conversation.id]?.message || "";
+      return [conversation.client_name, conversation.client_email, preview]
+        .some((value) => value.toLowerCase().includes(query));
+    });
+  }, [conversations, conversationPreviews, conversationSearch]);
+
   const counts = useMemo(() => ({
     total: applications.length,
     fresh: applications.filter((item) => item.status === "NEW").length,
@@ -581,10 +592,23 @@ export default function AdminDashboardPage() {
             <a className="btn secondary" href="/chat">Open public chat page</a>
           </div>
 
-          {conversations.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No conversations found.</p> : (
-            <div className="hb-inbox-layout">
+          <div className="hb-inbox-toolbar">
+            <label className="hb-inbox-search-wrap">
+              <span>Search conversations</span>
+              <input
+                type="search"
+                value={conversationSearch}
+                onChange={(event) => setConversationSearch(event.target.value)}
+                placeholder="Search customer name, email or message…"
+                aria-label="Search customer conversations"
+              />
+            </label>
+            <span className="hb-inbox-count">{visibleConversations.length} of {conversations.length} conversations</span>
+          </div>
+          {conversations.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No conversations found.</p> : visibleConversations.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No conversations match your search.</p> : (
+            <div className={`hb-inbox-layout${selectedConversation ? " has-selection" : ""}`}>
               <div className="hb-inbox-list" aria-label="Customer conversations">
-                {conversations.map((conversation) => {
+                {visibleConversations.map((conversation) => {
                   const isSelected = selectedConversation?.id === conversation.id;
                   return <button
                     key={conversation.id}
@@ -611,6 +635,7 @@ export default function AdminDashboardPage() {
                 ) : (
                   <>
                     <div className="hb-thread-header">
+                      <button type="button" className="hb-inbox-back" onClick={() => setSelectedConversation(null)}>← All conversations</button>
                       <strong>{selectedConversation.client_name}</strong>
                       <div style={{ color: "#627d98", fontSize: 13, overflowWrap: "anywhere" }}>{selectedConversation.client_email}</div>
                     </div>
