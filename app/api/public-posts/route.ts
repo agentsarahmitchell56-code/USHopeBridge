@@ -13,11 +13,7 @@ export async function GET() {
 
   try {
     const db = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { data, error } = await db.from("business_posts")
-      .select("id,caption,media_url,media_type,created_at")
-      .eq("status", "PUBLISHED")
-      .order("created_at", { ascending: false })
-      .limit(24);
+    const { data, error } = await db.rpc("get_published_business_posts", { p_limit: 24 });
     if (error) throw error;
 
     const posts = (data || []).map((post) => {
