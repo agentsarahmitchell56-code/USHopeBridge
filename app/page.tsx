@@ -130,10 +130,6 @@ export default function HomePage() {
             <strong>Important information</strong>
             <p>Submitting an application does not guarantee eligibility, approval, or payment. All requests are subject to review and applicable requirements. Payment status reflects the latest information recorded by HOPEBRIDGE staff.</p>
           </div>
-          <footer className="hb-suite-footer">
-            <span>© HOPEBRIDGE Financial Assistance</span>
-            <div><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><Link href="/chat">Contact support</Link></div>
-          </footer>
         </section>
       </div>
     </main>
