@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import MobileMenu from "./mobile-menu";
 
 type ProfileTab = "Overview" | "Posts" | "Media" | "Services" | "Apply" | "Track" | "Messages" | "Notifications" | "About";
+type PublishedPost = { id: string; caption: string; media_url: string | null; media_type: string | null; created_at: string };
 
 const tabs: ProfileTab[] = ["Overview", "Posts", "Media", "Services", "Apply", "Track", "Messages", "Notifications", "About"];
 
@@ -20,6 +21,22 @@ function SectionTitle({ eyebrow, title, description }: { eyebrow: string; title:
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("Overview");
+  const [publishedPosts, setPublishedPosts] = useState<PublishedPost[]>([]);
+  const [postsUnavailable, setPostsUnavailable] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/public-posts", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Published updates are unavailable.");
+        return response.json();
+      })
+      .then((result) => {
+        if (active) setPublishedPosts(Array.isArray(result.posts) ? result.posts : []);
+      })
+      .catch(() => { if (active) setPostsUnavailable(true); });
+    return () => { active = false; };
+  }, []);
 
   return (
     <main className="hb-home hb-profile-page">
@@ -100,9 +117,9 @@ export default function HomePage() {
             </section>
           </>}
 
-          {activeTab === "Posts" && <section className="hb-profile-card"><SectionTitle eyebrow="COMMUNITY FEED" title="Posts & guidance" description="Helpful information published for customers. These are guidance notes, not funding or approval announcements." />{guidance.map((post) => <article className="hb-profile-guidance-post" key={post.title}><span>{post.tag}</span><h3>{post.title}</h3><p>{post.body}</p></article>)}<Link href="/posts" className="hb-profile-primary">Open guidance library</Link></section>}
+          {activeTab === "Posts" && <section className="hb-profile-card"><SectionTitle eyebrow="COMMUNITY FEED" title="Posts & guidance" description="Official updates published by the HOPEBRIDGE team, alongside general website guidance." />{publishedPosts.length > 0 ? publishedPosts.map((post) => <article className="hb-profile-guidance-post" key={post.id}><span>HOPEBRIDGE UPDATE · {new Date(post.created_at).toLocaleDateString()}</span>{post.caption && <p style={{ whiteSpace: "pre-wrap" }}>{post.caption}</p>}{post.media_url && post.media_type?.startsWith("image/") && <img src={post.media_url} alt="HOPEBRIDGE post media" loading="lazy" style={{ display: "block", width: "100%", maxHeight: 420, objectFit: "contain", borderRadius: 12, marginTop: 12, background: "#f4f7fb" }} />}{post.media_url && post.media_type?.startsWith("video/") && <video src={post.media_url} controls playsInline preload="metadata" style={{ display: "block", width: "100%", maxHeight: 420, borderRadius: 12, marginTop: 12, background: "#111827" }} />}</article>) : <><div className="hb-profile-empty"><strong>{postsUnavailable ? "Published updates could not be loaded right now." : "No official posts have been published yet."}</strong><p>{postsUnavailable ? "Please refresh later or use the guidance library below." : "New public updates from the HOPEBRIDGE team will appear here after they are published in Business Studio."}</p></div>{guidance.map((post) => <article className="hb-profile-guidance-post" key={post.title}><span>{post.tag}</span><h3>{post.title}</h3><p>{post.body}</p></article>)}</>}<Link href="/posts" className="hb-profile-primary">Open guidance library</Link></section>}
 
-          {activeTab === "Media" && <section className="hb-profile-card"><SectionTitle eyebrow="PHOTO & VIDEO" title="Media gallery" description="A dedicated place for official HOPEBRIDGE images and videos." /><div className="hb-profile-empty"><span>▧</span><strong>No media updates have been published yet.</strong><p>Official media will appear here when it is added.</p></div></section>}
+          {activeTab === "Media" && <section className="hb-profile-card"><SectionTitle eyebrow="PHOTO & VIDEO" title="Media gallery" description="Photos and videos attached to public HOPEBRIDGE posts appear here after publication." />{publishedPosts.filter((post) => post.media_url).length > 0 ? <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>{publishedPosts.filter((post) => post.media_url).map((post) => <article key={post.id} style={{ minWidth: 0, border: "1px solid #e2e8f0", borderRadius: 14, padding: 10, background: "#fff" }}>{post.media_type?.startsWith("video/") ? <video src={post.media_url || undefined} controls playsInline preload="metadata" style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 9, background: "#111827" }} /> : <img src={post.media_url || ""} alt="HOPEBRIDGE published media" loading="lazy" style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 9, background: "#f4f7fb" }} />}{post.caption && <p style={{ fontSize: 13, lineHeight: 1.5, margin: "9px 0 0", overflowWrap: "anywhere" }}>{post.caption}</p>}</article>)}</div> : <div className="hb-profile-empty"><span>▧</span><strong>No published media is available yet.</strong><p>When the team publishes a post with a photo or video, it will appear in this gallery.</p></div>}</section>}
 
           {activeTab === "Services" && <section className="hb-profile-card"><SectionTitle eyebrow="WHAT YOU CAN DO" title="Website services" description="Use the available website features to manage your interaction with HOPEBRIDGE." /><div className="hb-profile-service-list"><article><span>＋</span><div><h3>Submit an assistance request</h3><p>Complete the online application and review your answers before submitting.</p><Link href="/apply">Go to application →</Link></div></article><article><span>◎</span><div><h3>Application status</h3><p>Use your reference number and application email to view recorded updates.</p><Link href="/status">Track your request →</Link></div></article><article><span>✉</span><div><h3>Customer support</h3><p>Send a message to the support team if you need help using the website.</p><Link href="/chat">Open support →</Link></div></article></div></section>}
 
