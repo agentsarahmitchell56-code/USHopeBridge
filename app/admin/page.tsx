@@ -52,6 +52,8 @@ type Message = {
   created_at: string;
   image_path?: string | null;
   image_type?: string | null;
+  video_path?: string | null;
+  video_type?: string | null;
 };
 
 const statuses = ["NEW", "REVIEWING", "APPROVED", "DECLINED"];
@@ -81,6 +83,7 @@ export default function AdminDashboardPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageImageUrls, setMessageImageUrls] = useState<Record<string, string>>({});
   const [replyText, setReplyText] = useState("");
+  const [staffAttachmentFile, setStaffAttachmentFile] = useState<File | null>(null);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [replySending, setReplySending] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -174,7 +177,7 @@ export default function AdminDashboardPage() {
     async function loadMessages() {
       const { data, error: messagesError } = await supabase
         .from("messages")
-        .select("id,conversation_id,sender_type,sender_id,message,created_at,image_path,image_type")
+        .select("id,conversation_id,sender_type,sender_id,message,created_at,image_path,image_type,video_path,video_type")
         .eq("conversation_id", selectedConversation!.id)
         .order("created_at", { ascending: true });
 
@@ -189,9 +192,9 @@ export default function AdminDashboardPage() {
         const accessToken = sessionData.session?.access_token;
         if (accessToken) {
           for (const item of loadedMessages) {
-            if (!item.image_path || messageImageUrlsRef.current[item.id]) continue;
+            if ((!item.image_path && !item.video_path) || messageImageUrlsRef.current[item.id]) continue;
             try {
-              const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+              const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path || item.video_path || "")}`, { headers: { Authorization: `Bearer ${accessToken}` } });
               const imageResult = await response.json();
               if (response.ok && imageResult.url && active) {
                 messageImageUrlsRef.current[item.id] = imageResult.url;
@@ -249,49 +252,56 @@ export default function AdminDashboardPage() {
   async function sendStaffReply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const cleanMessage = replyText.trim();
-    if (!selectedConversation || !cleanMessage || replySending) return;
-
+    if (!selectedConversation || (!cleanMessage && !staffAttachmentFile) || replySending) return;
     setReplySending(true);
     setError("");
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (authError || !authData.user || !accessToken) throw new Error("Your staff session has expired. Please sign in again.");
 
-    if (authError || !authData.user) {
-      setError("Your staff session has expired. Please sign in again.");
-      setReplySending(false);
-      return;
-    }
+      let messageId: string | null = null;
+      if (staffAttachmentFile) {
+        const form = new FormData();
+        form.append("file", staffAttachmentFile);
+        form.append("purpose", "chat");
+        form.append("conversationId", selectedConversation.id);
+        const response = await fetch("/api/uploads", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` }, body: form });
+        const uploaded = await response.json();
+        if (!response.ok) throw new Error(uploaded.error || "Attachment upload failed.");
+        const isVideo = staffAttachmentFile.type.startsWith("video/");
+        const { data, error: insertError } = await supabase.rpc("send_staff_chat_attachment", {
+          p_conversation_id: selectedConversation.id, p_message: cleanMessage,
+          p_image_path: isVideo ? null : uploaded.path, p_image_type: isVideo ? null : staffAttachmentFile.type,
+          p_video_path: isVideo ? uploaded.path : null, p_video_type: isVideo ? staffAttachmentFile.type : null,
+        });
+        if (insertError || !data) throw new Error(insertError?.message || "Attachment message could not be saved.");
+        messageId = data as string;
+      } else {
+        const { data, error: insertError } = await supabase.rpc("send_staff_chat_message", {
+          p_conversation_id: selectedConversation.id, p_message: cleanMessage,
+        });
+        if (insertError || !data) throw new Error(insertError?.message || "The reply was not saved.");
+        messageId = data as string;
+      }
 
-    const { data: messageId, error: insertError } = await supabase.rpc("send_staff_chat_message", {
-      p_conversation_id: selectedConversation.id,
-      p_message: cleanMessage,
-    });
-
-    if (insertError || !messageId) {
-      console.error("Staff reply error:", insertError);
-      setError(insertError?.message || "The reply was not saved. Please refresh the dashboard and try again.");
-    } else {
       setReplyText("");
+      setStaffAttachmentFile(null);
       const now = new Date().toISOString();
       const newMessage: Message = {
-        id: messageId as string,
-        conversation_id: selectedConversation.id,
-        sender_type: "agent",
-        sender_id: authData.user.id,
-        message: cleanMessage,
-        created_at: now,
+        id: messageId, conversation_id: selectedConversation.id, sender_type: "agent",
+        sender_id: authData.user.id, message: cleanMessage, created_at: now,
       };
-      setMessages((current) =>
-        current.some((item) => item.id === newMessage.id)
-          ? current
-          : [...current, newMessage].sort(
-              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-            )
-      );
-      setConversations((current) => current
-        .map((item) => item.id === selectedConversation.id ? { ...item, updated_at: now } : item)
+      setMessages((current) => current.some((item) => item.id === newMessage.id) ? current : [...current, newMessage]);
+      setConversations((current) => current.map((item) => item.id === selectedConversation.id ? { ...item, updated_at: now } : item)
         .sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()));
+    } catch (err) {
+      console.error("Staff attachment/reply error:", err);
+      setError(err instanceof Error ? err.message : "The reply could not be sent. Please try again.");
+    } finally {
+      setReplySending(false);
     }
-    setReplySending(false);
   }
 
   useEffect(() => {
@@ -645,8 +655,8 @@ export default function AdminDashboardPage() {
                         return <div key={item.id} style={{ alignSelf: isAgent ? "flex-end" : "flex-start", maxWidth: "88%", background: isAgent ? "#eaf2ff" : "#f1f5f9", color: "#243b53", padding: "10px 12px", borderRadius: 12, overflowWrap: "anywhere" }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: isAgent ? "#1554ad" : "#52667a", marginBottom: 4 }}>{isAgent ? "HOPEBRIDGE staff" : "Customer"}</div>
                           {item.message && <div style={{ whiteSpace: "pre-wrap" }}>{item.message}</div>}
-                          {item.image_path && messageImageUrls[item.id] && <a href={messageImageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={messageImageUrls[item.id]} alt="Customer attachment" width={480} height={320} unoptimized onError={() => { delete messageImageUrlsRef.current[item.id]; setMessageImageUrls((current) => { const next = { ...current }; delete next[item.id]; return next; }); }} style={{ display: "block", maxWidth: "100%", maxHeight: 220, width: "auto", height: "auto", borderRadius: 9, marginTop: item.message ? 8 : 0 }} /></a>}
-                          {item.image_path && !messageImageUrls[item.id] && <button type="button" className="btn secondary" style={{ fontSize: 12, marginTop: 6, padding: "6px 9px" }} onClick={async () => { const { data: session } = await supabase.auth.getSession(); const accessToken = session.session?.access_token; if (!accessToken) { setError("Your staff session has expired. Please sign in again."); return; } try { const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path!)}`, { headers: { Authorization: `Bearer ${accessToken}` } }); const result = await response.json(); if (response.ok && result.url) { messageImageUrlsRef.current[item.id] = result.url; setMessageImageUrls((current) => ({ ...current, [item.id]: result.url })); setError(""); } else { setError(result.error || "Attachment could not be opened. Refresh and try again."); } } catch { setError("Could not load the attachment. Check your connection and try again."); } }}>Retry image</button>}
+                          {item.image_path && messageImageUrls[item.id] && <a href={messageImageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={messageImageUrls[item.id]} alt="Chat image attachment" width={480} height={320} unoptimized style={{ display: "block", maxWidth: "100%", maxHeight: 220, width: "auto", height: "auto", borderRadius: 9, marginTop: item.message ? 8 : 0 }} /></a>}{item.video_path && messageImageUrls[item.id] && <video src={messageImageUrls[item.id]} controls playsInline preload="metadata" style={{ display: "block", maxWidth: "100%", maxHeight: 220, borderRadius: 9, marginTop: item.message ? 8 : 0 }} />}
+                          {(item.image_path || item.video_path) && !messageImageUrls[item.id] && <button type="button" className="btn secondary" style={{ fontSize: 12, marginTop: 6, padding: "6px 9px" }} onClick={async () => { const { data: session } = await supabase.auth.getSession(); const accessToken = session.session?.access_token; if (!accessToken) { setError("Your staff session has expired. Please sign in again."); return; } try { const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path!)}`, { headers: { Authorization: `Bearer ${accessToken}` } }); const result = await response.json(); if (response.ok && result.url) { messageImageUrlsRef.current[item.id] = result.url; setMessageImageUrls((current) => ({ ...current, [item.id]: result.url })); setError(""); } else { setError(result.error || "Attachment could not be opened. Refresh and try again."); } } catch { setError("Could not load the attachment. Check your connection and try again."); } }}>Retry attachment</button>}
                           <div style={{ fontSize: 10, color: "#718096", marginTop: 5 }}>{new Date(item.created_at).toLocaleString()}</div>
                         </div>;
                       })}
@@ -659,10 +669,9 @@ export default function AdminDashboardPage() {
                         placeholder="Write a reply to the customer…"
                         maxLength={5000}
                         rows={2}
-                        required
                         className="hb-thread-input"
                       />
-                      <button className="btn primary hb-thread-send" type="submit" disabled={replySending || !replyText.trim()}>{replySending ? "Sending…" : "Send reply"}</button>
+                      <label className="btn secondary" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: replySending ? "not-allowed" : "pointer" }}>＋ Attach file<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" disabled={replySending} onChange={(event) => { const file = event.target.files?.[0] || null; event.currentTarget.value = ""; if (!file) return; const image = ["image/jpeg","image/png","image/webp"].includes(file.type); const video = ["video/mp4","video/webm","video/quicktime"].includes(file.type); if (!image && !video) { setError("Choose JPG, PNG, WebP, MP4, WebM or MOV."); return; } if (file.size < 1 || file.size > (image ? 5 : 25) * 1024 * 1024) { setError(image ? "Images must be no larger than 5 MB." : "Videos must be no larger than 25 MB."); return; } setError(""); setStaffAttachmentFile(file); }} style={{ display: "none" }} /></label>\n                      {staffAttachmentFile && <span style={{ fontSize: 12, overflowWrap: "anywhere" }}>{staffAttachmentFile.name} <button type="button" onClick={() => setStaffAttachmentFile(null)} disabled={replySending}>Remove</button></span>}\n                      <button className="btn primary hb-thread-send" type="submit" disabled={replySending || (!replyText.trim() && !staffAttachmentFile)}>{replySending ? "Sending…" : "Send"}</button>
                     </form>
                     <p style={{ color: "#718096", fontSize: 12, marginBottom: 0 }}>Messages are saved to the database. Keep replies focused on verified support information; never ask customers for passwords or banking login details.</p>
                   </>
