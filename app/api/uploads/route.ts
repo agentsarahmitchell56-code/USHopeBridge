@@ -82,8 +82,6 @@ export async function POST(request: NextRequest) {
     if (purpose === "chat") {
       const conversationId = String(form.get("conversationId") || "");
       const chatToken = String(form.get("chatToken") || "");
-      const { data: staffUser } = await Promise.resolve({ data: null as null | { id: string } });
-      void staffUser;
       if (chatToken) {
         const { data: conversation } = await db.from("conversations").select("id").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
         if (!conversation) return NextResponse.json({ error: "Invalid chat session." }, { status: 403 });

@@ -19,7 +19,7 @@ returns table (
 )
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public
 as $$
 begin
   if not exists (
@@ -46,7 +46,7 @@ create or replace function public.send_chat_video(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public
 as $$
 declare
   new_id uuid;
@@ -59,7 +59,7 @@ begin
     raise exception 'Invalid video attachment';
   end if;
   if length(trim(coalesce(p_message,''))) > 5000 then raise exception 'Message is too long'; end if;
-  if not public.consume_chat_message_rate_limit(p_conversation_id) then
+  if not public.consume_upload_rate_limit(md5('chat-message:' || p_conversation_id::text || ':' || p_chat_token::text) || md5('chat-message-second:' || p_conversation_id::text || ':' || p_chat_token::text), 100, 3600) then
     raise exception 'Message rate limit exceeded';
   end if;
   insert into public.messages(conversation_id,sender_type,sender_id,message,video_path,video_type)
@@ -78,7 +78,7 @@ create or replace function public.send_staff_chat_attachment(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public
 as $$
 declare
   actor uuid := auth.uid();
