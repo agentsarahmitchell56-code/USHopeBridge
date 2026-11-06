@@ -468,7 +468,7 @@ export default function AdminDashboardPage() {
     <main className="hb-admin-page">
       <div className="hb-admin-container">
         <header className="hb-admin-header">
-          <a href="/admin" className="brand">HOPEBRIDGE<span>STAFF DASHBOARD</span></a>
+          <a href="/admin" className="brand">HOPEBRIDGE<span>BUSINESS SUITE</span></a>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <StaffNotifications />
             <a href="/admin/analytics" className="btn secondary">Analytics</a>
