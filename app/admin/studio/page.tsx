@@ -42,6 +42,7 @@ export default function BusinessStudioPage() {
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPost, setSavingPost] = useState(false);
+  const [publishingPostId, setPublishingPostId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -140,6 +141,24 @@ export default function BusinessStudioPage() {
     } finally { setSavingPost(false); }
   }
 
+  async function publishPost(postId: string) {
+    if (publishingPostId) return;
+    setPublishingPostId(postId); setError(""); setNotice("");
+    try {
+      const { data, error: publishError } = await supabase.from("business_posts")
+        .update({ status: "PUBLISHED", scheduled_at: null })
+        .eq("id", postId)
+        .select("id,caption,media_path,media_url,media_type,status,scheduled_at,created_at")
+        .single();
+      if (publishError || !data) throw publishError || new Error("The post could not be published.");
+      setPosts((current) => current.map((post) => post.id === postId ? data as Post : post));
+      setNotice("Post published on the public HOPEBRIDGE profile.");
+    } catch (e) {
+      console.error("Publish post failed", e);
+      setError(e instanceof Error ? e.message : "The post could not be published. Please try again.");
+    } finally { setPublishingPostId(null); }
+  }
+
   async function signOut() { await supabase.auth.signOut(); router.replace("/admin/login"); router.refresh(); }
 
   if (loading) return <main className="container" style={{ paddingTop: 80 }}>Loading secure Business Studio…</main>;
@@ -213,7 +232,7 @@ export default function BusinessStudioPage() {
 
         <section id="content-library" style={{ ...cardStyle, marginTop: 20, scrollMarginTop: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
-            <div><h2 style={{ fontSize: 22, margin: 0 }}>Content library</h2><p style={{ color: "#667085", margin: "5px 0 0", fontSize: 14 }}>Find and review your saved drafts and scheduled content.</p></div>
+            <div><h2 style={{ fontSize: 22, margin: 0 }}>Content library</h2><p style={{ color: "#667085", margin: "5px 0 0", fontSize: 14 }}>Find drafts, scheduled items and posts published on the public HOPEBRIDGE profile.</p></div>
             <button className="btn secondary" onClick={() => window.location.reload()}>Refresh library</button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: 10, marginBottom: 18 }}>
@@ -228,6 +247,7 @@ export default function BusinessStudioPage() {
                   <span style={{ display: "inline-block", fontSize: 11, fontWeight: 800, letterSpacing: ".05em", borderRadius: 999, padding: "5px 8px", color: post.status === "SCHEDULED" ? "#175cd3" : "#475467", background: post.status === "SCHEDULED" ? "#eff8ff" : "#f2f4f7" }}>{post.status}</span>
                   <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", margin: "10px 0", fontSize: 14 }}>{post.caption || "No caption"}</p>
                   {post.scheduled_at && <div style={{ fontSize: 12, color: "#667085" }}>Scheduled: {new Date(post.scheduled_at).toLocaleString()}</div>}
+                  {post.status !== "PUBLISHED" ? <button type="button" className="btn primary" style={{ width: "100%", marginTop: 10, fontSize: 13 }} disabled={publishingPostId !== null} onClick={() => void publishPost(post.id)}>{publishingPostId === post.id ? "Publishing…" : "Publish on HOPEBRIDGE profile"}</button> : <div style={{ color: "#067647", background: "#ecfdf3", borderRadius: 9, padding: "8px 10px", marginTop: 10, fontSize: 12, fontWeight: 700 }}>Visible on public profile</div>}
                   <div style={{ fontSize: 11, color: "#98a2b3", marginTop: 8 }}>Created {new Date(post.created_at).toLocaleDateString()}</div>
                 </div>
               </article>)}
