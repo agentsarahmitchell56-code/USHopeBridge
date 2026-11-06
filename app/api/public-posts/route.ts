@@ -28,7 +28,8 @@ export async function GET() {
           if (parsed.protocol === "https:") mediaUrl = parsed.toString();
         } catch { /* Ignore malformed media URLs. */ }
       }
-      const mediaType = typeof post.media_type === "string" && /^(image\\/(jpeg|png|webp|gif)|video\\/(mp4|webm))$/.test(post.media_type)
+      const allowedMediaTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm"];
+      const mediaType = typeof post.media_type === "string" && allowedMediaTypes.includes(post.media_type)
         ? post.media_type : null;
       return {
         id: post.id,
