@@ -257,6 +257,7 @@ export default function ChatPage() {
       let sendError: { message: string } | null = null;
 
       if (attachmentFile) {
+        let upload: { path?: string; error?: string };
         try {
           const form = new FormData();
           form.append("file", attachmentFile);
@@ -264,21 +265,39 @@ export default function ChatPage() {
           form.append("conversationId", conversationId);
           form.append("chatToken", chatToken);
           const response = await fetch("/api/uploads", { method: "POST", body: form });
-          const upload = await response.json();
-          if (!response.ok) throw new Error(upload.error || "Attachment upload failed.");
-          const isVideo = attachmentFile.type.startsWith("video/");
+          const responseText = await response.text();
+          let parsed: { path?: string; error?: string } = {};
+          try { parsed = JSON.parse(responseText) as { path?: string; error?: string }; } catch { /* Report a safe endpoint error below. */ }
+          if (!response.ok || !parsed.path) {
+            throw new Error(parsed.error || `Upload service returned HTTP ${response.status}. Please retry.`);
+          }
+          upload = parsed;
+        } catch (uploadError) {
+          const details = uploadError instanceof Error ? uploadError.message : "Attachment upload failed.";
+          console.error("Chat attachment upload failed:", details);
+          setError(/failed to fetch|networkerror|load failed|fetch failed/i.test(details)
+            ? "The file could not reach HOPEBRIDGE upload storage. Check your connection and try again. Your selected attachment has been kept."
+            : details);
+          return;
+        }
+
+        const isVideo = attachmentFile.type.startsWith("video/");
+        try {
           const result = isVideo
             ? await supabase.rpc("send_chat_video", {
                 p_conversation_id: conversationId, p_chat_token: chatToken,
-                p_video_path: upload.path, p_video_type: attachmentFile.type, p_message: cleanMessage,
+                p_video_path: upload.path!, p_video_type: attachmentFile.type, p_message: cleanMessage,
               })
             : await supabase.rpc("send_chat_image", {
                 p_conversation_id: conversationId, p_chat_token: chatToken,
-                p_image_path: upload.path, p_image_type: attachmentFile.type, p_message: cleanMessage,
+                p_image_path: upload.path!, p_image_type: attachmentFile.type, p_message: cleanMessage,
               });
           sendError = result.error;
-        } catch (uploadError) {
-          sendError = { message: uploadError instanceof Error ? uploadError.message : "Attachment upload failed." };
+        } catch (recordError) {
+          const details = recordError instanceof Error ? recordError.message : "The attachment was uploaded but could not be added to the chat.";
+          console.error("Chat attachment record failed after upload:", details);
+          setError("The file reached secure storage, but the chat could not attach it to your message. Keep this chat open and try again.");
+          return;
         }
       } else {
         const result = await supabase.rpc("send_chat_message", {
