@@ -193,7 +193,8 @@ export default function AdminDashboardPage() {
 
       if (!active) return;
       if (messagesError) {
-        setError("Could not load this conversation's messages. Check staff message access in Supabase.");
+        console.error("Load staff conversation messages failed:", messagesError);
+        setError(`Could not load this conversation's messages: ${messagesError.message}`);
         setMessages([]);
       } else {
         const loadedMessages = (data || []) as Message[];
