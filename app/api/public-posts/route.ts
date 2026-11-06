@@ -16,7 +16,8 @@ export async function GET() {
     const { data, error } = await db.rpc("get_published_business_posts", { p_limit: 24 });
     if (error) throw error;
 
-    const posts = (data || []).map((post) => {
+    type PublishedPost = { id: string; caption: string | null; media_url: string | null; media_type: string | null; created_at: string };
+    const posts = ((data ?? []) as PublishedPost[]).map((post: PublishedPost) => {
       let mediaUrl: string | null = null;
       if (post.media_url) {
         try {
