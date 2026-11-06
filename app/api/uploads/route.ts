@@ -118,16 +118,21 @@ export async function GET(request: NextRequest) {
     if (!/^(applications|chat)\/[0-9a-f-]{36}\.(jpg|png|webp|mp4|webm|mov)$/i.test(path)) return NextResponse.json({ error: "Access denied." }, { status: 401 });
 
     const db = adminClient();
+    const isImage = /\.(jpg|png|webp)$/i.test(path);
     if (path.startsWith("chat/") && conversationId && chatToken) {
       const { data: conversation } = await db.from("conversations").select("id").eq("id", conversationId).eq("chat_token", chatToken).maybeSingle();
       if (!conversation) return NextResponse.json({ error: "Access denied." }, { status: 403 });
-      const { data: attachment } = await db.from("messages").select("id").eq("conversation_id", conversationId).or(`image_path.eq.${path},video_path.eq.${path}`).maybeSingle();
+      const { data: attachment } = isImage
+        ? await db.from("messages").select("id").eq("conversation_id", conversationId).eq("image_path", path).maybeSingle()
+        : await db.from("messages").select("id").eq("conversation_id", conversationId).eq("video_path", path).maybeSingle();
       if (!attachment) return NextResponse.json({ error: "Attachment unavailable." }, { status: 404 });
     } else {
       const user = await authorizedStaff(db, request);
       if (!user) return NextResponse.json({ error: "Access denied." }, { status: 401 });
       if (path.startsWith("chat/")) {
-        const { data: attachment } = await db.from("messages").select("id").or(`image_path.eq.${path},video_path.eq.${path}`).maybeSingle();
+        const { data: attachment } = isImage
+          ? await db.from("messages").select("id").eq("image_path", path).maybeSingle()
+          : await db.from("messages").select("id").eq("video_path", path).maybeSingle();
         if (!attachment) return NextResponse.json({ error: "Attachment unavailable." }, { status: 404 });
       } else {
         const { data: attachment } = await db.from("applications").select("id").eq("attachment_path", path).maybeSingle();
