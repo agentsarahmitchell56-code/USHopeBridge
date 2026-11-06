@@ -175,11 +175,21 @@ export default function AdminDashboardPage() {
     setMessagesLoading(true);
 
     async function loadMessages() {
-      const { data, error: messagesError } = await supabase
+      let { data, error: messagesError } = await supabase
         .from("messages")
         .select("id,conversation_id,sender_type,sender_id,message,created_at,image_path,image_type,video_path,video_type")
         .eq("conversation_id", selectedConversation!.id)
         .order("created_at", { ascending: true });
+
+      // Keep the existing inbox readable until the separately reviewed video migration is applied.
+      if (messagesError && /video_path|video_type|column/i.test(messagesError.message)) {
+        const fallback = await supabase.from("messages")
+          .select("id,conversation_id,sender_type,sender_id,message,created_at,image_path,image_type")
+          .eq("conversation_id", selectedConversation!.id)
+          .order("created_at", { ascending: true });
+        data = fallback.data as typeof data;
+        messagesError = fallback.error;
+      }
 
       if (!active) return;
       if (messagesError) {
@@ -261,7 +271,7 @@ export default function AdminDashboardPage() {
       const accessToken = sessionData.session?.access_token;
       if (authError || !authData.user || !accessToken) throw new Error("Your staff session has expired. Please sign in again.");
 
-      let messageId: string | null = null;
+      let messageId = "";
       if (staffAttachmentFile) {
         const form = new FormData();
         form.append("file", staffAttachmentFile);
