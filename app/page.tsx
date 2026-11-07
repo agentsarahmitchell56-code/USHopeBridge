@@ -1,172 +1,147 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import MobileMenu from "./mobile-menu";
 
-const updates = [
-  { tag: "APPLICATION GUIDE", title: "Before you submit your request", body: "Take a moment to review your contact details and answers. Clear, accurate information helps the team understand the request.", icon: "✓" },
-  { tag: "STATUS REMINDER", title: "Keep your reference number safe", body: "After a successful submission, save the reference number shown on screen. Use it with your application email to check recorded updates.", icon: "↗" },
-  { tag: "SAFETY NOTICE", title: "Protect your private information", body: "Never share passwords, card PINs, one-time passcodes, or banking login credentials in a form or support conversation.", icon: "⌑" },
+type ProfileTab = "Overview" | "Posts" | "Media" | "Services" | "Apply" | "Track" | "Messages" | "Notifications" | "About";
+type PublishedPost = { id: string; caption: string; media_url: string | null; media_type: string | null; created_at: string };
+
+const tabs: ProfileTab[] = ["Overview", "Posts", "Media", "Services", "Apply", "Track", "Messages", "Notifications", "About"];
+
+const guidance = [
+  { tag: "APPLICATION GUIDE", title: "Prepare your information", body: "Review your contact details and answers carefully before submitting a request. Accurate information helps the team understand what you have shared." },
+  { tag: "STATUS TRACKING", title: "Keep your reference number", body: "After a successful submission, save the reference number shown on screen. You will need it and your application email to check recorded updates." },
+  { tag: "PRIVACY & SAFETY", title: "Protect your account information", body: "Never share passwords, bank card PINs, one-time passcodes, or banking login credentials in an application or support conversation." },
 ];
 
-const services = [
-  { icon: "▤", title: "Start an application", description: "Use the guided form to send your request and review your details before submission.", link: "/apply", linkText: "Apply now" },
-  { icon: "◎", title: "Track your status", description: "Check the latest application and payment information recorded by the team.", link: "/status", linkText: "Check status" },
-  { icon: "✳", title: "Chat with support", description: "Ask a question and return to the same conversation on this browser.", link: "/chat", linkText: "Open support chat" },
-];
+function SectionTitle({ eyebrow, title, description }: { eyebrow: string; title: string; description?: string }) {
+  return <div className="hb-profile-section-title"><span>{eyebrow}</span><h2>{title}</h2>{description && <p>{description}</p>}</div>;
+}
 
 export default function HomePage() {
-  return (
-    <main className="hb-home hb-community-page">
-      <div className="hb-topline">
-        <div className="hb-container hb-topline-inner">
-          <span><span className="hb-live-dot" /> Clear information. A structured application process.</span>
-          <Link href="/status">Already applied? Track your status <span aria-hidden="true">↗</span></Link>
-        </div>
-      </div>
+  const [activeTab, setActiveTab] = useState<ProfileTab>("Overview");
+  const [publishedPosts, setPublishedPosts] = useState<PublishedPost[]>([]);
+  const [postsUnavailable, setPostsUnavailable] = useState(false);
 
-      <header className="hb-header">
-        <div className="hb-container hb-nav">
-          <Link href="/" className="hb-brand" aria-label="HOPEBRIDGE home">
-            <img className="hb-logo-image" src="/images/hopebridge-logo.svg" alt="HOPEBRIDGE Financial Assistance" />
-            <span className="hb-brand-copy">HOPEBRIDGE<small>FINANCIAL ASSISTANCE</small></span>
-          </Link>
-          <nav className="hb-nav-links" aria-label="Main navigation">
-            <Link href="#community-feed">Updates</Link>
-            <Link href="#services">Services</Link>
-            <Link href="#how-it-works">How it works</Link>
-            <Link href="/posts">Guidance library</Link>
-          </nav>
-          <div className="hb-nav-actions">
-            <Link className="hb-login-link" href="/account/login">Customer sign in</Link>
-            <Link className="hb-login-link" href="/admin/login">Staff sign in</Link>
-            <Link className="hb-button hb-button-small" href="/account/signup">Create account</Link>
-            <Link className="hb-button hb-button-small" href="/apply">Apply now <span aria-hidden="true">↗</span></Link>
-          </div>
-          <MobileMenu />
-        </div>
+  useEffect(() => {
+    let active = true;
+    fetch("/api/public-posts", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Published updates are unavailable.");
+        return response.json();
+      })
+      .then((result) => {
+        if (active) setPublishedPosts(Array.isArray(result.posts) ? result.posts : []);
+      })
+      .catch(() => { if (active) setPostsUnavailable(true); });
+    return () => { active = false; };
+  }, []);
+
+  return (
+    <main className="hb-home hb-profile-page">
+      <header className="hb-profile-topbar">
+        <Link href="/" className="hb-profile-brand" aria-label="HOPEBRIDGE home">
+          <img src="/images/hopebridge-logo.svg" alt="" />
+          <span>HOPEBRIDGE<small>FINANCIAL ASSISTANCE</small></span>
+        </Link>
+        <nav className="hb-profile-toplinks" aria-label="Account navigation">
+          <Link href="/account/login">Sign in</Link>
+          <Link href="/admin/login">Staff portal</Link>
+          <Link href="/account/signup" className="hb-profile-top-cta">Create account</Link>
+        </nav>
+        <MobileMenu />
       </header>
 
-      <section className="hb-page-cover">
-        <div className="hb-page-cover-art"><img className="hb-banner-image" src="/images/hopebridge-banner.svg" alt="HOPEBRIDGE Financial Assistance — Support Today, Stronger Tomorrow" /></div>
-        <div className="hb-container hb-page-profile">
-          <div className="hb-page-avatar"><img className="hb-logo-image hb-avatar-logo" src="/images/hopebridge-logo.svg" alt="HOPEBRIDGE logo" /></div>
-          <div className="hb-page-profile-copy">
-            <span className="hb-eyebrow"><span className="hb-eyebrow-line" /> OFFICIAL WEBSITE</span>
-            <h1>HOPEBRIDGE Financial Assistance</h1>
-            <p>A clear place to submit a request, follow recorded updates, and contact support.</p>
-            <div className="hb-profile-meta"><span>◉ Application guidance</span><span>·</span><span>◎ Status tracking</span><span>·</span><span>✳ Customer support</span></div>
-          </div>
-          <div className="hb-profile-actions">
-            <Link href="/apply" className="hb-button">＋ Start application</Link>
-            <Link href="/chat" className="hb-button hb-button-light">✉ Message support</Link>
-          </div>
+      <div className="hb-profile-cover">
+        <div className="hb-profile-cover-pattern" aria-hidden="true"><span>HOPE</span><span>BRIDGE</span></div>
+      </div>
+
+      <section className="hb-profile-identity">
+        <div className="hb-profile-avatar"><img src="/images/hopebridge-logo.svg" alt="HOPEBRIDGE logo" /></div>
+        <div className="hb-profile-identity-copy">
+          <div className="hb-profile-name-row"><h1>HOPEBRIDGE Financial Assistance</h1><span className="hb-profile-status"><i /> Official website</span></div>
+          <p>Information, application access and customer support in one place.</p>
+          <div className="hb-profile-meta"><span>Financial assistance information</span><span>Customer support</span><span>Application status updates</span></div>
+        </div>
+        <div className="hb-profile-identity-actions">
+          <Link href="/apply" className="hb-profile-primary">＋ Apply</Link>
+          <Link href="/chat" className="hb-profile-secondary">✉ Message</Link>
         </div>
       </section>
 
-      <section className="hb-community-main" aria-label="HOPEBRIDGE customer page">
-        <div className="hb-container hb-community-grid">
-          <aside className="hb-community-sidebar">
-            <section className="hb-social-card hb-about-card">
-              <h2>About</h2>
-              <p>HOPEBRIDGE provides a structured website experience for assistance requests, status checks, and support questions.</p>
-              <div className="hb-about-row"><span>▤</span><span><strong>Guided application</strong><small>Review your details before sending</small></span></div>
-              <div className="hb-about-row"><span>◎</span><span><strong>Private reference</strong><small>Check recorded application updates</small></span></div>
-              <div className="hb-about-row"><span>✳</span><span><strong>Support conversation</strong><small>No customer account required</small></span></div>
+      <nav className="hb-profile-tabs" aria-label="HOPEBRIDGE profile sections">
+        {tabs.map((tab) => <button key={tab} type="button" className={activeTab === tab ? "is-active" : ""} aria-current={activeTab === tab ? "page" : undefined} onClick={() => setActiveTab(tab)}>{tab}</button>)}
+      </nav>
+
+      <div className="hb-profile-layout">
+        <aside className="hb-profile-left">
+          <section className="hb-profile-card hb-profile-intro">
+            <SectionTitle eyebrow="PROFILE" title="About HOPEBRIDGE" />
+            <p>HOPEBRIDGE provides an online place to submit financial assistance requests, review recorded application updates and contact the support team.</p>
+            <div className="hb-profile-detail"><span>◎</span><div><strong>Website services</strong><small>Applications · Status tracking · Support</small></div></div>
+            <div className="hb-profile-detail"><span>⌖</span><div><strong>Online service</strong><small>Access the website from your phone or computer</small></div></div>
+            <button type="button" className="hb-profile-inline-button" onClick={() => setActiveTab("About")}>More information →</button>
+          </section>
+          <section className="hb-profile-card hb-profile-shortcuts">
+            <SectionTitle eyebrow="QUICK LINKS" title="Your workspace" />
+            <Link href="/apply">＋ Start an application</Link>
+            <Link href="/status">◎ Track an application</Link>
+            <Link href="/chat">✉ Contact support</Link>
+            <Link href="/account/login">♙ Customer sign in</Link>
+            <Link href="/account/signup">＋ Create an account</Link>
+          </section>
+          <section className="hb-profile-card hb-profile-safety">
+            <span className="hb-profile-safety-icon">◇</span><strong>Stay safe online</strong>
+            <p>Never send passwords, card PINs, one-time passcodes or banking login details through chat.</p>
+            <Link href="/privacy">Privacy & safety →</Link>
+          </section>
+        </aside>
+
+        <section className="hb-profile-content" aria-live="polite">
+          {activeTab === "Overview" && <>
+            <section className="hb-profile-card hb-profile-welcome">
+              <div><span className="hb-profile-kicker">WELCOME TO HOPEBRIDGE</span><h2>Your assistance journey, organised in one place.</h2><p>Use the profile sections to explore information, submit a request, follow its recorded status or contact support.</p><div className="hb-profile-hero-actions"><Link href="/apply" className="hb-profile-primary">Start an application</Link><Link href="/status" className="hb-profile-secondary">Track a request</Link></div></div>
+              <div className="hb-profile-welcome-mark" aria-hidden="true">HB</div>
             </section>
-            <section className="hb-social-card hb-shortcuts-card">
-              <h2>Quick links</h2>
-              <Link href="/apply"><span className="hb-shortcut-icon">＋</span><span>Apply for assistance</span><span>↗</span></Link>
-              <Link href="/status"><span className="hb-shortcut-icon">◎</span><span>Check application status</span><span>↗</span></Link>
-              <Link href="/chat"><span className="hb-shortcut-icon">✉</span><span>Chat with support</span><span>↗</span></Link>
-              <Link href="/posts"><span className="hb-shortcut-icon">▤</span><span>Guidance and notices</span><span>↗</span></Link>
+            <SectionTitle eyebrow="EXPLORE THE PROFILE" title="Everything in one place" description="Choose a section above or use these direct links." />
+            <div className="hb-profile-feature-grid">
+              <Link href="/apply"><span>＋</span><strong>Applications</strong><small>Submit a new assistance request.</small></Link>
+              <Link href="/status"><span>◎</span><strong>Track status</strong><small>Check updates using your reference details.</small></Link>
+              <Link href="/chat"><span>✉</span><strong>Customer messages</strong><small>Open a private support conversation.</small></Link>
+              <Link href="/posts"><span>▤</span><strong>Guidance & posts</strong><small>Read application and website guidance.</small></Link>
+            </div>
+            <section className="hb-profile-card hb-profile-feed">
+              <div className="hb-profile-feed-heading"><div><span className="hb-profile-kicker">LATEST UPDATES</span><h2>Guidance from HOPEBRIDGE</h2></div><button onClick={() => setActiveTab("Posts")}>See all posts →</button></div>
+              {guidance.slice(0, 2).map((post) => <article className="hb-profile-post" key={post.title}><div className="hb-profile-post-avatar">HB</div><div><strong>HOPEBRIDGE</strong><small>{post.tag}</small><h3>{post.title}</h3><p>{post.body}</p></div></article>)}
             </section>
-            <p className="hb-community-smallprint">Submitting an application does not guarantee eligibility, approval, or payment. Requests are subject to review and applicable requirements.</p>
-          </aside>
+          </>}
 
-          <div className="hb-community-feed" id="community-feed">
-            <section className="hb-social-card hb-start-card">
-              <div className="hb-feed-card-heading"><div className="hb-feed-avatar">HB</div><div><strong>Welcome to HOPEBRIDGE</strong><small>Your application and support hub</small></div></div>
-              <p>What would you like to do today?</p>
-              <div className="hb-start-actions">
-                <Link href="/apply"><span>＋</span><span><strong>Start an application</strong><small>Share your request step by step</small></span><b>→</b></Link>
-                <Link href="/status"><span>◎</span><span><strong>Check a status</strong><small>Use your reference number and email</small></span><b>→</b></Link>
-                <Link href="/chat"><span>✉</span><span><strong>Ask support</strong><small>Continue a private conversation</small></span><b>→</b></Link>
-              </div>
-            </section>
+          {activeTab === "Posts" && <section className="hb-profile-card"><SectionTitle eyebrow="COMMUNITY FEED" title="Posts & guidance" description="Official updates published by the HOPEBRIDGE team, alongside general website guidance." />{publishedPosts.length > 0 ? publishedPosts.map((post) => <article className="hb-profile-guidance-post" key={post.id}><span>HOPEBRIDGE UPDATE · {new Date(post.created_at).toLocaleDateString()}</span>{post.caption && <p style={{ whiteSpace: "pre-wrap" }}>{post.caption}</p>}{post.media_url && post.media_type?.startsWith("image/") && <img src={post.media_url} alt="HOPEBRIDGE post media" loading="lazy" style={{ display: "block", width: "100%", maxHeight: 420, objectFit: "contain", borderRadius: 12, marginTop: 12, background: "#f4f7fb" }} />}{post.media_url && post.media_type?.startsWith("video/") && <video src={post.media_url} controls playsInline preload="metadata" style={{ display: "block", width: "100%", maxHeight: 420, borderRadius: 12, marginTop: 12, background: "#111827" }} />}</article>) : <><div className="hb-profile-empty"><strong>{postsUnavailable ? "Published updates could not be loaded right now." : "No official posts have been published yet."}</strong><p>{postsUnavailable ? "Please refresh later or use the guidance library below." : "New public updates from the HOPEBRIDGE team will appear here after they are published in Business Studio."}</p></div>{guidance.map((post) => <article className="hb-profile-guidance-post" key={post.title}><span>{post.tag}</span><h3>{post.title}</h3><p>{post.body}</p></article>)}</>}<Link href="/posts" className="hb-profile-primary">Open guidance library</Link></section>}
 
-            <div className="hb-feed-heading"><div><span className="hb-eyebrow"><span className="hb-eyebrow-line" /> INFORMATION FEED</span><h2>Guidance for your next step</h2></div><Link href="/posts">View all guidance ↗</Link></div>
-            {updates.map((update) => (
-              <article className="hb-social-card hb-feed-post" key={update.title}>
-                <div className="hb-feed-card-heading"><div className="hb-feed-avatar">HB</div><div><strong>HOPEBRIDGE Information</strong><small>Website guidance · {update.tag.toLowerCase()}</small></div><span className="hb-feed-post-menu" aria-hidden="true">•••</span></div>
-                <div className="hb-feed-post-body"><span className="hb-post-symbol" aria-hidden="true">{update.icon}</span><div><span className="hb-post-tag">{update.tag}</span><h3>{update.title}</h3><p>{update.body}</p></div></div>
-                <div className="hb-feed-post-footer"><Link href="/posts">Read related guidance <span aria-hidden="true">→</span></Link><span>Informational notice</span></div>
-              </article>
-            ))}
-          </div>
+          {activeTab === "Media" && <section className="hb-profile-card"><SectionTitle eyebrow="PHOTO & VIDEO" title="Media gallery" description="Photos and videos attached to public HOPEBRIDGE posts appear here after publication." />{publishedPosts.filter((post) => post.media_url).length > 0 ? <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>{publishedPosts.filter((post) => post.media_url).map((post) => <article key={post.id} style={{ minWidth: 0, border: "1px solid #e2e8f0", borderRadius: 14, padding: 10, background: "#fff" }}>{post.media_type?.startsWith("video/") ? <video src={post.media_url || undefined} controls playsInline preload="metadata" style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 9, background: "#111827" }} /> : <img src={post.media_url || ""} alt="HOPEBRIDGE published media" loading="lazy" style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 9, background: "#f4f7fb" }} />}{post.caption && <p style={{ fontSize: 13, lineHeight: 1.5, margin: "9px 0 0", overflowWrap: "anywhere" }}>{post.caption}</p>}</article>)}</div> : <div className="hb-profile-empty"><span>▧</span><strong>No published media is available yet.</strong><p>When the team publishes a post with a photo or video, it will appear in this gallery.</p></div>}</section>}
 
-          <aside className="hb-community-right">
-            <section className="hb-social-card hb-next-step-card">
-              <span className="hb-next-step-icon">✦</span><span className="hb-eyebrow">START HERE</span>
-              <h2>Take one step at a time.</h2>
-              <p>Choose the service you need. You can submit a request, check a status, or contact support without creating a customer account.</p>
-              <Link href="/apply" className="hb-button">Begin application <span aria-hidden="true">→</span></Link>
-              <Link href="/status" className="hb-secondary-action">Already applied? Check status</Link>
-            </section>
-            <section className="hb-social-card hb-help-card">
-              <h2>Need a hand?</h2>
-              <p>Our support chat helps you ask questions about using the website and following the application process.</p>
-              <Link href="/chat">Open support chat ↗</Link>
-            </section>
-            <section className="hb-social-card hb-trust-card">
-              <span className="hb-trust-icon">✓</span><h2>Keep your details safe</h2>
-              <p>HOPEBRIDGE will never need your password, bank card PIN, or one-time passcode in the chat.</p>
-              <Link href="/privacy">Read privacy information ↗</Link>
-            </section>
-          </aside>
-        </div>
-      </section>
+          {activeTab === "Services" && <section className="hb-profile-card"><SectionTitle eyebrow="WHAT YOU CAN DO" title="Website services" description="Use the available website features to manage your interaction with HOPEBRIDGE." /><div className="hb-profile-service-list"><article><span>＋</span><div><h3>Submit an assistance request</h3><p>Complete the online application and review your answers before submitting.</p><Link href="/apply">Go to application →</Link></div></article><article><span>◎</span><div><h3>Application status</h3><p>Use your reference number and application email to view recorded updates.</p><Link href="/status">Track your request →</Link></div></article><article><span>✉</span><div><h3>Customer support</h3><p>Send a message to the support team if you need help using the website.</p><Link href="/chat">Open support →</Link></div></article></div></section>}
 
-      <section className="hb-section hb-services-section" id="services">
-        <div className="hb-container">
-          <div className="hb-services-heading"><div><span className="hb-eyebrow"><span className="hb-eyebrow-line" /> YOUR HOPEBRIDGE SPACE</span><h2>Useful services,<br /><em>all in one place.</em></h2></div><p>Choose the next step that matches your needs.</p></div>
-          <div className="hb-services-grid">
-            {services.map((service) => <article className="hb-service-card" key={service.title}>
-              <span className="hb-service-icon" aria-hidden="true">{service.icon}</span><h3>{service.title}</h3><p>{service.description}</p><Link href={service.link}>{service.linkText} <span aria-hidden="true">→</span></Link>
-            </article>)}
-          </div>
-        </div>
-      </section>
+          {activeTab === "Apply" && <section className="hb-profile-card"><SectionTitle eyebrow="APPLICATION CENTRE" title="Start an application" description="Prepare your information and review it carefully before submitting." /><div className="hb-profile-action-panel"><span>＋</span><div><h3>Financial assistance request</h3><p>Continue to the secure application form. Submitting a form does not guarantee eligibility, approval or funding.</p><Link href="/apply" className="hb-profile-primary">Continue to application →</Link></div></div></section>}
 
-      <section className="hb-section" id="how-it-works">
-        <div className="hb-container">
-          <div className="hb-section-heading"><span className="hb-eyebrow"><span className="hb-eyebrow-line" /> HOW IT WORKS</span><h2>Simple steps.<br /><em>Clear information.</em></h2><p>Keep your reference number and return to check updates recorded by the HOPEBRIDGE team.</p></div>
-          <div className="hb-steps-grid">
-            <article className="hb-step-card"><span className="hb-step-index">01</span><h3>Submit your request</h3><p>Complete the guided form and review your details before you submit.</p></article>
-            <article className="hb-step-card"><span className="hb-step-index">02</span><h3>Save your reference</h3><p>Keep the reference number shown after a successful submission.</p></article>
-            <article className="hb-step-card"><span className="hb-step-index">03</span><h3>Check for updates</h3><p>Use your reference and application email to check recorded status information.</p></article>
-          </div>
-        </div>
-      </section>
+          {activeTab === "Track" && <section className="hb-profile-card"><SectionTitle eyebrow="APPLICATION CENTRE" title="Track your application" description="Check the latest status recorded by the HOPEBRIDGE team." /><div className="hb-profile-action-panel"><span>◎</span><div><h3>Find your application update</h3><p>Have your application reference number and the email used when applying ready.</p><Link href="/status" className="hb-profile-primary">Check application status →</Link></div></div></section>}
 
-      <section className="hb-support-band" id="support">
-        <div className="hb-container hb-support-inner">
-          <div className="hb-support-symbol" aria-hidden="true"><span>HB</span><i>✳</i></div>
-          <div className="hb-support-copy"><span className="hb-eyebrow">HERE IF YOU NEED US</span><h2>Need assistance?</h2><p>Ask for website guidance or review the latest recorded status of your application.</p></div>
-          <div className="hb-support-actions"><Link href="/chat" className="hb-button hb-button-white">Chat with support <span aria-hidden="true">→</span></Link><Link href="/status" className="hb-support-text-link">Check application status ↗</Link></div>
-        </div>
-      </section>
+          {activeTab === "Messages" && <section className="hb-profile-card"><SectionTitle eyebrow="CUSTOMER CARE" title="Your support inbox" description="Contact HOPEBRIDGE about using the website or checking your application information." /><div className="hb-profile-action-panel"><span>✉</span><div><h3>Private support conversation</h3><p>Open the support page to start or continue your customer conversation.</p><Link href="/chat" className="hb-profile-primary">Open messages →</Link></div></div></section>}
 
-      <section className="hb-section hb-faq-section" id="frequently-asked-questions">
-        <div className="hb-container hb-faq-layout">
-          <div className="hb-faq-intro"><span className="hb-eyebrow"><span className="hb-eyebrow-line" /> QUICK ANSWERS</span><h2>Questions, answered<br /><em>with clarity.</em></h2><p>Find guidance on submitting a request, keeping your reference number, and getting support.</p><Link href="/chat" className="hb-faq-contact">Still need help? Contact support <span aria-hidden="true">↗</span></Link></div>
-          <div className="hb-faq-list">
-            <details className="hb-faq-item"><summary>What happens after I submit an application?<span aria-hidden="true" /></summary><p>You will see a confirmation and reference number if submission succeeds. Keep the reference number and use the status page to check for updates recorded by the team.</p></details>
-            <details className="hb-faq-item"><summary>Does submitting a request guarantee assistance?<span aria-hidden="true" /></summary><p>No. Submission confirms that your request was received; it does not guarantee eligibility, approval, or payment. Outcomes depend on the applicable review process.</p></details>
-            <details className="hb-faq-item"><summary>How do I check my application status?<span aria-hidden="true" /></summary><p>Open the status page and enter your reference number together with the email address used on the application.</p></details>
-            <details className="hb-faq-item"><summary>What information should I never share?<span aria-hidden="true" /></summary><p>Never share passwords, bank card PINs, one-time passcodes, or account login credentials in an application or support conversation.</p></details>
-          </div>
-        </div>
-      </section>
-      <section className="hb-disclosure"><div className="hb-container"><span className="hb-disclosure-icon" aria-hidden="true">i</span><p><strong>Please note:</strong> Submitting an application does not guarantee eligibility, approval, or payment. All requests are subject to the program’s review process and applicable requirements. Payment status reflects the latest information recorded by HOPEBRIDGE staff.</p></div></section>
+          {activeTab === "Notifications" && <section className="hb-profile-card"><SectionTitle eyebrow="UPDATES" title="Notifications" description="Application updates are available through the status checker and customer support." /><div className="hb-profile-action-panel"><span>♧</span><div><h3>Check your application updates</h3><p>Sign in or use your application reference details to review the latest information available to you.</p><Link href="/status" className="hb-profile-primary">View application status →</Link></div></div></section>}
+
+          {activeTab === "About" && <section className="hb-profile-card"><SectionTitle eyebrow="OFFICIAL INFORMATION" title="About HOPEBRIDGE Financial Assistance" description="A single online destination for application access, customer information and support." /><p className="hb-profile-about-copy">HOPEBRIDGE provides website tools for customers to submit financial assistance requests, check application status and contact support. Information shown on this website should be read carefully. Customers should use only the official website and protect their private account and banking credentials.</p><div className="hb-profile-about-links"><Link href="/privacy">Privacy policy →</Link><Link href="/terms">Terms & conditions →</Link><Link href="/chat">Contact support →</Link><Link href="/account/login">Customer sign in →</Link></div></section>}
+        </section>
+
+        <aside className="hb-profile-right">
+          <section className="hb-profile-card"><SectionTitle eyebrow="GET STARTED" title="Customer access" /><Link href="/account/signup" className="hb-profile-primary hb-profile-full">Create customer account</Link><Link href="/account/login" className="hb-profile-outline hb-profile-full">Sign in</Link><p className="hb-profile-small-note">You can also access application and support pages without signing in where the feature allows it.</p></section>
+          <section className="hb-profile-card"><SectionTitle eyebrow="IMPORTANT" title="Application information" /><p className="hb-profile-small-note">Submitting an application does not guarantee eligibility, approval or payment. Requests are subject to review and applicable requirements.</p></section>
+          <section className="hb-profile-card"><SectionTitle eyebrow="HELP CENTRE" title="Need help?" /><p className="hb-profile-small-note">If a message or application instruction is unclear, contact the support team before sharing sensitive information.</p><Link href="/chat" className="hb-profile-text-link">Message support →</Link></section>
+        </aside>
+      </div>
+
+      <footer className="hb-profile-footer"><span>© {new Date().getFullYear()} HOPEBRIDGE Financial Assistance</span><div><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/chat">Support</Link><Link href="/admin/login">Staff portal</Link></div></footer>
     </main>
   );
 }

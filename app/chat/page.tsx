@@ -14,6 +14,8 @@ type Message = {
   created_at: string;
   image_path?: string | null;
   image_type?: string | null;
+  video_path?: string | null;
+  video_type?: string | null;
 };
 
 type SavedChat = {
@@ -38,7 +40,7 @@ export default function ChatPage() {
   const [chatToken, setChatToken] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -135,9 +137,9 @@ export default function ChatPage() {
         setChatConnection("connected");
         setError("");
         for (const item of loaded) {
-          if (item.image_path && !imageUrlsRef.current[item.id]) {
+          if ((item.image_path || item.video_path) && !imageUrlsRef.current[item.id]) {
             try {
-              const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path)}&conversationId=${encodeURIComponent(conversationId)}&chatToken=${encodeURIComponent(chatToken)}`);
+              const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path || item.video_path || "")}&conversationId=${encodeURIComponent(conversationId)}&chatToken=${encodeURIComponent(chatToken)}`);
               const result = await response.json();
               if (response.ok && result.url && active) {
                 imageUrlsRef.current[item.id] = result.url;
@@ -225,62 +227,81 @@ export default function ChatPage() {
 
   function handleImageSelection(file: File | null) {
     setError("");
-    if (!file) {
-      setImageFile(null);
+    if (!file) { setAttachmentFile(null); return; }
+    const imageTypes = ["image/jpeg", "image/png", "image/webp"];
+    const videoTypes = ["video/mp4", "video/webm", "video/quicktime"];
+    const isImage = imageTypes.includes(file.type);
+    const isVideo = videoTypes.includes(file.type);
+    if (!isImage && !isVideo) {
+      setAttachmentFile(null);
+      setError("Choose a JPG, PNG, WebP, MP4, WebM, or MOV file.");
       return;
     }
-    const allowed = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) {
-      setImageFile(null);
-      setError("Please choose a JPG, PNG, or WebP image.");
+    const limit = isImage ? 5 * 1024 * 1024 : 25 * 1024 * 1024;
+    if (file.size < 1 || file.size > limit) {
+      setAttachmentFile(null);
+      setError(isImage ? "Images must be smaller than 5 MB." : "Videos must be smaller than 25 MB.");
       return;
     }
-    if (file.size < 1 || file.size > 5 * 1024 * 1024) {
-      setImageFile(null);
-      setError("Please choose an image smaller than 5 MB.");
-      return;
-    }
-    setImageFile(file);
+    setAttachmentFile(file);
   }
 
   async function sendMessage(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const cleanMessage = message.trim();
-    if ((!cleanMessage && !imageFile) || !conversationId || !chatToken || sending) return;
+    if ((!cleanMessage && !attachmentFile) || !conversationId || !chatToken || sending) return;
 
     setSending(true);
     setError("");
     try {
       let sendError: { message: string } | null = null;
 
-      if (imageFile) {
+      if (attachmentFile) {
+        let upload: { path?: string; error?: string };
         try {
           const form = new FormData();
-          form.append("file", imageFile);
+          form.append("file", attachmentFile);
           form.append("purpose", "chat");
           form.append("conversationId", conversationId);
           form.append("chatToken", chatToken);
           const response = await fetch("/api/uploads", { method: "POST", body: form });
-          const upload = await response.json();
-          if (!response.ok) throw new Error(upload.error || "Image upload failed.");
-          const result = await supabase.rpc("send_chat_image", {
-            p_conversation_id: conversationId,
-            p_chat_token: chatToken,
-            p_image_path: upload.path,
-            p_image_type: imageFile.type,
-            p_message: cleanMessage,
-          });
-          sendError = result.error;
+          const responseText = await response.text();
+          let parsed: { path?: string; error?: string } = {};
+          try { parsed = JSON.parse(responseText) as { path?: string; error?: string }; } catch { /* Report a safe endpoint error below. */ }
+          if (!response.ok || !parsed.path) {
+            throw new Error(parsed.error || `Upload service returned HTTP ${response.status}. Please retry.`);
+          }
+          upload = parsed;
         } catch (uploadError) {
-          sendError = {
-            message: uploadError instanceof Error ? uploadError.message : "Image upload failed.",
-          };
+          const details = uploadError instanceof Error ? uploadError.message : "Attachment upload failed.";
+          console.error("Chat attachment upload failed:", details);
+          setError(/failed to fetch|networkerror|load failed|fetch failed/i.test(details)
+            ? "The file could not reach HOPEBRIDGE upload storage. Check your connection and try again. Your selected attachment has been kept."
+            : details);
+          return;
+        }
+
+        const isVideo = attachmentFile.type.startsWith("video/");
+        try {
+          const result = isVideo
+            ? await supabase.rpc("send_chat_video", {
+                p_conversation_id: conversationId, p_chat_token: chatToken,
+                p_video_path: upload.path!, p_video_type: attachmentFile.type, p_message: cleanMessage,
+              })
+            : await supabase.rpc("send_chat_image", {
+                p_conversation_id: conversationId, p_chat_token: chatToken,
+                p_image_path: upload.path!, p_image_type: attachmentFile.type, p_message: cleanMessage,
+              });
+          sendError = result.error;
+        } catch (recordError) {
+          const details = recordError instanceof Error ? recordError.message : "The attachment was uploaded but could not be added to the chat.";
+          console.error("Chat attachment record failed after upload:", details);
+          setError("The file reached secure storage, but the chat could not attach it to your message. Keep this chat open and try again.");
+          return;
         }
       } else {
         const result = await supabase.rpc("send_chat_message", {
-          p_conversation_id: conversationId,
-          p_chat_token: chatToken,
-          p_message: cleanMessage,
+          p_conversation_id: conversationId, p_chat_token: chatToken, p_message: cleanMessage,
         });
         sendError = result.error;
       }
@@ -294,16 +315,16 @@ export default function ChatPage() {
           setConversationId("");
           setChatToken("");
           setMessages([]);
-          setImageFile(null);
+          setAttachmentFile(null);
           setError("This chat session has expired or is no longer valid. Please start a new chat to continue.");
         } else if (/failed to fetch|networkerror|load failed|fetch failed/i.test(details)) {
-          setError("Connection to support was interrupted. Check your internet connection and try again. Your selected image has been kept.");
+          setError("Connection to support was interrupted. Check your internet connection and try again. Your selected attachment has been kept.");
         } else {
           setError(details);
         }
       } else {
         setMessage("");
-        setImageFile(null);
+        setAttachmentFile(null);
         const { data } = await supabase.rpc("get_chat_messages", {
           p_conversation_id: conversationId,
           p_chat_token: chatToken,
@@ -319,7 +340,7 @@ export default function ChatPage() {
         setConversationId("");
         setChatToken("");
         setMessages([]);
-        setImageFile(null);
+        setAttachmentFile(null);
         setError("This chat session has expired or is no longer valid. Please start a new chat to continue.");
       } else {
         setError("We couldn't send your message because the connection was interrupted. Check your internet connection and try again.");
@@ -337,7 +358,7 @@ export default function ChatPage() {
     setChatToken("");
     knownMessageIdsRef.current = null;
     setMessages([]);
-    setMessage(""); setImageFile(null); imageUrlsRef.current = {}; setImageUrls({});
+    setMessage(""); setAttachmentFile(null); imageUrlsRef.current = {}; setImageUrls({});
     setStarted(false);
     setError("");
   }
@@ -401,8 +422,8 @@ export default function ChatPage() {
                       {!mine && !grouped && <div className="message-sender">HOPEBRIDGE Support</div>}
                       <div className={`messenger-bubble ${mine ? "messenger-bubble-mine" : "messenger-bubble-agent"}`}>
                         {item.message && <span style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.message}</span>}
-                        {item.image_path && imageUrls[item.id] && <a href={imageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={imageUrls[item.id]} alt="Customer attachment" width={480} height={320} unoptimized style={{ display: "block", maxWidth: "100%", maxHeight: 260, width: "auto", height: "auto", objectFit: "contain", borderRadius: 10, marginTop: item.message ? 8 : 0 }} /></a>}
-                        {item.image_path && !imageUrls[item.id] && <span style={{ fontSize: 12 }}>Loading attached image…</span>}
+                        {item.image_path && imageUrls[item.id] && <a href={imageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={imageUrls[item.id]} alt="Customer image attachment" width={480} height={320} unoptimized style={{ display: "block", maxWidth: "100%", maxHeight: 260, width: "auto", height: "auto", objectFit: "contain", borderRadius: 10, marginTop: item.message ? 8 : 0 }} /></a>}{item.video_path && imageUrls[item.id] && <video src={imageUrls[item.id]} controls playsInline preload="metadata" style={{ display: "block", maxWidth: "100%", maxHeight: 260, borderRadius: 10, marginTop: item.message ? 8 : 0 }} />}
+                        {(item.image_path || item.video_path) && !imageUrls[item.id] && <span style={{ fontSize: 12 }}>Loading attachment…</span>}
                       </div>
                       <time className={`message-time ${mine ? "message-time-mine" : ""}`} dateTime={item.created_at}>{formatMessageTime(item.created_at)}</time>
                     </div>
@@ -411,20 +432,20 @@ export default function ChatPage() {
               })}
             </div>
             {error && <div role="alert" className="messenger-error messenger-error-inline">{error}</div>}
-            {imageFile && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "9px 12px", margin: "0 12px 8px", border: "1px solid #cbd5e1", borderRadius: 10, background: "#f8fafc", fontSize: 13 }}>
-              <span style={{ overflowWrap: "anywhere" }}>📎 {imageFile.name} · {(imageFile.size / 1024 / 1024).toFixed(2)} MB · Ready to send</span>
-              <button type="button" onClick={() => setImageFile(null)} disabled={sending} aria-label="Remove selected image" style={{ border: 0, background: "transparent", fontSize: 18, cursor: "pointer" }}>×</button>
+            {attachmentFile && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "9px 12px", margin: "0 12px 8px", border: "1px solid #cbd5e1", borderRadius: 10, background: "#f8fafc", fontSize: 13 }}>
+              <span style={{ overflowWrap: "anywhere" }}>📎 {attachmentFile.name} · {(attachmentFile.size / 1024 / 1024).toFixed(2)} MB · Ready to send</span>
+              <button type="button" onClick={() => setAttachmentFile(null)} disabled={sending} aria-label="Remove selected attachment" style={{ border: 0, background: "transparent", fontSize: 18, cursor: "pointer" }}>×</button>
             </div>}
             {sending && <p role="status" style={{ margin: "0 12px 8px", fontSize: 13, color: "#52667a" }}>Uploading and sending… Please keep this chat open.</p>}
             <form className="messenger-composer" onSubmit={sendMessage}>
-              <label title="Attach image" style={{ display: "grid", placeItems: "center", padding: "0 10px", cursor: sending ? "not-allowed" : "pointer", fontSize: 20, position: "relative", minWidth: 42, minHeight: 42, borderRadius: 10, background: "#f1f5f9", color: "#123c69" }}>
+              <label title="Attach image or video" style={{ display: "grid", placeItems: "center", padding: "0 10px", cursor: sending ? "not-allowed" : "pointer", fontSize: 20, position: "relative", minWidth: 42, minHeight: 42, borderRadius: 10, background: "#f1f5f9", color: "#123c69" }}>
                 <span aria-hidden="true">＋</span>
-                <span style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>Choose an image</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { handleImageSelection(e.target.files?.[0] || null); e.currentTarget.value = ""; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: sending ? "not-allowed" : "pointer" }} disabled={sending} aria-label="Attach an image" />
+                <span style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>Choose an image or video</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" onChange={(e) => { handleImageSelection(e.target.files?.[0] || null); e.currentTarget.value = ""; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: sending ? "not-allowed" : "pointer" }} disabled={sending} aria-label="Attach an image" />
               </label>
-              <input aria-label="Type a message" type="text" placeholder={imageFile ? `Image selected: ${imageFile.name}` : "Aa"} value={message}
+              <input aria-label="Type a message" type="text" placeholder={attachmentFile ? `Attachment selected: ${attachmentFile.name}` : "Aa"} value={message}
                 onChange={(e) => setMessage(e.target.value)} maxLength={5000} disabled={sending} />
-              <button type="submit" className="messenger-send" disabled={sending || (!message.trim() && !imageFile)} aria-label="Send message" title="Send message">
+              <button type="submit" className="messenger-send" disabled={sending || (!message.trim() && !attachmentFile)} aria-label="Send message" title="Send message">
                 {sending ? "…" : "➤"}
               </button>
             </form>
