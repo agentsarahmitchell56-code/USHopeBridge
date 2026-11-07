@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
       const { data: messages, error } = await db
         .from("messages")
-        .select("id,conversation_id,sender_type,sender_id,message,created_at,image_path,image_type")
+        .select("id,conversation_id,sender_type,sender_id,message,created_at,image_path,image_type,video_path,video_type")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true });
 
