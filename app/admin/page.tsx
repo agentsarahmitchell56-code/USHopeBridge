@@ -144,20 +144,36 @@ export default function AdminDashboardPage() {
     if (!ready) return;
     let active = true;
     async function refreshInbox() {
-      const [conversationResult, messageResult] = await Promise.all([
+      const [conversationResult, sessionResult] = await Promise.all([
         supabase.from("conversations").select("id,client_name,client_email,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
-        supabase.from("messages").select("conversation_id,message,sender_type,created_at").order("created_at", { ascending: false }).limit(200),
+        supabase.auth.getSession(),
       ]);
       if (!active) return;
       if (!conversationResult.error && conversationResult.data) {
         setConversations(conversationResult.data as Conversation[]);
       }
-      if (!messageResult.error && messageResult.data) {
-        const previews: Record<string, { message: string; sender_type: "client" | "agent"; created_at: string }> = {};
-        for (const item of messageResult.data as Array<{ conversation_id: string; message: string; sender_type: "client" | "agent"; created_at: string }>) {
-          if (!previews[item.conversation_id]) previews[item.conversation_id] = item;
+      let accessToken = sessionResult.data.session?.access_token;
+      if (!accessToken) {
+        const refreshed = await supabase.auth.refreshSession();
+        accessToken = refreshed.data.session?.access_token;
+      }
+      if (accessToken) {
+        try {
+          const response = await fetch("/api/staff/messages", {
+            cache: "no-store",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          const result = await response.json();
+          if (response.ok && Array.isArray(result.messages) && active) {
+            const previews: Record<string, { message: string; sender_type: "client" | "agent"; created_at: string }> = {};
+            for (const item of result.messages as Array<{ conversation_id: string; message: string; sender_type: "client" | "agent"; created_at: string }>) {
+              if (!previews[item.conversation_id]) previews[item.conversation_id] = item;
+            }
+            setConversationPreviews(previews);
+          }
+        } catch (previewError) {
+          console.error("Staff inbox previews could not be refreshed:", previewError);
         }
-        setConversationPreviews(previews);
       }
     }
     void refreshInbox();
@@ -175,33 +191,26 @@ export default function AdminDashboardPage() {
     setMessagesLoading(true);
 
     async function loadMessages() {
-      let { data, error: messagesError } = await supabase
-        .from("messages")
-        .select("id,conversation_id,sender_type,sender_id,message,created_at,image_path,image_type,video_path,video_type")
-        .eq("conversation_id", selectedConversation!.id)
-        .order("created_at", { ascending: true });
-
-      // Keep the existing inbox readable until the separately reviewed video migration is applied.
-      if (messagesError && /video_path|video_type|column/i.test(messagesError.message)) {
-        const fallback = await supabase.from("messages")
-          .select("id,conversation_id,sender_type,sender_id,message,created_at,image_path,image_type")
-          .eq("conversation_id", selectedConversation!.id)
-          .order("created_at", { ascending: true });
-        data = fallback.data as typeof data;
-        messagesError = fallback.error;
-      }
-
-      if (!active) return;
-      if (messagesError) {
-        console.error("Load staff conversation messages failed:", messagesError);
-        setError(`Could not load this conversation's messages: ${messagesError.message}`);
-        setMessages([]);
-      } else {
-        const loadedMessages = (data || []) as Message[];
-        setMessages(loadedMessages);
+      try {
         const { data: sessionData } = await supabase.auth.getSession();
-        const accessToken = sessionData.session?.access_token;
-        if (accessToken) {
+        let accessToken = sessionData.session?.access_token;
+        if (!accessToken) {
+          const refreshed = await supabase.auth.refreshSession();
+          accessToken = refreshed.data.session?.access_token;
+        }
+        if (!accessToken) throw new Error("Your staff session has expired. Please sign in again.");
+
+        const response = await fetch(`/api/staff/messages?conversationId=${encodeURIComponent(selectedConversation!.id)}`, {
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Messages could not be loaded.");
+        if (!active) return;
+
+        const loadedMessages = (Array.isArray(result.messages) ? result.messages : []) as Message[];
+        setMessages(loadedMessages);
+        {
           for (const item of loadedMessages) {
             if ((!item.image_path && !item.video_path) || messageImageUrlsRef.current[item.id]) continue;
             try {
@@ -214,8 +223,15 @@ export default function AdminDashboardPage() {
             } catch { /* attachment can be retried after refresh */ }
           }
         }
+      } catch (messagesError) {
+        if (!active) return;
+        console.error("Load staff conversation messages failed:", messagesError);
+        setError(messagesError instanceof Error
+          ? `Could not load this conversation's messages: ${messagesError.message}`
+          : "Could not load this conversation's messages. Please try again.");
+        setMessages([]);
       }
-      setMessagesLoading(false);
+      if (active) setMessagesLoading(false);
     }
 
     void loadMessages();
