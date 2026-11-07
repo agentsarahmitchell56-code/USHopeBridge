@@ -102,3 +102,48 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const bearer = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "").trim();
+    const adminDb = adminClient();
+    const user = await authorizedStaff(request, adminDb);
+    if (!bearer || !user) return NextResponse.json({ error: "Your staff session is missing or expired. Please sign in again." }, { status: 401 });
+
+    const body = await request.json();
+    const conversationId = String(body.conversationId || "");
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+    const imagePath = body.imagePath == null ? null : String(body.imagePath);
+    const imageType = body.imageType == null ? null : String(body.imageType);
+    const videoPath = body.videoPath == null ? null : String(body.videoPath);
+    const videoType = body.videoType == null ? null : String(body.videoType);
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    if (!uuidPattern.test(conversationId) || message.length > 5000) return NextResponse.json({ error: "The conversation or message is invalid." }, { status: 400 });
+    if (imagePath && (!/^chat\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(imagePath) || !["image/jpeg", "image/png", "image/webp"].includes(imageType || ""))) return NextResponse.json({ error: "The image attachment is invalid." }, { status: 400 });
+    if (videoPath && (!/^chat\/[0-9a-f-]{36}\.(mp4|webm|mov)$/i.test(videoPath) || !["video/mp4", "video/webm", "video/quicktime"].includes(videoType || ""))) return NextResponse.json({ error: "The video attachment is invalid." }, { status: 400 });
+    if (imagePath && videoPath) return NextResponse.json({ error: "Send one attachment at a time." }, { status: 400 });
+    if (!message && !imagePath && !videoPath) return NextResponse.json({ error: "Write a message or attach a file." }, { status: 400 });
+
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !anonKey) throw new Error("Staff message submission is not configured.");
+    const userDb = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: `Bearer ${bearer}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const hasAttachment = Boolean(imagePath || videoPath);
+    const rpcName = hasAttachment ? "send_staff_chat_attachment" : "send_staff_chat_message";
+    const rpcArgs = hasAttachment
+      ? { p_conversation_id: conversationId, p_message: message, p_image_path: imagePath, p_image_type: imageType, p_video_path: videoPath, p_video_type: videoType }
+      : { p_conversation_id: conversationId, p_message: message };
+    const { data, error } = await userDb.rpc(rpcName, rpcArgs);
+    if (error || !data) {
+      console.error("Staff message RPC failed:", { rpcName, code: error?.code, message: error?.message });
+      return NextResponse.json({ error: error?.message || "The message could not be saved." }, { status: 502 });
+    }
+    return NextResponse.json({ messageId: data }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    console.error("Staff message submission failed:", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Staff messaging is temporarily unavailable." }, { status: 503 });
+  }
+}
