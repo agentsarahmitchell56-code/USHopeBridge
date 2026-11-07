@@ -288,37 +288,45 @@ export default function AdminDashboardPage() {
       const accessToken = sessionData.session?.access_token;
       if (authError || !authData.user || !accessToken) throw new Error("Your staff session has expired. Please sign in again.");
 
-      let messageId = "";
+      let attachment: { imagePath?: string; imageType?: string; videoPath?: string; videoType?: string } = {};
       if (staffAttachmentFile) {
         const form = new FormData();
         form.append("file", staffAttachmentFile);
         form.append("purpose", "chat");
         form.append("conversationId", selectedConversation.id);
-        const response = await fetch("/api/uploads", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` }, body: form });
-        const uploaded = await response.json();
-        if (!response.ok) throw new Error(uploaded.error || "Attachment upload failed.");
+        let uploadResponse: Response;
+        try {
+          uploadResponse = await fetch("/api/uploads", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` }, body: form });
+        } catch {
+          throw new Error("The upload request could not reach HOPEBRIDGE. Check your connection and try again; your selected file is still attached.");
+        }
+        const uploaded = await uploadResponse.json().catch(() => ({}));
+        if (!uploadResponse.ok) throw new Error(uploaded.error || `Attachment upload failed (HTTP ${uploadResponse.status}).`);
         const isVideo = staffAttachmentFile.type.startsWith("video/");
-        const { data, error: insertError } = await supabase.rpc("send_staff_chat_attachment", {
-          p_conversation_id: selectedConversation.id, p_message: cleanMessage,
-          p_image_path: isVideo ? null : uploaded.path, p_image_type: isVideo ? null : staffAttachmentFile.type,
-          p_video_path: isVideo ? uploaded.path : null, p_video_type: isVideo ? staffAttachmentFile.type : null,
-        });
-        if (insertError || !data) throw new Error(insertError?.message || "Attachment message could not be saved.");
-        messageId = data as string;
-      } else {
-        const { data, error: insertError } = await supabase.rpc("send_staff_chat_message", {
-          p_conversation_id: selectedConversation.id, p_message: cleanMessage,
-        });
-        if (insertError || !data) throw new Error(insertError?.message || "The reply was not saved.");
-        messageId = data as string;
+        attachment = isVideo ? { videoPath: uploaded.path, videoType: staffAttachmentFile.type } : { imagePath: uploaded.path, imageType: staffAttachmentFile.type };
       }
+
+      let response: Response;
+      try {
+        response = await fetch("/api/staff/messages", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ conversationId: selectedConversation.id, message: cleanMessage, ...attachment }),
+        });
+      } catch {
+        throw new Error("The message could not reach the secure staff messaging service. Check your connection and retry; the selected file has been kept.");
+      }
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.messageId) throw new Error(result.error || `The message could not be saved (HTTP ${response.status}).`);
 
       setReplyText("");
       setStaffAttachmentFile(null);
       const now = new Date().toISOString();
       const newMessage: Message = {
-        id: messageId, conversation_id: selectedConversation.id, sender_type: "agent",
+        id: result.messageId as string, conversation_id: selectedConversation.id, sender_type: "agent",
         sender_id: authData.user.id, message: cleanMessage, created_at: now,
+        image_path: attachment.imagePath || null, image_type: attachment.imageType || null,
+        video_path: attachment.videoPath || null, video_type: attachment.videoType || null,
       };
       setMessages((current) => current.some((item) => item.id === newMessage.id) ? current : [...current, newMessage]);
       setConversations((current) => current.map((item) => item.id === selectedConversation.id ? { ...item, updated_at: now } : item)
