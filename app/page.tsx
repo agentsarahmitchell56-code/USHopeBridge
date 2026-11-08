@@ -46,6 +46,7 @@ export default function HomePage() {
           <span>HOPEBRIDGE<small>FINANCIAL ASSISTANCE</small></span>
         </Link>
         <nav className="hb-profile-toplinks" aria-label="Account navigation">
+          <Link href="/business/register">For businesses</Link>
           <Link href="/account/login">Sign in</Link>
           <Link href="/admin/login">Staff portal</Link>
           <Link href="/account/signup" className="hb-profile-top-cta">Create account</Link>

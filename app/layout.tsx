@@ -60,6 +60,7 @@ export default function RootLayout({
             <nav aria-label="Legal and support links" className="hb-global-footer-links">
               <Link href="/privacy" style={{ color: "#1464f4" }}>Privacy Policy</Link>
               <Link href="/terms" style={{ color: "#1464f4" }}>Terms &amp; Conditions</Link>
+              <Link href="/business/register" style={{ color: "#1464f4" }}>For businesses</Link>
               <Link href="/apply" style={{ color: "#1464f4" }}>Apply</Link>
               <Link href="/status" style={{ color: "#1464f4" }}>Track application</Link>
             </nav>
