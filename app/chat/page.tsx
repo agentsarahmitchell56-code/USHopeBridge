@@ -60,7 +60,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (!started || !conversationId || !chatToken) return;
     let active = true;
-    fetch(`/api/chat/conversations?conversationId=${encodeURIComponent(conversationId)}&chatToken=${encodeURIComponent(chatToken)}`, { cache: "no-store" })
+    fetch(`/api/chat/conversations?conversationId=${encodeURIComponent(conversationId)}`, { cache: "no-store", headers: { "x-chat-token": chatToken } })
       .then(async (response) => {
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || "Application status could not be checked.");
