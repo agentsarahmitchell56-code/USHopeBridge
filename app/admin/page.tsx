@@ -146,7 +146,7 @@ export default function AdminDashboardPage() {
     let active = true;
     async function refreshInbox() {
       const [conversationResult, sessionResult] = await Promise.all([
-        supabase.from("conversations").select("id,client_name,client_email,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
+        supabase.from("conversations").select("id,client_name,client_email,application_id,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
         supabase.auth.getSession(),
       ]);
       if (!active) return;
