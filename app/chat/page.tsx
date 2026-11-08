@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "../../lib/supabase";
-import ChatApplicationForm from "./application-form";
 
 type Message = {
   id: string;
@@ -27,7 +26,6 @@ type SavedChat = {
 };
 
 const CHAT_STORAGE_KEY = "hopebridge-support-chat-v1";
-const APPLICATION_INTENT_PATTERN = /\\b(apply|application|financial assistance|need help|rent assistance|housing assistance|medical assistance|school fees|tuition|emergency assistance|financial support)\\b/i;
 
 function formatMessageTime(value: string) {
   return new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -51,34 +49,10 @@ export default function ChatPage() {
   const imageUrlsRef = useRef<Record<string, string>>({});
   const knownMessageIdsRef = useRef<Set<string> | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">("default");
-  const [applicationOpen, setApplicationOpen] = useState(false);
-  const [applicationPrompt, setApplicationPrompt] = useState(false);
-  const [applicationReference, setApplicationReference] = useState("");
 
   useEffect(() => {
     setNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
   }, []);
-
-  const applicationIntentPattern = /\b(apply|application|financial assistance|need help|rent assistance|housing assistance|medical assistance|school fees|tuition|emergency assistance|financial support)\b/i;
-
-  useEffect(() => {
-    if (applicationReference || applicationOpen) return;
-    const latestCustomerMessage = [...messages].reverse().find((item) => item.sender_type === "client" && item.message.trim());
-    if (latestCustomerMessage && APPLICATION_INTENT_PATTERN.test(latestCustomerMessage.message)) setApplicationPrompt(true);
-  }, [messages, applicationReference, applicationOpen]);
-
-  useEffect(() => {
-    if (!started || !conversationId || !chatToken) return;
-    let active = true;
-    fetch(`/api/chat/conversations?conversationId=${encodeURIComponent(conversationId)}`, { cache: "no-store", headers: { "x-chat-token": chatToken } })
-      .then(async (response) => {
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "Application status could not be checked.");
-        if (active && result.submitted && result.reference_number) setApplicationReference(String(result.reference_number));
-      })
-      .catch((lookupError) => console.error("Chat application status lookup failed:", lookupError));
-    return () => { active = false; };
-  }, [started, conversationId, chatToken]);
 
   async function enableReplyNotifications() {
     if (!("Notification" in window)) {
@@ -242,9 +216,6 @@ export default function ChatPage() {
       knownMessageIdsRef.current = null;
       setChatConnection("connecting");
       setMessages([]);
-      setApplicationOpen(false);
-      setApplicationPrompt(false);
-      setApplicationReference("");
       setStarted(true);
     } catch (err) {
       console.error("Start chat error:", err);
@@ -389,9 +360,6 @@ export default function ChatPage() {
     setMessages([]);
     setMessage(""); setAttachmentFile(null); imageUrlsRef.current = {}; setImageUrls({});
     setStarted(false);
-    setApplicationOpen(false);
-    setApplicationPrompt(false);
-    setApplicationReference("");
     setError("");
   }
 
@@ -405,7 +373,7 @@ export default function ChatPage() {
             <div className="messenger-title">HOPEBRIDGE Support</div>
             <div className="messenger-presence"><span className={`online-dot ${chatConnection === "connected" ? "online-dot-connected" : ""}`} />{!started ? "Support chat · No account required" : chatConnection === "connected" ? "Connected · Replies update automatically" : chatConnection === "reconnecting" ? "Reconnecting to chat…" : "Connecting to support…"}</div>
           </div>
-          <Link className="messenger-info" href="/status" aria-label="Check application status" title="Check application status">i</Link>
+          <Link className="messenger-info" href="/" aria-label="Business profile" title="Business profile">i</Link>
         </header>
 
         {!started ? (
@@ -426,7 +394,6 @@ export default function ChatPage() {
               </button>
             </form>
             <p className="messenger-privacy-note">Keep this browser to return to your conversation. Your chat access is saved on this device.</p>
-            <Link href="/status" className="messenger-status-link">Track an application instead</Link>
           </section>
         ) : (
           <>
@@ -434,12 +401,6 @@ export default function ChatPage() {
               <span className="context-lock" aria-hidden="true">✓</span>
               <span><strong>You are chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started. You do not need a customer account; replies appear here automatically.</small>{(notificationPermission === "default") && <button type="button" onClick={() => void enableReplyNotifications()} style={{ display: "block", marginTop: 8, padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: 8, background: "#fff", color: "#123c69", fontSize: 12, cursor: "pointer" }}>🔔 Enable reply notifications</button>}{notificationPermission === "denied" && <small>Notifications are blocked in your browser settings. You can still see replies when you reopen this chat.</small>}{notificationPermission === "unsupported" && <small>Browser reply notifications are not supported on this device.</small>}</span>
             </div>
-            {!applicationReference && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, margin: "10px 12px 0", padding: "12px", border: "1px solid #d9e2ec", borderRadius: 12, background: "#f8fbff" }}>
-              <span style={{ minWidth: 0 }}><strong style={{ display: "block", color: "#123c69", fontSize: 13 }}>{applicationPrompt ? "We can help you apply" : "Need financial assistance?"}</strong><small style={{ color: "#52667a", fontSize: 12 }}>{applicationPrompt ? "It sounds like you want assistance. You can complete your application securely right here in this chat." : "Complete your application without leaving this chat, or keep messaging us for information."}</small></span>
-              <button type="button" onClick={() => { setApplicationOpen((open) => !open); setApplicationPrompt(false); }} style={{ flexShrink: 0, border: 0, borderRadius: 9, padding: "10px 12px", background: "#123c69", color: "#fff", fontWeight: 700, fontSize: 12 }}>{applicationOpen ? "Close form" : applicationPrompt ? "Start application" : "＋ Apply now"}</button>
-            </div>}
-            {applicationOpen && !applicationReference && <ChatApplicationForm name={name} email={email} conversationId={conversationId} chatToken={chatToken} onCancel={() => setApplicationOpen(false)} onSubmitted={(reference) => { setApplicationReference(reference); setApplicationOpen(false); }} />}
-            {applicationReference && <div role="status" style={{ margin: "10px 12px", padding: 14, borderRadius: 12, border: "1px solid #a7d7b5", background: "#f0fdf4", color: "#14532d" }}><strong>Application submitted successfully</strong><p style={{ margin: "5px 0", fontSize: 13 }}>Your reference number is <strong>{applicationReference}</strong>. Your application is now linked to this support conversation.</p><button type="button" onClick={() => void navigator.clipboard?.writeText(applicationReference)} style={{ border: "1px solid #86b99a", borderRadius: 8, background: "#fff", padding: "7px 10px", color: "#14532d", fontWeight: 650 }}>Copy reference</button></div>}
             <div className="messenger-messages" ref={messagesRef} aria-live="polite">
               <div className="chat-day-label">MESSAGES</div>
               {messages.length === 0 ? (
@@ -489,13 +450,12 @@ export default function ChatPage() {
             </form>
             <div className="messenger-bottom-links">
               <Link href="/">Home</Link><span>·</span>
-              <Link href="/status">Track application</Link><span>·</span>
               <button type="button" onClick={startNewConversation}>New chat</button>
             </div>
           </>
         )}
       </div>
-      <p className="messenger-page-note">HOPEBRIDGE Financial Assistance · Support chat</p>
+      <p className="messenger-page-note">HOPEBRIDGE · Customer messaging</p>
     </main>
   );
 }
