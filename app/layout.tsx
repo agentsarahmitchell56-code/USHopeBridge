@@ -5,16 +5,16 @@ import "./globals.css";
 export const metadata = {
   metadataBase: new URL("https://us-hope-bridge.vercel.app"),
   title: {
-    default: "HOPEBRIDGE | Financial Assistance",
-    template: "%s | HOPEBRIDGE",
+    default: "Platform | Business Management",
+    template: "%s | Platform",
   },
-  description: "Submit an assistance request, review recorded application updates, and contact HOPEBRIDGE support through a clear, guided process.",
+  description: "A business platform for managing public profiles, customer conversations, content, teams and business operations.",
   openGraph: {
     type: "website",
     url: "https://us-hope-bridge.vercel.app",
-    siteName: "HOPEBRIDGE Financial Assistance",
-    title: "HOPEBRIDGE | Financial Assistance",
-    description: "A clear, guided process for assistance requests, application status updates, and support.",
+    siteName: "Platform",
+    title: "Platform | Business Management",
+    description: "Manage business profiles, customer conversations, content, teams and business operations in one platform.",
   },
   twitter: {
     card: "summary",
@@ -25,7 +25,7 @@ export const metadata = {
     index: true,
     follow: true,
   },
-  applicationName: "HOPEBRIDGE",
+  applicationName: "Platform",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",
@@ -34,7 +34,7 @@ export const metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default" as const,
-    title: "HOPEBRIDGE",
+    title: "Platform",
   },
 };
 
@@ -56,7 +56,7 @@ export default function RootLayout({
         <PWAInstall />
         <footer className="footer">
           <div className="container hb-global-footer-inner">
-            <span>© {new Date().getFullYear()} HOPEBRIDGE Financial Assistance. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} Platform. All rights reserved.</span>
             <nav aria-label="Legal and support links" className="hb-global-footer-links">
               <Link href="/privacy" style={{ color: "#1464f4" }}>Privacy Policy</Link>
               <Link href="/terms" style={{ color: "#1464f4" }}>Terms &amp; Conditions</Link>
