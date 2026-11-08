@@ -12,6 +12,35 @@ function clientIp(request: NextRequest) {
     || "";
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    if (!supabaseUrl || !serviceKey) throw new Error("Chat is not configured.");
+    const conversationId = request.nextUrl.searchParams.get("conversationId") || "";
+    const chatToken = request.nextUrl.searchParams.get("chatToken") || "";
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(conversationId) || !uuidPattern.test(chatToken)) {
+      return NextResponse.json({ error: "Invalid chat session." }, { status: 400 });
+    }
+    const db = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data: conversation, error } = await db.from("conversations")
+      .select("application_id")
+      .eq("id", conversationId)
+      .eq("chat_token", chatToken)
+      .maybeSingle();
+    if (error || !conversation) return NextResponse.json({ error: "Invalid chat session." }, { status: 403 });
+    if (!conversation.application_id) return NextResponse.json({ submitted: false }, { headers: { "Cache-Control": "no-store" } });
+    const { data: application, error: applicationError } = await db.from("applications")
+      .select("reference_number")
+      .eq("id", conversation.application_id)
+      .maybeSingle();
+    if (applicationError || !application) return NextResponse.json({ submitted: true, reference_number: null }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ submitted: true, reference_number: application.reference_number }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    console.error("Chat application status lookup failed:", error);
+    return NextResponse.json({ error: "Application status is temporarily unavailable." }, { status: 503 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!supabaseUrl || !serviceKey) throw new Error("Chat is not configured.");
