@@ -525,12 +525,12 @@ export default function AdminDashboardPage() {
     <main className="hb-admin-page">
       <div className="hb-admin-container">
         <header className="hb-admin-header">
-          <a href="/admin" className="brand">HOPEBRIDGE<span>BUSINESS SUITE</span></a>
+          <a href="/admin" className="brand">PLATFORM<span>BUSINESS MANAGEMENT</span></a>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <StaffNotifications />
             <a href="/admin/analytics" className="btn secondary">Analytics</a>
             {role === "admin" && <a href="/admin/team" className="btn secondary">Team & permissions</a>}
-            <a href="/admin/studio" className="btn secondary">Business Studio</a>
+            <a href="/admin/studio" className="btn secondary">Business tools</a>
             <div style={{ textAlign: "right" }}><strong>{staffEmail}</strong><div style={{ color: "#627d98", fontSize: 12, textTransform: "capitalize" }}>{role}</div></div>
             <button className="btn secondary" onClick={signOut}>Sign out</button>
           </div>
@@ -541,12 +541,12 @@ export default function AdminDashboardPage() {
           <a href="#applications">Applications</a>
           <a href="/admin/analytics">Analytics</a>
           {role === "admin" && <a href="/admin/team">Team &amp; permissions</a>}
-          <a href="/admin/studio">Business Studio</a>
+          <a href="/admin/studio">Business tools</a>
         </nav>
 
         <div className="hb-admin-heading">
-          <h1>Staff workspace</h1>
-          <p>Review application requests, update recorded statuses, and reply to customers from one secure workspace.</p>
+          <h1>Platform workspace</h1>
+          <p>Manage business activity, customer conversations, and team operations from one secure workspace.</p>
         </div>
 
         {error && <p role="alert" style={{ color: "#9f1d20", background: "#fff1f2", border: "1px solid #fecdd3", padding: 14, borderRadius: 12 }}>{error}</p>}
