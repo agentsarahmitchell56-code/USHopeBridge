@@ -49,7 +49,7 @@ export default function BusinessRegisterPage() {
       const { error: verifyError } = await supabase.auth.verifyOtp({
         email: email.trim().toLowerCase(),
         token: code.trim(),
-        type: "signup",
+        type: "email",
       });
       if (verifyError) throw verifyError;
       router.replace("/business/workspace");
@@ -94,7 +94,7 @@ export default function BusinessRegisterPage() {
       </form>
     ) : (
       <form onSubmit={verify} style={{ display: "grid", gap: 14, marginTop: 22 }}>
-        <label style={label}>6-digit verification code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\\D/g, "").slice(0, 6))} placeholder="Enter code" style={{ ...input, letterSpacing: ".3em", textAlign: "center", fontSize: 22 }} /></label>
+        <label style={label}>6-digit verification code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="Enter code" style={{ ...input, letterSpacing: ".3em", textAlign: "center", fontSize: 22 }} /></label>
         <p style={muted}>Sent to <strong>{email.trim().toLowerCase()}</strong></p>
         {error && <p role="alert" style={alert}>{error}</p>}
         {notice && <p role="status" style={success}>{notice}</p>}
