@@ -57,6 +57,19 @@ export default function ChatPage() {
     setNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
   }, []);
 
+  useEffect(() => {
+    if (!started || !conversationId || !chatToken) return;
+    let active = true;
+    fetch(`/api/chat/conversations?conversationId=${encodeURIComponent(conversationId)}&chatToken=${encodeURIComponent(chatToken)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Application status could not be checked.");
+        if (active && result.submitted && result.reference_number) setApplicationReference(String(result.reference_number));
+      })
+      .catch((lookupError) => console.error("Chat application status lookup failed:", lookupError));
+    return () => { active = false; };
+  }, [started, conversationId, chatToken]);
+
   async function enableReplyNotifications() {
     if (!("Notification" in window)) {
       setNotificationPermission("unsupported");
@@ -219,6 +232,8 @@ export default function ChatPage() {
       knownMessageIdsRef.current = null;
       setChatConnection("connecting");
       setMessages([]);
+      setApplicationOpen(false);
+      setApplicationReference("");
       setStarted(true);
     } catch (err) {
       console.error("Start chat error:", err);
@@ -363,6 +378,8 @@ export default function ChatPage() {
     setMessages([]);
     setMessage(""); setAttachmentFile(null); imageUrlsRef.current = {}; setImageUrls({});
     setStarted(false);
+    setApplicationOpen(false);
+    setApplicationReference("");
     setError("");
   }
 
