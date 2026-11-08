@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 
 type Page = { id: string; name: string; slug: string; category: string; description: string; contact_email: string; contact_phone: string; website_url: string; avatar_url: string | null; cover_url: string | null };
 type Post = { id: string; body: string; media_path: string | null; media_type: string | null; media_url: string | null; created_at: string };
+type MediaStorage = { storage: { from: (bucket: string) => { createSignedUrl: (path: string, expiresIn: number) => Promise<{ data: { signedUrl: string } | null; error: unknown }> } } };
 
-async function mediaUrl(db: ReturnType<typeof createClient>, path: string | null, publicUrl: string | null) {
+async function mediaUrl(db: MediaStorage, path: string | null, publicUrl: string | null) {
   if (path) {
     const { data, error } = await db.storage.from("business-private-media").createSignedUrl(path, 3600);
     return error ? null : data.signedUrl;
@@ -36,3 +37,4 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
   const [avatar_url, cover_url] = await Promise.all([mediaUrl(serviceDb, business.avatar_url && !business.avatar_url.startsWith("http") ? business.avatar_url : null, business.avatar_url?.startsWith("http") ? business.avatar_url : null), mediaUrl(serviceDb, business.cover_url && !business.cover_url.startsWith("http") ? business.cover_url : null, business.cover_url?.startsWith("http") ? business.cover_url : null)]);
   return NextResponse.json({ page: { ...business, avatar_url, cover_url }, posts }, { headers: { "Cache-Control": "private, no-store" } });
 }
+
