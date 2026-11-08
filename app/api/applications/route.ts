@@ -48,6 +48,9 @@ export async function POST(request: NextRequest) {
     const requestedAmount = typeof input.requested_amount === "string" ? input.requested_amount.trim() : "";
     const details = typeof input.details === "string" ? input.details.trim() : "";
     const attachmentPath = input.attachment_path == null ? null : String(input.attachment_path);
+    const conversationId = typeof input.conversation_id === "string" ? input.conversation_id : "";
+    const chatToken = typeof input.chat_token === "string" ? input.chat_token : "";
+    const hasChatCredentials = Boolean(conversationId || chatToken);
 
     if (fullName.length < 2 || fullName.length > 120) {
       return NextResponse.json({ error: "Enter your full name using 2 to 120 characters." }, { status: 400 });
@@ -67,14 +70,35 @@ export async function POST(request: NextRequest) {
     if (attachmentPath !== null && !/^applications\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(attachmentPath)) {
       return NextResponse.json({ error: "The supporting image reference is invalid." }, { status: 400 });
     }
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (hasChatCredentials && (!uuidPattern.test(conversationId) || !uuidPattern.test(chatToken))) {
+      return NextResponse.json({ error: "This chat session is invalid. Refresh the chat and try again." }, { status: 400 });
+    }
 
     const ip = getClientIp(request);
     if (!ip) {
       return NextResponse.json({ error: "We could not securely process this request. Please try again." }, { status: 503 });
     }
 
-    const keyHash = createHmac("sha256", serviceKey).update(`application-submit:${ip}`).digest("hex");
     const db = adminClient();
+    let linkedConversation: { id: string; client_name: string; client_email: string; application_id: string | null } | null = null;
+    if (hasChatCredentials) {
+      const { data, error } = await db.from("conversations")
+        .select("id,client_name,client_email,application_id")
+        .eq("id", conversationId)
+        .eq("chat_token", chatToken)
+        .maybeSingle();
+      if (error || !data) return NextResponse.json({ error: "We could not verify this chat. Please reopen your support conversation." }, { status: 403 });
+      linkedConversation = data;
+      if (linkedConversation.application_id) {
+        return NextResponse.json({ error: "An application has already been submitted in this chat. Contact support if you need to correct your details." }, { status: 409 });
+      }
+      if (linkedConversation.client_email.toLowerCase() !== email || linkedConversation.client_name.trim().toLowerCase() !== fullName.toLowerCase()) {
+        return NextResponse.json({ error: "Use the same name and email address you used to start this chat." }, { status: 400 });
+      }
+    }
+
+    const keyHash = createHmac("sha256", serviceKey).update(`application-submit:${ip}`).digest("hex");
     const { data: allowed, error: limitError } = await db.rpc("consume_upload_rate_limit", {
       p_key_hash: keyHash,
       p_limit: 3,
@@ -108,25 +132,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "We couldn't submit your application right now. Please try again." }, { status: 500 });
     }
 
-    // Link the new application to a private support conversation. This makes
-    // the applicant visible in the staff inbox and lets them continue chatting
-    // without creating an account or relying on confirmation email.
-    const conversationId = randomUUID();
-    const chatToken = randomUUID();
+    if (linkedConversation) {
+      const { data: linked, error: linkError } = await db.from("conversations")
+        .update({ application_id: application.id, client_name: fullName, client_email: email, updated_at: new Date().toISOString() })
+        .eq("id", linkedConversation.id)
+        .eq("chat_token", chatToken)
+        .is("application_id", null)
+        .select("id")
+        .maybeSingle();
+      if (linkError || !linked) {
+        console.error("Could not link application to support conversation:", linkError);
+        await db.from("applications").delete().eq("id", application.id);
+        return NextResponse.json({ error: "Your application could not be linked to this chat. Please try again." }, { status: 409 });
+      }
+      return NextResponse.json({ reference_number: referenceNumber, conversation_id: conversationId }, { status: 201 });
+    }
+
+    // Keep the existing standalone application flow: create a fresh support
+    // conversation when the customer submits outside the chat workspace.
+    const newConversationId = randomUUID();
+    const newChatToken = randomUUID();
     const { error: conversationError } = await db.from("conversations").insert({
-      id: conversationId,
+      id: newConversationId,
       application_id: application.id,
       client_name: fullName,
       client_email: email,
-      chat_token: chatToken,
+      chat_token: newChatToken,
     });
-    if (conversationError) {
-      console.error("Application support conversation creation failed:", conversationError);
-    }
+    if (conversationError) console.error("Application support conversation creation failed:", conversationError);
 
     return NextResponse.json({
       reference_number: referenceNumber,
-      ...(conversationError ? {} : { conversation_id: conversationId, chat_token: chatToken }),
+      ...(conversationError ? {} : { conversation_id: newConversationId, chat_token: newChatToken }),
     }, { status: 201 });
   } catch (error) {
     console.error("Application submission failed:", error);
