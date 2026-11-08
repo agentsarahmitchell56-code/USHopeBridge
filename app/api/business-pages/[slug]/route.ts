@@ -11,7 +11,7 @@ type MediaStorage = { storage: { from: (bucket: string) => { createSignedUrl: (p
 async function mediaUrl(db: MediaStorage, path: string | null, publicUrl: string | null) {
   if (path) {
     const { data, error } = await db.storage.from("business-private-media").createSignedUrl(path, 3600);
-    return error ? null : data.signedUrl;
+    return error || !data ? null : data.signedUrl;
   }
   if (publicUrl) {
     try { const parsed = new URL(publicUrl); return parsed.protocol === "https:" ? parsed.toString() : null; }
