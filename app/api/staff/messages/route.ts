@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const bearer = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "").trim();
+    const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
     const adminDb = adminClient();
     const user = await authorizedStaff(request, adminDb);
     if (!bearer || !user) return NextResponse.json({ error: "Your staff session is missing or expired. Please sign in again." }, { status: 401 });
