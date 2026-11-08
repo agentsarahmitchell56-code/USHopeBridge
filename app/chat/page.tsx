@@ -27,6 +27,7 @@ type SavedChat = {
 };
 
 const CHAT_STORAGE_KEY = "hopebridge-support-chat-v1";
+const APPLICATION_INTENT_PATTERN = /\\b(apply|application|financial assistance|need help|rent assistance|housing assistance|medical assistance|school fees|tuition|emergency assistance|financial support)\\b/i;
 
 function formatMessageTime(value: string) {
   return new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -63,7 +64,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (applicationReference || applicationOpen) return;
     const latestCustomerMessage = [...messages].reverse().find((item) => item.sender_type === "client" && item.message.trim());
-    if (latestCustomerMessage && applicationIntentPattern.test(latestCustomerMessage.message)) setApplicationPrompt(true);
+    if (latestCustomerMessage && APPLICATION_INTENT_PATTERN.test(latestCustomerMessage.message)) setApplicationPrompt(true);
   }, [messages, applicationReference, applicationOpen]);
 
   useEffect(() => {
