@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   try {
     if (!supabaseUrl || !serviceKey) throw new Error("Chat is not configured.");
     const conversationId = request.nextUrl.searchParams.get("conversationId") || "";
-    const chatToken = request.nextUrl.searchParams.get("chatToken") || "";
+    const chatToken = request.headers.get("x-chat-token") || "";
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidPattern.test(conversationId) || !uuidPattern.test(chatToken)) {
       return NextResponse.json({ error: "Invalid chat session." }, { status: 400 });
