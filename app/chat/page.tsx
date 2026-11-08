@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "../../lib/supabase";
+import ChatApplicationForm from "./application-form";
 
 type Message = {
   id: string;
@@ -49,6 +50,8 @@ export default function ChatPage() {
   const imageUrlsRef = useRef<Record<string, string>>({});
   const knownMessageIdsRef = useRef<Set<string> | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">("default");
+  const [applicationOpen, setApplicationOpen] = useState(false);
+  const [applicationReference, setApplicationReference] = useState("");
 
   useEffect(() => {
     setNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
@@ -402,6 +405,12 @@ export default function ChatPage() {
               <span className="context-lock" aria-hidden="true">✓</span>
               <span><strong>You are chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started. You do not need a customer account; replies appear here automatically.</small>{(notificationPermission === "default") && <button type="button" onClick={() => void enableReplyNotifications()} style={{ display: "block", marginTop: 8, padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: 8, background: "#fff", color: "#123c69", fontSize: 12, cursor: "pointer" }}>🔔 Enable reply notifications</button>}{notificationPermission === "denied" && <small>Notifications are blocked in your browser settings. You can still see replies when you reopen this chat.</small>}{notificationPermission === "unsupported" && <small>Browser reply notifications are not supported on this device.</small>}</span>
             </div>
+            {!applicationReference && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, margin: "10px 12px 0", padding: "12px", border: "1px solid #d9e2ec", borderRadius: 12, background: "#f8fbff" }}>
+              <span style={{ minWidth: 0 }}><strong style={{ display: "block", color: "#123c69", fontSize: 13 }}>Need financial assistance?</strong><small style={{ color: "#52667a", fontSize: 12 }}>Complete your application without leaving this chat.</small></span>
+              <button type="button" onClick={() => setApplicationOpen((open) => !open)} style={{ flexShrink: 0, border: 0, borderRadius: 9, padding: "10px 12px", background: "#123c69", color: "#fff", fontWeight: 700, fontSize: 12 }}>{applicationOpen ? "Close form" : "＋ Apply now"}</button>
+            </div>}
+            {applicationOpen && !applicationReference && <ChatApplicationForm name={name} email={email} conversationId={conversationId} chatToken={chatToken} onCancel={() => setApplicationOpen(false)} onSubmitted={(reference) => { setApplicationReference(reference); setApplicationOpen(false); }} />}
+            {applicationReference && <div role="status" style={{ margin: "10px 12px", padding: 14, borderRadius: 12, border: "1px solid #a7d7b5", background: "#f0fdf4", color: "#14532d" }}><strong>Application submitted successfully</strong><p style={{ margin: "5px 0", fontSize: 13 }}>Your reference number is <strong>{applicationReference}</strong>. Your application is now linked to this support conversation.</p><button type="button" onClick={() => void navigator.clipboard?.writeText(applicationReference)} style={{ border: "1px solid #86b99a", borderRadius: 8, background: "#fff", padding: "7px 10px", color: "#14532d", fontWeight: 650 }}>Copy reference</button></div>}
             <div className="messenger-messages" ref={messagesRef} aria-live="polite">
               <div className="chat-day-label">MESSAGES</div>
               {messages.length === 0 ? (
