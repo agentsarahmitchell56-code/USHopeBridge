@@ -40,6 +40,7 @@ type Conversation = {
   id: string;
   client_name: string;
   client_email: string;
+  application_id?: string | null;
   created_at: string;
   updated_at?: string;
 };
@@ -120,7 +121,7 @@ export default function AdminDashboardPage() {
 
     const [appResult, conversationResult] = await Promise.all([
       supabase.from("applications").select("id,reference_number,full_name,email,phone,location,assistance_type,requested_amount,details,status,payment_status,payment_updated_at,payment_updated_by,payment_reference,payment_paid_at,review_notes,reviewed_by,reviewed_at,created_at,attachment_path").order("created_at", { ascending: false }).limit(200),
-      supabase.from("conversations").select("id,client_name,client_email,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
+      supabase.from("conversations").select("id,client_name,client_email,application_id,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
     ]);
 
     if (appResult.error) setError("Could not load applications. Check the staff access policies in Supabase.");
@@ -683,6 +684,13 @@ export default function AdminDashboardPage() {
                       <button type="button" className="hb-inbox-back" onClick={() => setSelectedConversation(null)}>← All conversations</button>
                       <strong>{selectedConversation.client_name}</strong>
                       <div style={{ color: "#627d98", fontSize: 13, overflowWrap: "anywhere" }}>{selectedConversation.client_email}</div>
+                      {selectedConversation.application_id && <div style={{ marginTop: 9, padding: 10, borderRadius: 9, background: "#eff6ff", border: "1px solid #bfdbfe" }}>
+                        <strong style={{ display: "block", color: "#123c69", fontSize: 12 }}>Linked application</strong>
+                        {(() => {
+                          const linkedApplication = applications.find((application) => application.id === selectedConversation.application_id);
+                          return linkedApplication ? <><span style={{ display: "block", fontSize: 12, color: "#52667a", margin: "4px 0" }}>{linkedApplication.reference_number || "Application"} · {linkedApplication.status}</span><button type="button" className="btn secondary" style={{ padding: "6px 9px", fontSize: 12 }} onClick={() => { setSelectedApplication(linkedApplication); setReviewNotes(linkedApplication.review_notes || ""); }}>View application details</button></> : <span style={{ display: "block", fontSize: 12, color: "#52667a", marginTop: 4 }}>Application record is linked. Refresh the application list to view its details.</span>;
+                        })()}
+                      </div>}
                     </div>
                     <div ref={messagesRef} aria-live="polite" className="hb-thread-messages">
                       {messagesLoading ? <p style={{ color: "#627d98" }}>Loading messages…</p> : messages.length === 0 ? <p style={{ color: "#627d98", textAlign: "center", margin: "auto 0" }}>No messages in this conversation yet.</p> : messages.map((item) => {
