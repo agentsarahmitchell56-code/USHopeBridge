@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 type ChatMessage = { id: string; senderType: "customer" | "business"; body: string; attachmentType: string | null; attachmentUrl: string | null; createdAt: string };
 type Session = { conversationId: string; accessToken: string };
@@ -57,8 +58,26 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
     event.preventDefault(); if (!session || busy || (!message.trim() && !file)) return;
     setBusy(true); setError("");
     try {
-      const data = new FormData(); data.set("message", message); if (file) data.set("file", file);
-      const response = await fetch(`/api/business-chat/${session.conversationId}`, { method: "POST", headers: { "x-business-chat-token": session.accessToken }, body: data });
+      let attachmentPath: string | null = null;
+      let attachmentType: string | null = null;
+      if (file) {
+        const uploadResponse = await fetch("/api/business-chat/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-business-chat-token": session.accessToken },
+          body: JSON.stringify({ conversationId: session.conversationId, fileType: file.type, fileSize: file.size }),
+        });
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResponse.ok || !uploadResult.path || !uploadResult.token) throw new Error(uploadResult.error || "A secure upload could not be prepared.");
+        const { error: uploadError } = await supabase.storage.from("business-private-media").uploadToSignedUrl(uploadResult.path, uploadResult.token, file, { contentType: file.type, upsert: false });
+        if (uploadError) throw new Error("The attachment could not be uploaded. Please try again.");
+        attachmentPath = uploadResult.path;
+        attachmentType = file.type;
+      }
+      const response = await fetch(`/api/business-chat/${session.conversationId}`, {
+        method: "POST",
+        headers: { "x-business-chat-token": session.accessToken, "Content-Type": "application/json" },
+        body: JSON.stringify({ message: message.trim(), attachmentPath, attachmentType }),
+      });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Message could not be sent.");
       setMessage(""); setFile(null); await refresh(session);
