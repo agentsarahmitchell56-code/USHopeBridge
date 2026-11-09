@@ -3,7 +3,7 @@ import Link from "next/link";
 const features = [
   { number: "01", title: "Your business profile", description: "Create a public home for your business with its name, description, contact details, logo and cover image." },
   { number: "02", title: "Publish updates", description: "Prepare text, photo and video updates, save drafts privately and publish the posts you are ready to share." },
-  { number: "03", title: "A workspace that can grow", description: "Platform is being developed to bring customer conversations, team access and everyday business tools into one place." },
+  { number: "03", title: "Private customer messages", description: "Receive private messages from customers and reply from your business inbox." },
 ];
 
 export default function HomePage() {
@@ -28,7 +28,7 @@ export default function HomePage() {
           <div>
             <span className="eyebrow">ONE PLACE FOR YOUR BUSINESS</span>
             <h1>Your business presence, organised.</h1>
-            <p>Create a public business profile, share updates and manage your business presence from a single workspace. Platform is growing into a connected place for businesses and their customers.</p>
+            <p>Create a public business profile, share text, photo and video updates, and handle private customer conversations from one organised workspace.</p>
             <div className="actions">
               <Link href="/business/register" className="btn primary">Create your free workspace</Link>
               <Link href="/business/login" className="btn secondary">Sign in to your workspace</Link>
@@ -36,7 +36,7 @@ export default function HomePage() {
             <p style={{ fontSize: 13, marginTop: 18 }}>Start with a business profile and publish updates. No paid plan is required to create an account.</p>
           </div>
           <div className="card platform-preview">
-            <div className="platform-preview-top"><span className="platform-avatar">P</span><div><strong>Your business workspace</strong><small>Public profile · Updates · Settings</small></div><span className="platform-live-dot" /></div>
+            <div className="platform-preview-top"><span className="platform-avatar">P</span><div><strong>Your business workspace</strong><small>Public profile · Updates · Messages</small></div><span className="platform-live-dot" /></div>
             <div className="platform-cover"><span>YOUR BUSINESS</span></div>
             <div className="platform-profile-row"><span className="platform-profile-avatar">B</span><div><strong>Business name</strong><small>Your public business profile</small></div></div>
             <div className="platform-preview-stats"><div><strong>Profile</strong><small>Business details</small></div><div><strong>Posts</strong><small>Photo & video</small></div><div><strong>Drafts</strong><small>Private until published</small></div></div>
