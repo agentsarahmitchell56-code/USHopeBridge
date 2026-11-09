@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Platform Business Workspace",
-  "short_name": "Platform",
+  "name": "HOPEBRIDGE Business Workspace",
+  "short_name": "HOPEBRIDGE",
   "description": "Create a business profile and publish updates from one workspace.",
   "lang": "en-US",
   "start_url": "/",
