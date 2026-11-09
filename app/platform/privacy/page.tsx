@@ -22,7 +22,7 @@ export default function PlatformPrivacyPage() {
 
         <h2>2. Information handled</h2>
         <p>When a business creates an account, Platform processes account and authentication information, including email address and account credentials managed by Supabase Auth. A business workspace may contain its business name, public profile URL, category, description, contact details, logo, cover image, posts and uploaded media.</p>
-        <p>When a customer contacts a business, Platform processes the customer's name and email address, message content, attachments, timestamps and the technical information needed to protect the messaging service. Customer chat access is associated with a browser-stored session token so the customer can reopen the conversation on that browser.</p>
+        <p>When a customer contacts a business, Platform processes the customer&apos;s name and email address, message content, attachments, timestamps and the technical information needed to protect the messaging service. Customer chat access is associated with a browser-stored session token so the customer can reopen the conversation on that browser.</p>
 
         <h2>3. Public profiles and private messages</h2>
         <p>Business profile details and posts that a business owner publishes are visible to visitors. Customers should not include passwords, payment-card details, government identity numbers or other highly sensitive information in public posts or messages.</p>
@@ -51,12 +51,12 @@ export default function PlatformPrivacyPage() {
         <p>Platform uses access controls, server-side authorization, private storage for business media and rate limits intended to protect information. No online service can guarantee absolute security. Users should protect their passwords, sign out on shared devices and avoid sending sensitive information through customer chat.</p>
 
         <h2>9. Children</h2>
-        <p>Platform is intended for business use and is not designed for children. Do not create an account or submit another person's information unless you are legally permitted to do so.</p>
+        <p>Platform is intended for business use and is not designed for children. Do not create an account or submit another person&apos;s information unless you are legally permitted to do so.</p>
 
         <h2>10. Changes and contact</h2>
         <p>This policy may change as Platform develops. Material changes should be reflected here with an updated review date. Contact the operator at <strong>[OFFICIAL PRIVACY / SUPPORT EMAIL]</strong> for privacy questions or requests.</p>
 
-        <p style={{ padding: 14, borderRadius: 10, background: "#fff7e8", color: "#87520b", fontSize: 13 }}>This is a product-specific draft, not legal advice. The operator's legal identity, contact details, applicable jurisdictions and retention schedule must be confirmed and reviewed before public launch.</p>
+        <p style={{ padding: 14, borderRadius: 10, background: "#fff7e8", color: "#87520b", fontSize: 13 }}>This is a product-specific draft, not legal advice. The operator&apos;s legal identity, contact details, applicable jurisdictions and retention schedule must be confirmed and reviewed before public launch.</p>
         <p><Link href="/platform/terms" style={{ color: "#1768dc" }}>Platform Terms &amp; Conditions</Link> · <Link href="/" style={{ color: "#1768dc" }}>Return to Platform</Link></p>
       </article>
     </main>
