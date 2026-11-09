@@ -42,7 +42,7 @@ async function allowChatUpload(db: ReturnType<typeof adminClient>, request: Next
 }
 
 async function authorizedStaff(db: ReturnType<typeof adminClient>, request: NextRequest) {
-  const bearer = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+  const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!bearer) return null;
   const { data, error } = await db.auth.getUser(bearer);
   if (error || !data.user) return null;
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many uploads from this connection. Please try again later." }, { status: 429 });
     }
 
-    const path = `chat/${conversationId}/${crypto.randomUUID()}.${info.ext}`;
+    const path = `chat/${crypto.randomUUID()}.${info.ext}`;
     const { data, error } = await db.storage.from("hopebridge-private-uploads").createSignedUploadUrl(path);
     if (error || !data?.token) {
       console.error("HOPEBRIDGE chat upload signing failed:", error);
