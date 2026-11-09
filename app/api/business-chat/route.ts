@@ -20,6 +20,15 @@ export async function GET(request: NextRequest) {
       const { data: conversation } = await db.from("business_page_conversations")
         .select("id,customer_name,customer_email").eq("id", conversationId).eq("page_id", pageId).maybeSingle();
       if (!conversation) return chatError("Conversation not found.", 404);
+    if (file) {
+      const types: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "video/mp4": "mp4", "video/webm": "webm" };
+      const extension = types[file.type];
+      if (!extension || file.size > 25 * 1024 * 1024) return chatError("Attach a JPG, PNG, WebP, GIF, MP4, or WebM file up to 25 MB.", 400);
+      uploadedPath = `business-chat/${conversationId}/${randomUUID()}.${extension}`;
+      const { error: uploadError } = await db.storage.from(BUSINESS_CHAT_BUCKET).upload(uploadedPath, file, { contentType: file.type, upsert: false });
+      if (uploadError) return chatError("The attachment could not be uploaded. Please try again.", 502);
+    }
+    if (!message && !uploadedPath) return chatError("Write a message or attach a file.", 400);
       const now = new Date().toISOString();
       await db.from("business_page_conversations").update({ business_last_read_at: now }).eq("id", conversationId);
       const { data: rows, error } = await db.from("business_page_messages")
@@ -88,15 +97,7 @@ export async function POST(request: NextRequest) {
       message = typeof body.message === "string" ? body.message.trim() : "";
     }
     if (!/^[0-9a-f-]{36}$/i.test(pageId) || !/^[0-9a-f-]{36}$/i.test(conversationId) || message.length > 4000) return chatError("Enter a message of up to 4,000 characters.", 400);
-    if (file) {
-      const types: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "video/mp4": "mp4", "video/webm": "webm" };
-      const extension = types[file.type];
-      if (!extension || file.size > 25 * 1024 * 1024) return chatError("Attach a JPG, PNG, WebP, GIF, MP4, or WebM file up to 25 MB.", 400);
-      uploadedPath = `business-chat/${conversationId}/${randomUUID()}.${extension}`;
-      const { error: uploadError } = await db.storage.from(BUSINESS_CHAT_BUCKET).upload(uploadedPath, file, { contentType: file.type, upsert: false });
-      if (uploadError) return chatError("The attachment could not be uploaded. Please try again.", 502);
-    }
-    if (!message && !uploadedPath) return chatError("Write a message or attach a file.", 400);
+    if (!message && !file) return chatError("Write a message or attach a file.", 400);
     const { data: page } = await db.from("business_pages").select("id").eq("id", pageId).eq("owner_id", user.id).maybeSingle();
     if (!page) return chatError("You do not have access to this business page.", 403);
     const { data: conversation } = await db.from("business_page_conversations").select("id").eq("id", conversationId).eq("page_id", pageId).maybeSingle();
