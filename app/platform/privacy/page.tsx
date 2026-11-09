@@ -5,7 +5,7 @@ export const metadata = {
   description: "How Platform handles business account, public profile, customer message and media information.",
 };
 
-const draftNotice = "Launch review required: replace every bracketed operator/contact detail and confirm the retention schedule before advertising or accepting public registrations.";
+const draftNotice = "Launch review required: confirm the retention schedule, applicable privacy requirements and service-provider arrangements before advertising or accepting public registrations.";
 
 export default function PlatformPrivacyPage() {
   return (
@@ -18,7 +18,7 @@ export default function PlatformPrivacyPage() {
         <p>{draftNotice}</p>
 
         <h2>1. Who operates Platform</h2>
-        <p>Platform is operated by <strong>[LEGAL OPERATOR NAME]</strong>, located at <strong>[REGISTERED BUSINESS ADDRESS AND COUNTRY]</strong>. The operator is responsible for decisions about the personal information handled through Platform. Privacy questions and requests should be sent to <strong>[OFFICIAL PRIVACY / SUPPORT EMAIL]</strong>.</p>
+        <p>Platform is operated by <strong>ISREAL OKEWUNMI</strong>, located in <strong>New York, New York, USA</strong>. The operator is responsible for decisions about the personal information handled through Platform. Privacy questions and requests should be sent to <strong>hopebridge098@gmail.com</strong>.</p>
 
         <h2>2. Information handled</h2>
         <p>When a business creates an account, Platform processes account and authentication information, including email address and account credentials managed by Supabase Auth. A business workspace may contain its business name, public profile URL, category, description, contact details, logo, cover image, posts and uploaded media.</p>
@@ -45,7 +45,7 @@ export default function PlatformPrivacyPage() {
         <p>Platform does not make private customer conversations public. Information may be processed by the service providers described above, disclosed when required by law, or shared when reasonably necessary to protect users, the operator or the service. Business owners are responsible for how they use information customers send to them.</p>
 
         <h2>7. Retention and deletion</h2>
-        <p>Account, profile, post, message and attachment retention periods must be set by the operator and published here. Current retention schedule: <strong>[INSERT RETENTION PERIODS FOR ACCOUNTS, MESSAGES, MEDIA, LOGS AND BACKUPS]</strong>. To request access, correction or deletion, contact <strong>[OFFICIAL PRIVACY / SUPPORT EMAIL]</strong>. Requests may require reasonable identity verification and may be subject to legal retention obligations.</p>
+        <p>Account, profile, post, message and attachment retention periods must be set by the operator and published here. Current retention schedule: <strong>[INSERT RETENTION PERIODS FOR ACCOUNTS, MESSAGES, MEDIA, LOGS AND BACKUPS]</strong>. To request access, correction or deletion, contact <strong>hopebridge098@gmail.com</strong>. Requests may require reasonable identity verification and may be subject to legal retention obligations.</p>
 
         <h2>8. Security</h2>
         <p>Platform uses access controls, server-side authorization, private storage for business media and rate limits intended to protect information. No online service can guarantee absolute security. Users should protect their passwords, sign out on shared devices and avoid sending sensitive information through customer chat.</p>
@@ -54,9 +54,9 @@ export default function PlatformPrivacyPage() {
         <p>Platform is intended for business use and is not designed for children. Do not create an account or submit another person&apos;s information unless you are legally permitted to do so.</p>
 
         <h2>10. Changes and contact</h2>
-        <p>This policy may change as Platform develops. Material changes should be reflected here with an updated review date. Contact the operator at <strong>[OFFICIAL PRIVACY / SUPPORT EMAIL]</strong> for privacy questions or requests.</p>
+        <p>This policy may change as Platform develops. Material changes should be reflected here with an updated review date. Contact the operator at <strong>hopebridge098@gmail.com</strong> for privacy questions or requests.</p>
 
-        <p style={{ padding: 14, borderRadius: 10, background: "#fff7e8", color: "#87520b", fontSize: 13 }}>This is a product-specific draft, not legal advice. The operator&apos;s legal identity, contact details, applicable jurisdictions and retention schedule must be confirmed and reviewed before public launch.</p>
+        <p style={{ padding: 14, borderRadius: 10, background: "#fff7e8", color: "#87520b", fontSize: 13 }}>This is a product-specific draft, not legal advice. The retention schedule, applicable jurisdictions and service-provider arrangements must be confirmed and reviewed before public launch.</p>
         <p><Link href="/platform/terms" style={{ color: "#1768dc" }}>Platform Terms &amp; Conditions</Link> · <Link href="/" style={{ color: "#1768dc" }}>Return to Platform</Link></p>
       </article>
     </main>
