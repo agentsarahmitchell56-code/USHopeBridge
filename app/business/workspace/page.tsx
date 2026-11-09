@@ -114,19 +114,23 @@ export default function BusinessWorkspacePage() {
         mediaPath = `${business.id}/${crypto.randomUUID()}.${fileExt(media)}`;
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !sessionData.session?.access_token) throw new Error("Your session expired. Please sign in again.");
-        const uploadForm = new FormData();
-        uploadForm.append("pageId", business.id);
-        uploadForm.append("file", media);
         const uploadResponse = await fetch("/api/business-media", {
           method: "POST",
-          headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
-          body: uploadForm,
+          headers: {
+            Authorization: `Bearer ${sessionData.session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ pageId: business.id, fileType: media.type, fileSize: media.size }),
         });
         const uploadResult = await uploadResponse.json().catch(() => ({}));
-        if (!uploadResponse.ok || typeof uploadResult.path !== "string") {
-          throw new Error(typeof uploadResult.error === "string" ? uploadResult.error : "The media upload failed. Please try again.");
+        if (!uploadResponse.ok || typeof uploadResult.path !== "string" || typeof uploadResult.token !== "string") {
+          throw new Error(typeof uploadResult.error === "string" ? uploadResult.error : "A secure media upload could not be prepared. Please try again.");
         }
         mediaPath = uploadResult.path;
+        const { error: storageUploadError } = await supabase.storage
+          .from("business-private-media")
+          .uploadToSignedUrl(mediaPath, uploadResult.token, media, { contentType: media.type, upsert: false });
+        if (storageUploadError) throw storageUploadError;
       }
       const { data, error: insertError } = await supabase.from("business_page_posts").insert({ page_id: business.id, author_id: userId, body: body.trim(), media_path: mediaPath, media_type: media?.type || null, status: "DRAFT" }).select("id,body,media_path,media_type,media_url,status,created_at").single();
       if (insertError) throw insertError;
