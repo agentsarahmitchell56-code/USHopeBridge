@@ -14,7 +14,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const name = typeof input.name === "string" ? input.name.trim() : "";
     const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
     if (name.length < 2 || name.length > 100) return chatError("Enter your name using 2 to 100 characters.", 400);
-    if (email.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return chatError("Enter a valid email address.", 400);
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(email)) return chatError("Enter a valid email address.", 400);
 
     const db = businessChatAdmin();
     const allowed = await rateLimitBusinessChat(db, request, "start", 8, 3600);
