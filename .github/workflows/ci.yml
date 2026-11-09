@@ -63,6 +63,13 @@ jobs:
               exit 1
             fi
           done <<'ROUTES'
+          /business/login
+          /business/register
+          /business/workspace
+          /business/inbox
+          /b/julius
+          /platform/privacy
+          /platform/terms
           /apply
           /status
           /chat
