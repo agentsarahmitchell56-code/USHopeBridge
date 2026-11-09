@@ -18,7 +18,7 @@ export default function PlatformPrivacyPage() {
         <p>{draftNotice}</p>
 
         <h2>1. Who operates Platform</h2>
-        <p>Platform is operated by <strong>ISREAL OKEWUNMI</strong>, located in <strong>New York, New York, USA</strong>. The operator is responsible for decisions about the personal information handled through Platform. Privacy questions and requests should be sent to <strong>hopebridge098@gmail.com</strong>.</p>
+        <p>Platform is operated by <strong>Isreal Okewunmi</strong>, an individual using <strong>Platform Digital Services</strong> as an unregistered trading name. Platform Digital Services is not represented as a US-registered company or legal entity. The operator is responsible for decisions about the personal information handled through Platform. The operator’s physical business address and applicable legal jurisdiction must be confirmed and published before public launch. Privacy questions and requests should be sent to <strong>hopebridge098@gmail.com</strong>.</p>
 
         <h2>2. Information handled</h2>
         <p>When a business creates an account, Platform processes account and authentication information, including email address and account credentials managed by Supabase Auth. A business workspace may contain its business name, public profile URL, category, description, contact details, logo, cover image, posts and uploaded media.</p>
