@@ -5,27 +5,27 @@ import "./globals.css";
 export const metadata = {
   metadataBase: new URL("https://us-hope-bridge.vercel.app"),
   title: {
-    default: "Platform | Business Workspace",
-    template: "%s | Platform",
+    default: "HOPEBRIDGE | Business Workspace",
+    template: "%s | HOPEBRIDGE",
   },
   description: "Create a business profile, publish updates and organise your business presence in one workspace.",
   openGraph: {
     type: "website",
     url: "https://us-hope-bridge.vercel.app",
-    siteName: "Platform",
-    title: "Platform | Business Workspace",
+    siteName: "HOPEBRIDGE",
+    title: "HOPEBRIDGE | Business Workspace",
     description: "Create a business profile, publish updates and organise your business presence in one workspace.",
   },
   twitter: {
     card: "summary",
-    title: "Platform | Business Workspace",
+    title: "HOPEBRIDGE | Business Workspace",
     description: "Create a business profile, publish updates and organise your business presence in one workspace.",
   },
   robots: {
     index: true,
     follow: true,
   },
-  applicationName: "Platform",
+  applicationName: "HOPEBRIDGE",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",
@@ -34,7 +34,7 @@ export const metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default" as const,
-    title: "Platform",
+    title: "HOPEBRIDGE",
   },
 };
 
