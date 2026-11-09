@@ -1,5 +1,5 @@
-import Link from "next/link";
 import PWAInstall from "./pwa-install";
+import GlobalFooter from "../components/GlobalFooter";
 import "./globals.css";
 
 export const metadata = {
@@ -54,17 +54,7 @@ export default function RootLayout({
       <body>
         {children}
         <PWAInstall />
-        <footer className="footer">
-          <div className="container hb-global-footer-inner">
-            <span>© {new Date().getFullYear()} Platform. All rights reserved.</span>
-            <nav aria-label="Legal and workspace links" className="hb-global-footer-links">
-              <Link href="/platform/privacy" style={{ color: "#1464f4" }}>Privacy Policy</Link>
-              <Link href="/platform/terms" style={{ color: "#1464f4" }}>Terms &amp; Conditions</Link>
-              <Link href="/business/register" style={{ color: "#1464f4" }}>Create a business workspace</Link>
-              <Link href="/business/login" style={{ color: "#1464f4" }}>Business sign in</Link>
-            </nav>
-          </div>
-        </footer>
+        <GlobalFooter />
       </body>
     </html>
   );
