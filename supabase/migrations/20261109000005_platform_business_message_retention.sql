@@ -2,6 +2,10 @@
 -- the customer's most recent message. This function only selects candidates;
 -- the server route removes private storage objects and then the database rows.
 
+create index if not exists business_page_messages_customer_retention_idx
+  on public.business_page_messages (conversation_id, created_at desc)
+  where sender_type = 'customer';
+
 create or replace function public.get_expired_business_conversations(
   p_cutoff timestamptz,
   p_limit integer default 100
