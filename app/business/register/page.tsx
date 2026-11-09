@@ -79,7 +79,7 @@ export default function BusinessRegisterPage() {
   }
 
   return <main style={shell}><section style={card}>
-    <Link href="/" style={brand}>PLATFORM <small>BUSINESS ACCOUNT</small></Link>
+    <Link href="/" style={brand}>HOPEBRIDGE <small>BUSINESS ACCOUNT</small></Link>
     <h1 style={{ margin: "28px 0 8px", color: "#15395f" }}>{step === "register" ? "Create your business workspace" : "Verify your email address"}</h1>
     <p style={muted}>{step === "register" ? "Set up an independent public profile for your business. Your workspace and media stay separate from other businesses." : "Enter the complete verification code we sent to your email. Your business workspace will open after verification."}</p>
 
@@ -105,7 +105,7 @@ export default function BusinessRegisterPage() {
     )}
 
     <p style={{ ...muted, marginTop: 18 }}>Already have an account? <Link href="/business/login" style={link}>Sign in</Link></p>
-    <Link href="/" style={link}>Return to Platform</Link>
+    <Link href="/" style={link}>Return to HOPEBRIDGE</Link>
   </section></main>;
 }
 
