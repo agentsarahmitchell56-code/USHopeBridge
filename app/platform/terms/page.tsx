@@ -13,7 +13,7 @@ export default function PlatformTermsPage() {
         <p style={{ marginTop: 24, color: "#a15c12", fontSize: 13, fontWeight: 800 }}>DRAFT — NOT READY FOR PUBLIC PROMOTION</p>
         <h1 style={{ color: "#15395f" }}>Terms &amp; Conditions</h1>
         <p>Last reviewed: November 9, 2026</p>
-        <p>These terms apply to Platform business accounts, public business profiles, posts, media uploads and customer messaging. Platform is operated by <strong>ISREAL OKEWUNMI</strong>, located in <strong>New York, New York, USA</strong>. Contact: <strong>hopebridge098@gmail.com</strong>.</p>
+        <p>These terms apply to Platform business accounts, public business profiles, posts, media uploads and customer messaging. Platform is operated by <strong>Isreal Okewunmi</strong>, an individual using <strong>Platform Digital Services</strong> as an unregistered trading name. Platform Digital Services is not represented as a US-registered company or legal entity. Contact: <strong>hopebridge098@gmail.com</strong>. The operator’s physical business address and applicable legal jurisdiction must be confirmed before public launch.</p>
 
         <h2>1. The service</h2>
         <p>Platform provides tools for businesses to create a public profile, publish text, photo and video updates, and receive and respond to private customer messages. Features may change as the service develops. The service is provided subject to these terms and the Platform Privacy Policy.</p>
