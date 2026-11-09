@@ -5,7 +5,7 @@ import { businessChatAdmin, BUSINESS_CHAT_BUCKET } from "../../../../lib/busines
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const RETENTION_DAYS = 365;
+const RETENTION_MONTHS = 12;
 const BATCH_SIZE = 100;
 
 function authorized(request: NextRequest) {
@@ -28,7 +28,15 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = businessChatAdmin();
-    const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const now = new Date();
+    const cutoffDate = new Date(now);
+    cutoffDate.setUTCDate(1);
+    cutoffDate.setUTCFullYear(now.getUTCFullYear() - 1);
+    cutoffDate.setUTCMonth(now.getUTCMonth());
+    const lastDayOfCutoffMonth = new Date(Date.UTC(cutoffDate.getUTCFullYear(), cutoffDate.getUTCMonth() + 1, 0)).getUTCDate();
+    cutoffDate.setUTCDate(Math.min(now.getUTCDate(), lastDayOfCutoffMonth));
+    cutoffDate.setUTCHours(now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(), now.getUTCMilliseconds());
+    const cutoff = cutoffDate.toISOString();
     const { data: expired, error: lookupError } = await db.rpc("get_expired_business_conversations", {
       p_cutoff: cutoff,
       p_limit: BATCH_SIZE,
