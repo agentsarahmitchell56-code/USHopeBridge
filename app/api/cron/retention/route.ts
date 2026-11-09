@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
       batchLimit: BATCH_SIZE,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    console.error("Platform retention job failed:", error);
+    console.error("HOPEBRIDGE retention job failed:", error);
     return NextResponse.json({ error: "Retention cleanup failed." }, { status: 500 });
   }
 }
