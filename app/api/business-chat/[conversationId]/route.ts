@@ -31,7 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .select("id,sender_type,body,attachment_path,attachment_type,created_at")
       .eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
     if (error) return chatError("Messages could not be loaded. Please refresh.", 500);
-    const messages = await Promise.all((rows || []).map(async (message: any) => {
+    const messages = await Promise.all((rows || []).map(async (message: { id: string; sender_type: string; body: string; attachment_path: string | null; attachment_type: string | null; created_at: string }) => {
       let attachmentUrl: string | null = null;
       if (message.attachment_path) {
         const { data } = await db.storage.from(BUSINESS_CHAT_BUCKET).createSignedUrl(message.attachment_path, 900);
