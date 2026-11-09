@@ -106,3 +106,7 @@ jobs:
           post_status=$(curl --silent --show-error -o /tmp/hopebridge-upload-post.json -w "%{http_code}" -X POST -F "purpose=application" http://127.0.0.1:3000/api/uploads)
           test "$post_status" = "400"
           grep -qi "valid file" /tmp/hopebridge-upload-post.json
+
+          chat_upload_status=$(curl --silent --show-error -o /tmp/business-chat-upload.json -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{"conversationId":"550e8400-e29b-41d4-a716-446655440000","fileType":"image/jpeg","fileSize":1024}' http://127.0.0.1:3000/api/business-chat/upload)
+          test "$chat_upload_status" = "403"
+          grep -qi "chat link" /tmp/business-chat-upload.json
