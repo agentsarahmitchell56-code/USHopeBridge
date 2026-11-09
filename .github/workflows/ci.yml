@@ -29,6 +29,9 @@ jobs:
         run: |
           npm audit --json > npm-audit.json || true
           node -e "try { const a=require('./npm-audit.json'); console.log('Dependency vulnerabilities:', JSON.stringify(a.metadata?.vulnerabilities || {})); for (const [name, item] of Object.entries(a.vulnerabilities || {})) console.log(name + ': ' + item.severity + ' (' + item.range + ')'); } catch (e) { console.log('Dependency audit report unavailable:', e.message); }"
+      - name: Block high-severity dependency advisories
+        run: npm audit --audit-level=high
+
       - name: Type-check TypeScript
         run: npx tsc --noEmit
       - name: Lint Next.js app
