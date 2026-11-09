@@ -1,4 +1,4 @@
-const CACHE_NAME = "hopebridge-shell-v2";
+const CACHE_NAME = "platform-shell-v3";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE_URLS = [OFFLINE_URL, "/manifest.json", "/icon.svg", "/icon-maskable.svg", "/apple-touch-icon.svg"];
 
@@ -30,8 +30,11 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/admin") ||
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/auth/") ||
+    url.pathname.startsWith("/account/") ||
+    url.pathname.startsWith("/business/") ||
     url.pathname.startsWith("/apply") ||
     url.pathname.startsWith("/status") ||
+    url.pathname.startsWith("/chat") ||
     url.pathname.startsWith("/privacy") ||
     url.pathname.startsWith("/terms")
   ) return;

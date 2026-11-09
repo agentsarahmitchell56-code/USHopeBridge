@@ -1,4 +1,4 @@
-name: HOPEBRIDGE CI
+name: Platform CI
 
 on:
   pull_request:
@@ -16,15 +16,23 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
       SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
+      CRON_SECRET: ci-placeholder-cron-secret
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - name: Install dependencies
         run: npm install
+      - name: Summarize dependency audit
+        run: |
+          npm audit --json > npm-audit.json || true
+          node -e "try { const a=require('./npm-audit.json'); console.log('Dependency vulnerabilities:', JSON.stringify(a.metadata?.vulnerabilities || {})); for (const [name, item] of Object.entries(a.vulnerabilities || {})) console.log(name + ': ' + item.severity + ' (' + item.range + ')'); } catch (e) { console.log('Dependency audit report unavailable:', e.message); }"
+      - name: Block high-severity dependency advisories
+        run: npm audit --audit-level=high
+
       - name: Type-check TypeScript
         run: npx tsc --noEmit
       - name: Lint Next.js app
@@ -35,31 +43,45 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/hopebridge-next.log 2>&1 &
+          npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/platform-next.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 
+          ready=false
           for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:3000/ -o /tmp/hopebridge-home.html; then
+            if curl --fail --silent http://127.0.0.1:3000/ -o /tmp/platform-home.html; then
+              ready=true
               break
             fi
             sleep 2
           done
+          test "$ready" = "true"
 
-          test -s /tmp/hopebridge-home.html
-          grep -Eqi "<title>[^<]*HOPEBRIDGE" /tmp/hopebridge-home.html
+          test -s /tmp/platform-home.html
+          grep -Eqi "<title>[^<]*Platform" /tmp/platform-home.html
+
+          cron_status=$(curl --silent --show-error -o /tmp/platform-retention-cron.json -w "%{http_code}" http://127.0.0.1:3000/api/cron/retention)
+          test "$cron_status" = "401"
+          grep -qi "unauthorized" /tmp/platform-retention-cron.json
 
           while IFS= read -r route; do
             echo "Checking $route"
-            curl --fail --silent --show-error "http://127.0.0.1:3000$route" -o "/tmp/hopebridge-route.html"
-            test -s /tmp/hopebridge-route.html
+            curl --fail --silent --show-error "http://127.0.0.1:3000$route" -o /tmp/platform-route.html
+            test -s /tmp/platform-route.html
             # Check the document title only. Framework/client bundles may include
             # generic not-found text even when the requested route rendered correctly.
-            if grep -Eqi '<title>[^<]*404' /tmp/hopebridge-route.html; then
+            if grep -Eqi '<title>[^<]*404' /tmp/platform-route.html; then
               echo "Unexpected 404 document title for $route"
               exit 1
             fi
           done <<'ROUTES'
+          /business/login
+          /business/register
+          /business/workspace
+          /business/inbox
+          /b/julius
+          /platform/privacy
+          /platform/terms
           /apply
           /status
           /chat
@@ -91,4 +113,8 @@ jobs:
 
           post_status=$(curl --silent --show-error -o /tmp/hopebridge-upload-post.json -w "%{http_code}" -X POST -F "purpose=application" http://127.0.0.1:3000/api/uploads)
           test "$post_status" = "400"
-          grep -qi "valid image" /tmp/hopebridge-upload-post.json
+          grep -qi "valid file" /tmp/hopebridge-upload-post.json
+
+          chat_upload_status=$(curl --silent --show-error -o /tmp/business-chat-upload.json -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{"conversationId":"550e8400-e29b-41d4-a716-446655440000","fileType":"image/jpeg","fileSize":1024}' http://127.0.0.1:3000/api/business-chat/upload)
+          test "$chat_upload_status" = "403"
+          grep -qi "chat link" /tmp/business-chat-upload.json

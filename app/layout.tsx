@@ -1,31 +1,31 @@
-import Link from "next/link";
 import PWAInstall from "./pwa-install";
+import GlobalFooter from "../components/GlobalFooter";
 import "./globals.css";
 
 export const metadata = {
   metadataBase: new URL("https://us-hope-bridge.vercel.app"),
   title: {
-    default: "HOPEBRIDGE | Financial Assistance",
-    template: "%s | HOPEBRIDGE",
+    default: "Platform | Business Workspace",
+    template: "%s | Platform",
   },
-  description: "Submit an assistance request, review recorded application updates, and contact HOPEBRIDGE support through a clear, guided process.",
+  description: "Create a business profile, publish updates and organise your business presence in one workspace.",
   openGraph: {
     type: "website",
     url: "https://us-hope-bridge.vercel.app",
-    siteName: "HOPEBRIDGE Financial Assistance",
-    title: "HOPEBRIDGE | Financial Assistance",
-    description: "A clear, guided process for assistance requests, application status updates, and support.",
+    siteName: "Platform",
+    title: "Platform | Business Workspace",
+    description: "Create a business profile, publish updates and organise your business presence in one workspace.",
   },
   twitter: {
     card: "summary",
-    title: "HOPEBRIDGE | Financial Assistance",
-    description: "A clear, guided process for assistance requests, application status updates, and support.",
+    title: "Platform | Business Workspace",
+    description: "Create a business profile, publish updates and organise your business presence in one workspace.",
   },
   robots: {
     index: true,
     follow: true,
   },
-  applicationName: "HOPEBRIDGE",
+  applicationName: "Platform",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",
@@ -34,7 +34,7 @@ export const metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default" as const,
-    title: "HOPEBRIDGE",
+    title: "Platform",
   },
 };
 
@@ -54,17 +54,7 @@ export default function RootLayout({
       <body>
         {children}
         <PWAInstall />
-        <footer className="footer">
-          <div className="container hb-global-footer-inner">
-            <span>© {new Date().getFullYear()} HOPEBRIDGE Financial Assistance. All rights reserved.</span>
-            <nav aria-label="Legal and support links" className="hb-global-footer-links">
-              <Link href="/privacy" style={{ color: "#1464f4" }}>Privacy Policy</Link>
-              <Link href="/terms" style={{ color: "#1464f4" }}>Terms &amp; Conditions</Link>
-              <Link href="/apply" style={{ color: "#1464f4" }}>Apply</Link>
-              <Link href="/status" style={{ color: "#1464f4" }}>Track application</Link>
-            </nav>
-          </div>
-        </footer>
+        <GlobalFooter />
       </body>
     </html>
   );

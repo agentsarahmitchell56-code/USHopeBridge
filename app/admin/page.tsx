@@ -40,6 +40,7 @@ type Conversation = {
   id: string;
   client_name: string;
   client_email: string;
+  application_id?: string | null;
   created_at: string;
   updated_at?: string;
 };
@@ -52,6 +53,8 @@ type Message = {
   created_at: string;
   image_path?: string | null;
   image_type?: string | null;
+  video_path?: string | null;
+  video_type?: string | null;
 };
 
 const statuses = ["NEW", "REVIEWING", "APPROVED", "DECLINED"];
@@ -75,11 +78,13 @@ export default function AdminDashboardPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [notesSaving, setNotesSaving] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationSearch, setConversationSearch] = useState("");
   const [conversationPreviews, setConversationPreviews] = useState<Record<string, { message: string; sender_type: "client" | "agent"; created_at: string }>>({});
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageImageUrls, setMessageImageUrls] = useState<Record<string, string>>({});
   const [replyText, setReplyText] = useState("");
+  const [staffAttachmentFile, setStaffAttachmentFile] = useState<File | null>(null);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [replySending, setReplySending] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -116,7 +121,7 @@ export default function AdminDashboardPage() {
 
     const [appResult, conversationResult] = await Promise.all([
       supabase.from("applications").select("id,reference_number,full_name,email,phone,location,assistance_type,requested_amount,details,status,payment_status,payment_updated_at,payment_updated_by,payment_reference,payment_paid_at,review_notes,reviewed_by,reviewed_at,created_at,attachment_path").order("created_at", { ascending: false }).limit(200),
-      supabase.from("conversations").select("id,client_name,client_email,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
+      supabase.from("conversations").select("id,client_name,client_email,application_id,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
     ]);
 
     if (appResult.error) setError("Could not load applications. Check the staff access policies in Supabase.");
@@ -140,20 +145,36 @@ export default function AdminDashboardPage() {
     if (!ready) return;
     let active = true;
     async function refreshInbox() {
-      const [conversationResult, messageResult] = await Promise.all([
-        supabase.from("conversations").select("id,client_name,client_email,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
-        supabase.from("messages").select("conversation_id,message,sender_type,created_at").order("created_at", { ascending: false }).limit(200),
+      const [conversationResult, sessionResult] = await Promise.all([
+        supabase.from("conversations").select("id,client_name,client_email,application_id,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
+        supabase.auth.getSession(),
       ]);
       if (!active) return;
       if (!conversationResult.error && conversationResult.data) {
         setConversations(conversationResult.data as Conversation[]);
       }
-      if (!messageResult.error && messageResult.data) {
-        const previews: Record<string, { message: string; sender_type: "client" | "agent"; created_at: string }> = {};
-        for (const item of messageResult.data as Array<{ conversation_id: string; message: string; sender_type: "client" | "agent"; created_at: string }>) {
-          if (!previews[item.conversation_id]) previews[item.conversation_id] = item;
+      let accessToken = sessionResult.data.session?.access_token;
+      if (!accessToken) {
+        const refreshed = await supabase.auth.refreshSession();
+        accessToken = refreshed.data.session?.access_token;
+      }
+      if (accessToken) {
+        try {
+          const response = await fetch("/api/staff/messages", {
+            cache: "no-store",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          const result = await response.json();
+          if (response.ok && Array.isArray(result.messages) && active) {
+            const previews: Record<string, { message: string; sender_type: "client" | "agent"; created_at: string }> = {};
+            for (const item of result.messages as Array<{ conversation_id: string; message: string; sender_type: "client" | "agent"; created_at: string }>) {
+              if (!previews[item.conversation_id]) previews[item.conversation_id] = item;
+            }
+            setConversationPreviews(previews);
+          }
+        } catch (previewError) {
+          console.error("Staff inbox previews could not be refreshed:", previewError);
         }
-        setConversationPreviews(previews);
       }
     }
     void refreshInbox();
@@ -171,26 +192,30 @@ export default function AdminDashboardPage() {
     setMessagesLoading(true);
 
     async function loadMessages() {
-      const { data, error: messagesError } = await supabase
-        .from("messages")
-        .select("id,conversation_id,sender_type,sender_id,message,created_at,image_path,image_type")
-        .eq("conversation_id", selectedConversation!.id)
-        .order("created_at", { ascending: true });
-
-      if (!active) return;
-      if (messagesError) {
-        setError("Could not load this conversation's messages. Check staff message access in Supabase.");
-        setMessages([]);
-      } else {
-        const loadedMessages = (data || []) as Message[];
-        setMessages(loadedMessages);
+      try {
         const { data: sessionData } = await supabase.auth.getSession();
-        const accessToken = sessionData.session?.access_token;
-        if (accessToken) {
+        let accessToken = sessionData.session?.access_token;
+        if (!accessToken) {
+          const refreshed = await supabase.auth.refreshSession();
+          accessToken = refreshed.data.session?.access_token;
+        }
+        if (!accessToken) throw new Error("Your staff session has expired. Please sign in again.");
+
+        const response = await fetch(`/api/staff/messages?conversationId=${encodeURIComponent(selectedConversation!.id)}`, {
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Messages could not be loaded.");
+        if (!active) return;
+
+        const loadedMessages = (Array.isArray(result.messages) ? result.messages : []) as Message[];
+        setMessages(loadedMessages);
+        {
           for (const item of loadedMessages) {
-            if (!item.image_path || messageImageUrlsRef.current[item.id]) continue;
+            if ((!item.image_path && !item.video_path) || messageImageUrlsRef.current[item.id]) continue;
             try {
-              const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+              const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path || item.video_path || "")}`, { headers: { Authorization: `Bearer ${accessToken}` } });
               const imageResult = await response.json();
               if (response.ok && imageResult.url && active) {
                 messageImageUrlsRef.current[item.id] = imageResult.url;
@@ -199,8 +224,15 @@ export default function AdminDashboardPage() {
             } catch { /* attachment can be retried after refresh */ }
           }
         }
+      } catch (messagesError) {
+        if (!active) return;
+        console.error("Load staff conversation messages failed:", messagesError);
+        setError(messagesError instanceof Error
+          ? `Could not load this conversation's messages: ${messagesError.message}`
+          : "Could not load this conversation's messages. Please try again.");
+        setMessages([]);
       }
-      setMessagesLoading(false);
+      if (active) setMessagesLoading(false);
     }
 
     void loadMessages();
@@ -248,49 +280,64 @@ export default function AdminDashboardPage() {
   async function sendStaffReply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const cleanMessage = replyText.trim();
-    if (!selectedConversation || !cleanMessage || replySending) return;
-
+    if (!selectedConversation || (!cleanMessage && !staffAttachmentFile) || replySending) return;
     setReplySending(true);
     setError("");
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (authError || !authData.user || !accessToken) throw new Error("Your staff session has expired. Please sign in again.");
 
-    if (authError || !authData.user) {
-      setError("Your staff session has expired. Please sign in again.");
-      setReplySending(false);
-      return;
-    }
+      let attachment: { imagePath?: string; imageType?: string; videoPath?: string; videoType?: string } = {};
+      if (staffAttachmentFile) {
+        const form = new FormData();
+        form.append("file", staffAttachmentFile);
+        form.append("purpose", "chat");
+        form.append("conversationId", selectedConversation.id);
+        let uploadResponse: Response;
+        try {
+          uploadResponse = await fetch("/api/uploads", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` }, body: form });
+        } catch {
+          throw new Error("The upload request could not reach HOPEBRIDGE. Check your connection and try again; your selected file is still attached.");
+        }
+        const uploaded = await uploadResponse.json().catch(() => ({}));
+        if (!uploadResponse.ok) throw new Error(uploaded.error || `Attachment upload failed (HTTP ${uploadResponse.status}).`);
+        const isVideo = staffAttachmentFile.type.startsWith("video/");
+        attachment = isVideo ? { videoPath: uploaded.path, videoType: staffAttachmentFile.type } : { imagePath: uploaded.path, imageType: staffAttachmentFile.type };
+      }
 
-    const { data: messageId, error: insertError } = await supabase.rpc("send_staff_chat_message", {
-      p_conversation_id: selectedConversation.id,
-      p_message: cleanMessage,
-    });
+      let response: Response;
+      try {
+        response = await fetch("/api/staff/messages", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ conversationId: selectedConversation.id, message: cleanMessage, ...attachment }),
+        });
+      } catch {
+        throw new Error("The message could not reach the secure staff messaging service. Check your connection and retry; the selected file has been kept.");
+      }
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.messageId) throw new Error(result.error || `The message could not be saved (HTTP ${response.status}).`);
 
-    if (insertError || !messageId) {
-      console.error("Staff reply error:", insertError);
-      setError(insertError?.message || "The reply was not saved. Please refresh the dashboard and try again.");
-    } else {
       setReplyText("");
+      setStaffAttachmentFile(null);
       const now = new Date().toISOString();
       const newMessage: Message = {
-        id: messageId as string,
-        conversation_id: selectedConversation.id,
-        sender_type: "agent",
-        sender_id: authData.user.id,
-        message: cleanMessage,
-        created_at: now,
+        id: result.messageId as string, conversation_id: selectedConversation.id, sender_type: "agent",
+        sender_id: authData.user.id, message: cleanMessage, created_at: now,
+        image_path: attachment.imagePath || null, image_type: attachment.imageType || null,
+        video_path: attachment.videoPath || null, video_type: attachment.videoType || null,
       };
-      setMessages((current) =>
-        current.some((item) => item.id === newMessage.id)
-          ? current
-          : [...current, newMessage].sort(
-              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-            )
-      );
-      setConversations((current) => current
-        .map((item) => item.id === selectedConversation.id ? { ...item, updated_at: now } : item)
+      setMessages((current) => current.some((item) => item.id === newMessage.id) ? current : [...current, newMessage]);
+      setConversations((current) => current.map((item) => item.id === selectedConversation.id ? { ...item, updated_at: now } : item)
         .sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()));
+    } catch (err) {
+      console.error("Staff attachment/reply error:", err);
+      setError(err instanceof Error ? err.message : "The reply could not be sent. Please try again.");
+    } finally {
+      setReplySending(false);
     }
-    setReplySending(false);
   }
 
   useEffect(() => {
@@ -454,6 +501,16 @@ export default function AdminDashboardPage() {
     return matchesStatus && matchesSearch;
   }), [applications, filter, search]);
 
+  const visibleConversations = useMemo(() => {
+    const query = conversationSearch.trim().toLowerCase();
+    if (!query) return conversations;
+    return conversations.filter((conversation) => {
+      const preview = conversationPreviews[conversation.id]?.message || "";
+      return [conversation.client_name, conversation.client_email, preview]
+        .some((value) => value.toLowerCase().includes(query));
+    });
+  }, [conversations, conversationPreviews, conversationSearch]);
+
   const counts = useMemo(() => ({
     total: applications.length,
     fresh: applications.filter((item) => item.status === "NEW").length,
@@ -468,12 +525,12 @@ export default function AdminDashboardPage() {
     <main className="hb-admin-page">
       <div className="hb-admin-container">
         <header className="hb-admin-header">
-          <a href="/admin" className="brand">HOPEBRIDGE<span>STAFF DASHBOARD</span></a>
+          <a href="/admin" className="brand">PLATFORM<span>BUSINESS MANAGEMENT</span></a>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <StaffNotifications />
             <a href="/admin/analytics" className="btn secondary">Analytics</a>
             {role === "admin" && <a href="/admin/team" className="btn secondary">Team & permissions</a>}
-            <a href="/admin/studio" className="btn secondary">Business Studio</a>
+            <a href="/admin/studio" className="btn secondary">Business tools</a>
             <div style={{ textAlign: "right" }}><strong>{staffEmail}</strong><div style={{ color: "#627d98", fontSize: 12, textTransform: "capitalize" }}>{role}</div></div>
             <button className="btn secondary" onClick={signOut}>Sign out</button>
           </div>
@@ -484,12 +541,12 @@ export default function AdminDashboardPage() {
           <a href="#applications">Applications</a>
           <a href="/admin/analytics">Analytics</a>
           {role === "admin" && <a href="/admin/team">Team &amp; permissions</a>}
-          <a href="/admin/studio">Business Studio</a>
+          <a href="/admin/studio">Business tools</a>
         </nav>
 
         <div className="hb-admin-heading">
-          <h1>Staff workspace</h1>
-          <p>Review application requests, update recorded statuses, and reply to customers from one secure workspace.</p>
+          <h1>Platform workspace</h1>
+          <p>Manage business activity, customer conversations, and team operations from one secure workspace.</p>
         </div>
 
         {error && <p role="alert" style={{ color: "#9f1d20", background: "#fff1f2", border: "1px solid #fecdd3", padding: 14, borderRadius: 12 }}>{error}</p>}
@@ -581,10 +638,23 @@ export default function AdminDashboardPage() {
             <a className="btn secondary" href="/chat">Open public chat page</a>
           </div>
 
-          {conversations.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No conversations found.</p> : (
-            <div className="hb-inbox-layout">
+          <div className="hb-inbox-toolbar">
+            <label className="hb-inbox-search-wrap">
+              <span>Search conversations</span>
+              <input
+                type="search"
+                value={conversationSearch}
+                onChange={(event) => setConversationSearch(event.target.value)}
+                placeholder="Search customer name, email or message…"
+                aria-label="Search customer conversations"
+              />
+            </label>
+            <span className="hb-inbox-count">{visibleConversations.length} of {conversations.length} conversations</span>
+          </div>
+          {conversations.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No conversations found.</p> : visibleConversations.length === 0 ? <p style={{ color: "#627d98", padding: 18, textAlign: "center" }}>No conversations match your search.</p> : (
+            <div className={`hb-inbox-layout${selectedConversation ? " has-selection" : ""}`}>
               <div className="hb-inbox-list" aria-label="Customer conversations">
-                {conversations.map((conversation) => {
+                {visibleConversations.map((conversation) => {
                   const isSelected = selectedConversation?.id === conversation.id;
                   return <button
                     key={conversation.id}
@@ -611,8 +681,16 @@ export default function AdminDashboardPage() {
                 ) : (
                   <>
                     <div className="hb-thread-header">
+                      <button type="button" className="hb-inbox-back" onClick={() => setSelectedConversation(null)}>← All conversations</button>
                       <strong>{selectedConversation.client_name}</strong>
                       <div style={{ color: "#627d98", fontSize: 13, overflowWrap: "anywhere" }}>{selectedConversation.client_email}</div>
+                      {selectedConversation.application_id && <div style={{ marginTop: 9, padding: 10, borderRadius: 9, background: "#eff6ff", border: "1px solid #bfdbfe" }}>
+                        <strong style={{ display: "block", color: "#123c69", fontSize: 12 }}>Linked application</strong>
+                        {(() => {
+                          const linkedApplication = applications.find((application) => application.id === selectedConversation.application_id);
+                          return linkedApplication ? <><span style={{ display: "block", fontSize: 12, color: "#52667a", margin: "4px 0" }}>{linkedApplication.reference_number || "Application"} · {linkedApplication.status}</span><button type="button" className="btn secondary" style={{ padding: "6px 9px", fontSize: 12 }} onClick={() => { setSelectedApplication(linkedApplication); setReviewNotes(linkedApplication.review_notes || ""); }}>View application details</button></> : <span style={{ display: "block", fontSize: 12, color: "#52667a", marginTop: 4 }}>Application record is linked. Refresh the application list to view its details.</span>;
+                        })()}
+                      </div>}
                     </div>
                     <div ref={messagesRef} aria-live="polite" className="hb-thread-messages">
                       {messagesLoading ? <p style={{ color: "#627d98" }}>Loading messages…</p> : messages.length === 0 ? <p style={{ color: "#627d98", textAlign: "center", margin: "auto 0" }}>No messages in this conversation yet.</p> : messages.map((item) => {
@@ -620,8 +698,8 @@ export default function AdminDashboardPage() {
                         return <div key={item.id} style={{ alignSelf: isAgent ? "flex-end" : "flex-start", maxWidth: "88%", background: isAgent ? "#eaf2ff" : "#f1f5f9", color: "#243b53", padding: "10px 12px", borderRadius: 12, overflowWrap: "anywhere" }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: isAgent ? "#1554ad" : "#52667a", marginBottom: 4 }}>{isAgent ? "HOPEBRIDGE staff" : "Customer"}</div>
                           {item.message && <div style={{ whiteSpace: "pre-wrap" }}>{item.message}</div>}
-                          {item.image_path && messageImageUrls[item.id] && <a href={messageImageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={messageImageUrls[item.id]} alt="Customer attachment" width={480} height={320} unoptimized onError={() => { delete messageImageUrlsRef.current[item.id]; setMessageImageUrls((current) => { const next = { ...current }; delete next[item.id]; return next; }); }} style={{ display: "block", maxWidth: "100%", maxHeight: 220, width: "auto", height: "auto", borderRadius: 9, marginTop: item.message ? 8 : 0 }} /></a>}
-                          {item.image_path && !messageImageUrls[item.id] && <button type="button" className="btn secondary" style={{ fontSize: 12, marginTop: 6, padding: "6px 9px" }} onClick={async () => { const { data: session } = await supabase.auth.getSession(); const accessToken = session.session?.access_token; if (!accessToken) { setError("Your staff session has expired. Please sign in again."); return; } try { const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path!)}`, { headers: { Authorization: `Bearer ${accessToken}` } }); const result = await response.json(); if (response.ok && result.url) { messageImageUrlsRef.current[item.id] = result.url; setMessageImageUrls((current) => ({ ...current, [item.id]: result.url })); setError(""); } else { setError(result.error || "Attachment could not be opened. Refresh and try again."); } } catch { setError("Could not load the attachment. Check your connection and try again."); } }}>Retry image</button>}
+                          {item.image_path && messageImageUrls[item.id] && <a href={messageImageUrls[item.id]} target="_blank" rel="noreferrer"><Image src={messageImageUrls[item.id]} alt="Chat image attachment" width={480} height={320} unoptimized style={{ display: "block", maxWidth: "100%", maxHeight: 220, width: "auto", height: "auto", borderRadius: 9, marginTop: item.message ? 8 : 0 }} /></a>}{item.video_path && messageImageUrls[item.id] && <video src={messageImageUrls[item.id]} controls playsInline preload="metadata" style={{ display: "block", maxWidth: "100%", maxHeight: 220, borderRadius: 9, marginTop: item.message ? 8 : 0 }} />}
+                          {(item.image_path || item.video_path) && !messageImageUrls[item.id] && <button type="button" className="btn secondary" style={{ fontSize: 12, marginTop: 6, padding: "6px 9px" }} onClick={async () => { const { data: session } = await supabase.auth.getSession(); const accessToken = session.session?.access_token; if (!accessToken) { setError("Your staff session has expired. Please sign in again."); return; } try { const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path || item.video_path || "")}`, { headers: { Authorization: `Bearer ${accessToken}` } }); const result = await response.json(); if (response.ok && result.url) { messageImageUrlsRef.current[item.id] = result.url; setMessageImageUrls((current) => ({ ...current, [item.id]: result.url })); setError(""); } else { setError(result.error || "Attachment could not be opened. Refresh and try again."); } } catch { setError("Could not load the attachment. Check your connection and try again."); } }}>Retry attachment</button>}
                           <div style={{ fontSize: 10, color: "#718096", marginTop: 5 }}>{new Date(item.created_at).toLocaleString()}</div>
                         </div>;
                       })}
@@ -634,10 +712,11 @@ export default function AdminDashboardPage() {
                         placeholder="Write a reply to the customer…"
                         maxLength={5000}
                         rows={2}
-                        required
                         className="hb-thread-input"
                       />
-                      <button className="btn primary hb-thread-send" type="submit" disabled={replySending || !replyText.trim()}>{replySending ? "Sending…" : "Send reply"}</button>
+                      <label className="btn secondary" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: replySending ? "not-allowed" : "pointer" }}>＋ Attach file<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" disabled={replySending} onChange={(event) => { const file = event.target.files?.[0] || null; event.currentTarget.value = ""; if (!file) return; const image = ["image/jpeg","image/png","image/webp"].includes(file.type); const video = ["video/mp4","video/webm","video/quicktime"].includes(file.type); if (!image && !video) { setError("Choose JPG, PNG, WebP, MP4, WebM or MOV."); return; } if (file.size < 1 || file.size > (image ? 5 : 25) * 1024 * 1024) { setError(image ? "Images must be no larger than 5 MB." : "Videos must be no larger than 25 MB."); return; } setError(""); setStaffAttachmentFile(file); }} style={{ display: "none" }} /></label>
+                      {staffAttachmentFile && <span style={{ fontSize: 12, overflowWrap: "anywhere" }}>{staffAttachmentFile.name} <button type="button" onClick={() => setStaffAttachmentFile(null)} disabled={replySending}>Remove</button></span>}
+                      <button className="btn primary hb-thread-send" type="submit" disabled={replySending || (!replyText.trim() && !staffAttachmentFile)}>{replySending ? "Sending…" : "Send"}</button>
                     </form>
                     <p style={{ color: "#718096", fontSize: 12, marginBottom: 0 }}>Messages are saved to the database. Keep replies focused on verified support information; never ask customers for passwords or banking login details.</p>
                   </>
