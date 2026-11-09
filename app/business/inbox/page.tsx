@@ -15,6 +15,7 @@ export default function BusinessInboxPage() {
   const [selected, setSelected] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(true);
   const [sending, setSending] = useState(false);
@@ -77,10 +78,11 @@ export default function BusinessInboxPage() {
     try {
       const auth = await headers();
       if (!auth) throw new Error("Your session expired. Sign in again.");
-      const response = await fetch("/api/business-chat", { method: "POST", headers: { ...auth, "Content-Type": "application/json" }, body: JSON.stringify({ pageId: page.id, conversationId: selected, message: draft.trim() }) });
+      const form = new FormData(); form.set("pageId", page.id); form.set("conversationId", selected); form.set("message", draft.trim()); if (file) form.set("file", file);
+      const response = await fetch("/api/business-chat", { method: "POST", headers: auth, body: form });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Reply could not be sent.");
-      setDraft(""); await loadMessages(selected); await loadInbox();
+      setDraft(""); setFile(null); await loadMessages(selected); await loadInbox();
     } catch (e) { setError(e instanceof Error ? e.message : "Reply could not be sent."); }
     finally { setSending(false); }
   }
@@ -116,7 +118,7 @@ export default function BusinessInboxPage() {
             </div>
             <form onSubmit={send} style={{ display: "grid", gap: 8, padding: 12, borderTop: "1px solid #e6edf5" }}>
               <textarea value={draft} onChange={e => setDraft(e.target.value)} maxLength={4000} rows={2} placeholder="Reply to customer…" style={{ width: "100%", boxSizing: "border-box", padding: 11, border: "1px solid #cbd5e1", borderRadius: 9, font: "inherit" }} />
-              <button disabled={sending || !draft.trim()} style={{ justifySelf: "end", border: 0, borderRadius: 8, padding: "10px 18px", background: "#1768dc", color: "white", fontWeight: 800 }}>{sending ? "Sending…" : "Send reply"}</button>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label style={{ color: "#476581", fontSize: 12 }}>Photo or video<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={e => setFile(e.target.files?.[0] || null)} style={{ display: "block", maxWidth: 210, marginTop: 4, fontSize: 11 }} /></label><button disabled={sending || (!draft.trim() && !file)} style={{ border: 0, borderRadius: 8, padding: "10px 18px", background: "#1768dc", color: "white", fontWeight: 800 }}>{sending ? "Sending…" : "Send reply"}</button></div>
             </form>
           </> : <div style={{ display: "grid", placeItems: "center", flex: 1, padding: 30, textAlign: "center", color: "#718297" }}><div><strong style={{ display: "block", color: "#173b62", marginBottom: 6 }}>Your business inbox</strong>Select a conversation to read and reply to a customer.</div></div>}
         </section>
