@@ -259,19 +259,25 @@ export default function ChatPage() {
       if (attachmentFile) {
         let upload: { path?: string; error?: string };
         try {
-          const form = new FormData();
-          form.append("file", attachmentFile);
-          form.append("purpose", "chat");
-          form.append("conversationId", conversationId);
-          form.append("chatToken", chatToken);
-          const response = await fetch("/api/uploads", { method: "POST", body: form });
-          const responseText = await response.text();
-          let parsed: { path?: string; error?: string } = {};
-          try { parsed = JSON.parse(responseText) as { path?: string; error?: string }; } catch { /* Report a safe endpoint error below. */ }
-          if (!response.ok || !parsed.path) {
+          const response = await fetch("/api/uploads/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              conversationId,
+              chatToken,
+              fileType: attachmentFile.type,
+              fileSize: attachmentFile.size,
+            }),
+          });
+          const parsed = await response.json().catch(() => ({})) as { path?: string; token?: string; error?: string };
+          if (!response.ok || !parsed.path || !parsed.token) {
             throw new Error(parsed.error || `Upload service returned HTTP ${response.status}. Please retry.`);
           }
-          upload = parsed;
+          const { error: storageError } = await supabase.storage
+            .from("hopebridge-private-uploads")
+            .uploadToSignedUrl(parsed.path, parsed.token, attachmentFile, { contentType: attachmentFile.type });
+          if (storageError) throw new Error(storageError.message || "The file could not be saved to secure storage.");
+          upload = { path: parsed.path };
         } catch (uploadError) {
           const details = uploadError instanceof Error ? uploadError.message : "Attachment upload failed.";
           console.error("Chat attachment upload failed:", details);
