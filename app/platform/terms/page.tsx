@@ -28,7 +28,7 @@ export default function PlatformTermsPage() {
         <p>Businesses must handle customer contact details and messages lawfully, fairly and only for appropriate business purposes. Do not request passwords, one-time codes, payment-card details or unnecessary sensitive personal information through chat. Customers should verify a business independently before making payments or sharing sensitive information.</p>
 
         <h2>5. Acceptable use</h2>
-        <p>You must not attempt to access another business's workspace or conversations, interfere with the service, upload malicious files, send spam, impersonate another person or use Platform for illegal activity. Platform may restrict or suspend access where reasonably necessary to protect users, businesses or the service.</p>
+        <p>You must not attempt to access another business&apos;s workspace or conversations, interfere with the service, upload malicious files, send spam, impersonate another person or use Platform for illegal activity. Platform may restrict or suspend access where reasonably necessary to protect users, businesses or the service.</p>
 
         <h2>6. Availability and changes</h2>
         <p>Platform may be updated, interrupted or changed for maintenance, security, legal or operational reasons. We do not promise uninterrupted availability, error-free operation, customer enquiries, sales or business results. Nothing in these terms excludes rights that cannot legally be excluded.</p>
@@ -37,7 +37,7 @@ export default function PlatformTermsPage() {
         <p>Platform relies on service providers, including Supabase for authentication, database and storage and Vercel for hosting and delivery. Their services may be subject to separate terms and privacy notices.</p>
 
         <h2>8. Intellectual property</h2>
-        <p>Platform's software, branding and service materials remain the property of their respective rights holders. You grant the operator permission to host, store, process and display the content you submit to provide the service and make your published profile and posts available to visitors.</p>
+        <p>Platform&apos;s software, branding and service materials remain the property of their respective rights holders. You grant the operator permission to host, store, process and display the content you submit to provide the service and make your published profile and posts available to visitors.</p>
 
         <h2>9. Suspension and termination</h2>
         <p>The operator may restrict or terminate access for serious or repeated violations, security risks or legal requirements. The operator must publish the account-closure and data-deletion process before launch: <strong>[INSERT ACCOUNT CLOSURE AND DATA EXPORT / DELETION PROCESS]</strong>.</p>
