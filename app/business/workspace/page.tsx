@@ -129,7 +129,7 @@ export default function BusinessWorkspacePage() {
         mediaPath = uploadResult.path;
         const { error: storageUploadError } = await supabase.storage
           .from("business-private-media")
-          .uploadToSignedUrl(mediaPath, uploadResult.token, media, { contentType: media.type, upsert: false });
+          .uploadToSignedUrl(uploadResult.path, uploadResult.token, media, { contentType: media.type, upsert: false });
         if (storageUploadError) throw storageUploadError;
       }
       const { data, error: insertError } = await supabase.from("business_page_posts").insert({ page_id: business.id, author_id: userId, body: body.trim(), media_path: mediaPath, media_type: media?.type || null, status: "DRAFT" }).select("id,body,media_path,media_type,media_url,status,created_at").single();
