@@ -94,4 +94,4 @@ jobs:
 
           post_status=$(curl --silent --show-error -o /tmp/hopebridge-upload-post.json -w "%{http_code}" -X POST -F "purpose=application" http://127.0.0.1:3000/api/uploads)
           test "$post_status" = "400"
-          grep -qi "valid image" /tmp/hopebridge-upload-post.json
+          grep -qi "valid file" /tmp/hopebridge-upload-post.json
