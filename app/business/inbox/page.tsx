@@ -73,7 +73,7 @@ export default function BusinessInboxPage() {
 
   async function send(event: FormEvent) {
     event.preventDefault();
-    if (!page || !selected || !draft.trim() || sending) return;
+    if (!page || !selected || (!draft.trim() && !file) || sending) return;
     setSending(true); setError("");
     try {
       const auth = await headers();
