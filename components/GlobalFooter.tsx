@@ -14,7 +14,7 @@ export default function GlobalFooter() {
   return (
     <footer className="footer">
       <div className="container hb-global-footer-inner">
-        <span>© {new Date().getFullYear()} {isHopebridge ? "HOPEBRIDGE" : "Platform"}. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} {isHopebridge ? "HOPEBRIDGE" : "HOPEBRIDGE"}. All rights reserved.</span>
         <nav aria-label="Legal and workspace links" className="hb-global-footer-links">
           <Link href={privacyHref} style={{ color: "#1464f4" }}>Privacy Policy</Link>
           <Link href={termsHref} style={{ color: "#1464f4" }}>Terms &amp; Conditions</Link>
