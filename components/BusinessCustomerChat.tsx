@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-type ChatMessage = { id: string; senderType: "customer" | "business"; body: string; attachmentType: string | null; attachmentUrl: string | null; createdAt: string };
+type ChatMessage = { id: string; senderType: "customer" | "business"; body: string; attachmentType: string | null; attachmentUrl: string | null; attachmentError?: string | null; createdAt: string };
 type Session = { conversationId: string; accessToken: string };
 
 export default function BusinessCustomerChat({ slug, businessName }: { slug: string; businessName: string }) {
@@ -26,7 +26,14 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
   async function refresh(current: Session) {
     const response = await fetch(`/api/business-chat/${current.conversationId}`, { headers: { "x-business-chat-token": current.accessToken }, cache: "no-store" });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "Chat could not be loaded.");
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem("platform-business-chat:" + slug);
+        setSession(null);
+        setMessages([]);
+      }
+      throw new Error(result.error || "Chat could not be loaded.");
+    }
     setMessages(result.messages || []);
   }
 
@@ -69,7 +76,7 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
         const uploadResult = await uploadResponse.json();
         if (!uploadResponse.ok || !uploadResult.path || !uploadResult.token) throw new Error(uploadResult.error || "A secure upload could not be prepared.");
         const { error: uploadError } = await supabase.storage.from("business-private-media").uploadToSignedUrl(uploadResult.path, uploadResult.token, file, { contentType: file.type, upsert: false });
-        if (uploadError) throw new Error("The attachment could not be uploaded. Please try again.");
+        if (uploadError) throw new Error(uploadError.message || "The attachment could not be uploaded. Please try again.");
         attachmentPath = uploadResult.path;
         attachmentType = file.type;
       }
@@ -101,8 +108,9 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
           {messages.length === 0 && <p style={{ margin: 0, color: "#718297", fontSize: 13 }}>Your conversation is ready. Send the first message.</p>}
           {messages.map(item => <div key={item.id} style={{ justifySelf: item.senderType === "customer" ? "end" : "start", maxWidth: "88%", padding: "9px 12px", borderRadius: 12, background: item.senderType === "customer" ? "#e1efff" : "white", color: "#29445f", fontSize: 14 }}>
             {item.body && <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{item.body}</p>}
-            {item.attachmentUrl && item.attachmentType?.startsWith("image/") && <img src={item.attachmentUrl} alt="Chat attachment" style={{ maxWidth: "100%", maxHeight: 210, borderRadius: 8 }} />}
-            {item.attachmentUrl && item.attachmentType?.startsWith("video/") && <video src={item.attachmentUrl} controls playsInline style={{ maxWidth: "100%", maxHeight: 220 }} />}
+            {item.attachmentUrl && item.attachmentType?.startsWith("image/") && <a href={item.attachmentUrl} target="_blank" rel="noreferrer"><img src={item.attachmentUrl} alt="Chat attachment" style={{ maxWidth: "100%", maxHeight: 210, borderRadius: 8, display: "block" }} /></a>}
+            {item.attachmentUrl && item.attachmentType?.startsWith("video/") && <video src={item.attachmentUrl} controls playsInline preload="metadata" style={{ width: "min(100%, 360px)", maxHeight: 220, borderRadius: 8 }} />}
+            {item.attachmentError && <p role="alert" style={{ margin: "6px 0 0", color: "#9f1d20", fontSize: 12 }}>{item.attachmentError}</p>}
             <small style={{ display: "block", marginTop: 5, color: "#8292a5" }}>{item.senderType === "customer" ? "You" : businessName} · {new Date(item.createdAt).toLocaleTimeString()}</small>
           </div>)}
         </div>
