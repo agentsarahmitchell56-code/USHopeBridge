@@ -34,7 +34,7 @@ export async function rateLimitBusinessChat(db: SupabaseClient, request: NextReq
 }
 
 export async function authorizedBusinessOwner(request: NextRequest, db: SupabaseClient) {
-  const bearer = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "").trim();
+  const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
   if (!bearer) return null;
   const { data, error } = await db.auth.getUser(bearer);
   if (error || !data.user) return null;
