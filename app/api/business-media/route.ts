@@ -16,7 +16,7 @@ const ALLOWED_TYPES: Record<string, string> = {
 export async function POST(request: NextRequest) {
   try {
     const authorization = request.headers.get("authorization") || "";
-    const accessToken = authorization.replace(/^Bearer\\s+/i, "");
+    const accessToken = authorization.replace(/^Bearer\s+/i, "");
     if (!accessToken || accessToken === authorization) {
       return NextResponse.json({ error: "Please sign in again before uploading media." }, { status: 401 });
     }
