@@ -161,7 +161,7 @@ export default function BusinessStudioPage() {
 
   async function signOut() { await supabase.auth.signOut(); router.replace("/admin/login"); router.refresh(); }
 
-  if (loading) return <main className="container" style={{ paddingTop: 80 }}>Loading secure Platform tools…</main>;
+  if (loading) return <main className="container" style={{ paddingTop: 80 }}>Loading secure HOPEBRIDGE tools…</main>;
 
   const drafts = posts.filter((p) => p.status === "DRAFT").length;
   const scheduled = posts.filter((p) => p.status === "SCHEDULED").length;
@@ -177,7 +177,7 @@ export default function BusinessStudioPage() {
     <main style={{ minHeight: "100vh", padding: "24px 0 60px", background: "#f4f7fb" }}>
       <div className="container">
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14, marginBottom: 24 }}>
-          <Link href="/admin" className="brand">PLATFORM<span>BUSINESS TOOLS</span></Link>
+          <Link href="/admin" className="brand">HOPEBRIDGE<span>BUSINESS TOOLS</span></Link>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <Link href="/admin" className="btn secondary">Applications &amp; inbox</Link>
             <a href="#content-library" className="btn secondary">Content library</a>
@@ -186,7 +186,7 @@ export default function BusinessStudioPage() {
         </header>
 
         <div style={{ marginBottom: 24 }}>
-          <p className="eyebrow" style={{ marginBottom: 6 }}>PLATFORM MANAGEMENT</p>
+          <p className="eyebrow" style={{ marginBottom: 6 }}>HOPEBRIDGE MANAGEMENT</p>
           <h1 style={{ margin: "0 0 7px", fontSize: "clamp(28px,4vw,38px)", letterSpacing: "-.04em" }}>Business tools</h1>
           <p style={{ margin: 0, color: "#667085", maxWidth: 760, lineHeight: 1.7 }}>A simple workspace to manage your profile and prepare content. Start with a draft, preview your media, then schedule it when you are ready.</p>
         </div>
