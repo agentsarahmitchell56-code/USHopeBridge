@@ -1,7 +1,7 @@
 # Platform customer-message retention operations
 
 ## Policy scope
-- Delete a business-page conversation and all of its messages/attachments 365 days after the customer's most recent message.
+- Delete a business-page conversation and all of its messages/attachments 12 calendar months after the customer's most recent message.
 - A new customer message resets the retention clock.
 - Business replies do not reset the customer-activity clock.
 - This job is intentionally limited to `business_page_conversations`, `business_page_messages`, and objects in the `business-private-media` bucket referenced by those messages.
