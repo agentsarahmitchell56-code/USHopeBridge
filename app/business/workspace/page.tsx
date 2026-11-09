@@ -37,10 +37,26 @@ export default function BusinessWorkspacePage() {
       if (data) {
         setBusiness(data as Business); setDraft({ owner_id: data.owner_id, name: data.name, slug: data.slug, category: data.category, description: data.description, contact_email: data.contact_email, contact_phone: data.contact_phone || "", website_url: data.website_url, avatar_url: data.avatar_url, cover_url: data.cover_url, published: data.published });
         const { data: rows, error: postsError } = await supabase.from("business_page_posts").select("id,body,media_path,media_type,media_url,status,created_at").eq("page_id", data.id).order("created_at", { ascending: false }).limit(50);
-        if (!postsError && rows) {
-          const urls: Record<string, string> = {};
-          await Promise.all(rows.map(async (post: Post) => { if (post.media_path) { const { data: signedUrl } = await supabase.storage.from("business-private-media").createSignedUrl(post.media_path, 3600); if (signedUrl?.signedUrl) urls[post.id] = signedUrl.signedUrl; } }));
-          if (active) { setPosts(rows as Post[]); setSigned(urls); }
+        const urls: Record<string, string> = {};
+        const profileMedia = [
+          ["logo", data.avatar_url],
+          ["cover", data.cover_url],
+        ] as const;
+        await Promise.all([
+          ...profileMedia.map(async ([key, path]) => {
+            if (!path || path.startsWith("http")) return;
+            const { data: signedUrl, error: signedError } = await supabase.storage.from("business-private-media").createSignedUrl(path, 3600);
+            if (!signedError && signedUrl?.signedUrl) urls[key] = signedUrl.signedUrl;
+          }),
+          ...((!postsError && rows) ? rows.map(async (post: Post) => {
+            if (!post.media_path) return;
+            const { data: signedUrl, error: signedError } = await supabase.storage.from("business-private-media").createSignedUrl(post.media_path, 3600);
+            if (!signedError && signedUrl?.signedUrl) urls[post.id] = signedUrl.signedUrl;
+          }) : []),
+        ]);
+        if (active) {
+          if (!postsError && rows) setPosts(rows as Post[]);
+          setSigned(urls);
         }
       } else {
         setDraft(blank(auth.user.id, String(auth.user.user_metadata?.business_name || "")));
