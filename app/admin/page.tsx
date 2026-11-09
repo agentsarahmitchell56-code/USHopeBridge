@@ -535,7 +535,7 @@ export default function AdminDashboardPage() {
     <main className="hb-admin-page">
       <div className="hb-admin-container">
         <header className="hb-admin-header">
-          <a href="/admin" className="brand">PLATFORM<span>BUSINESS MANAGEMENT</span></a>
+          <a href="/admin" className="brand">HOPEBRIDGE<span>BUSINESS MANAGEMENT</span></a>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <StaffNotifications />
             <a href="/admin/analytics" className="btn secondary">Analytics</a>
@@ -555,7 +555,7 @@ export default function AdminDashboardPage() {
         </nav>
 
         <div className="hb-admin-heading">
-          <h1>Platform workspace</h1>
+          <h1>HOPEBRIDGE workspace</h1>
           <p>Manage business activity, customer conversations, and team operations from one secure workspace.</p>
         </div>
 
