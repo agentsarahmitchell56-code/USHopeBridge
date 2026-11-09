@@ -5,21 +5,21 @@ import "./globals.css";
 export const metadata = {
   metadataBase: new URL("https://us-hope-bridge.vercel.app"),
   title: {
-    default: "Platform | Business Management",
+    default: "Platform | Business Workspace",
     template: "%s | Platform",
   },
-  description: "A business platform for managing public profiles, customer conversations, content, teams and business operations.",
+  description: "Create a business profile, publish updates and organise your business presence in one workspace.",
   openGraph: {
     type: "website",
     url: "https://us-hope-bridge.vercel.app",
     siteName: "Platform",
-    title: "Platform | Business Management",
-    description: "Manage business profiles, customer conversations, content, teams and business operations in one platform.",
+    title: "Platform | Business Workspace",
+    description: "Create a business profile, publish updates and organise your business presence in one workspace.",
   },
   twitter: {
     card: "summary",
-    title: "HOPEBRIDGE | Financial Assistance",
-    description: "A clear, guided process for assistance requests, application status updates, and support.",
+    title: "Platform | Business Workspace",
+    description: "Create a business profile, publish updates and organise your business presence in one workspace.",
   },
   robots: {
     index: true,
@@ -57,12 +57,11 @@ export default function RootLayout({
         <footer className="footer">
           <div className="container hb-global-footer-inner">
             <span>© {new Date().getFullYear()} Platform. All rights reserved.</span>
-            <nav aria-label="Legal and support links" className="hb-global-footer-links">
+            <nav aria-label="Legal and workspace links" className="hb-global-footer-links">
               <Link href="/privacy" style={{ color: "#1464f4" }}>Privacy Policy</Link>
               <Link href="/terms" style={{ color: "#1464f4" }}>Terms &amp; Conditions</Link>
-              <Link href="/business/register" style={{ color: "#1464f4" }}>For businesses</Link>
-              <Link href="/apply" style={{ color: "#1464f4" }}>Apply</Link>
-              <Link href="/status" style={{ color: "#1464f4" }}>Track application</Link>
+              <Link href="/business/register" style={{ color: "#1464f4" }}>Create a business workspace</Link>
+              <Link href="/business/login" style={{ color: "#1464f4" }}>Business sign in</Link>
             </nav>
           </div>
         </footer>
