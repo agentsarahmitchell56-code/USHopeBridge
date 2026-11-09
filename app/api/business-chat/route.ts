@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
         .select("id,sender_type,sender_id,body,attachment_path,attachment_type,created_at")
         .eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
       if (error) return chatError("Messages could not be loaded.", 500);
-      const messages = await Promise.all((rows || []).map(async (message: any) => {
+      const messages = await Promise.all((rows || []).map(async (message: { id: string; sender_type: string; sender_id: string | null; body: string; attachment_path: string | null; attachment_type: string | null; created_at: string }) => {
         let attachmentUrl: string | null = null;
         if (message.attachment_path) {
           const { data } = await db.storage.from(BUSINESS_CHAT_BUCKET).createSignedUrl(message.attachment_path, 900);
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       .select("id,customer_name,customer_email,created_at,updated_at,business_last_read_at")
       .eq("page_id", pageId).order("updated_at", { ascending: false }).limit(100);
     if (error) return chatError("Your inbox could not be loaded.", 500);
-    const inbox = await Promise.all((conversations || []).map(async (conversation: any) => {
+    const inbox = await Promise.all((conversations || []).map(async (conversation: { id: string; customer_name: string; customer_email: string; created_at: string; updated_at: string; business_last_read_at: string | null }) => {
       const { data: last } = await db.from("business_page_messages")
         .select("body,attachment_type,sender_type,created_at").eq("conversation_id", conversation.id)
         .order("created_at", { ascending: false }).limit(1).maybeSingle();
