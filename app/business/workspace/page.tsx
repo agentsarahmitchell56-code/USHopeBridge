@@ -112,7 +112,21 @@ export default function BusinessWorkspacePage() {
         const valid = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm"];
         if (!valid.includes(media.type) || media.size > 25 * 1024 * 1024) throw new Error("Choose a JPG, PNG, WebP, GIF, MP4, or WebM file no larger than 25 MB.");
         mediaPath = `${business.id}/${crypto.randomUUID()}.${fileExt(media)}`;
-        const { error: uploadError } = await supabase.storage.from("business-private-media").upload(mediaPath, media, { contentType: media.type, upsert: false }); if (uploadError) throw uploadError;
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !sessionData.session?.access_token) throw new Error("Your session expired. Please sign in again.");
+        const uploadForm = new FormData();
+        uploadForm.append("pageId", business.id);
+        uploadForm.append("file", media);
+        const uploadResponse = await fetch("/api/business-media", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
+          body: uploadForm,
+        });
+        const uploadResult = await uploadResponse.json().catch(() => ({}));
+        if (!uploadResponse.ok || typeof uploadResult.path !== "string") {
+          throw new Error(typeof uploadResult.error === "string" ? uploadResult.error : "The media upload failed. Please try again.");
+        }
+        mediaPath = uploadResult.path;
       }
       const { data, error: insertError } = await supabase.from("business_page_posts").insert({ page_id: business.id, author_id: userId, body: body.trim(), media_path: mediaPath, media_type: media?.type || null, status: "DRAFT" }).select("id,body,media_path,media_type,media_url,status,created_at").single();
       if (insertError) throw insertError;
