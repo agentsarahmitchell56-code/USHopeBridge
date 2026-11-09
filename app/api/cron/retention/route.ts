@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const cutoffDate = new Date(now);
     cutoffDate.setUTCDate(1);
-    cutoffDate.setUTCFullYear(now.getUTCFullYear() - 1);
+    cutoffDate.setUTCFullYear(now.getUTCFullYear() - RETENTION_MONTHS);
     cutoffDate.setUTCMonth(now.getUTCMonth());
     const lastDayOfCutoffMonth = new Date(Date.UTC(cutoffDate.getUTCFullYear(), cutoffDate.getUTCMonth() + 1, 0)).getUTCDate();
     cutoffDate.setUTCDate(Math.min(now.getUTCDate(), lastDayOfCutoffMonth));
