@@ -14,15 +14,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!page) {
     return {
-      title: "Business profile | Platform",
-      description: "View public business profiles and updates on Platform.",
+      title: "Business profile | HOPEBRIDGE",
+      description: "View public business profiles and updates on HOPEBRIDGE.",
       robots: { index: false, follow: true },
     };
   }
 
-  const title = `${page.name} | Platform`;
+  const title = `${page.name} | HOPEBRIDGE`;
   const description = page.description?.trim()
-    || `View ${page.name}'s business profile, updates and contact details on Platform.`;
+    || `View ${page.name}'s business profile, updates and contact details on HOPEBRIDGE.`;
   const mediaPath = page.avatar_url || page.cover_url;
   let imageUrl: string | undefined;
 
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: `/b/${encodeURIComponent(slug)}` },
-    openGraph: { type: "website", title, description, url: `/b/${encodeURIComponent(slug)}`, siteName: "Platform", images },
+    openGraph: { type: "website", title, description, url: `/b/${encodeURIComponent(slug)}`, siteName: "HOPEBRIDGE", images },
     twitter: { card: imageUrl ? "summary_large_image" : "summary", title, description, images: imageUrl ? [imageUrl] : undefined },
   };
 }
