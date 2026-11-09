@@ -78,8 +78,26 @@ export default function BusinessInboxPage() {
     try {
       const auth = await headers();
       if (!auth) throw new Error("Your session expired. Sign in again.");
-      const form = new FormData(); form.set("pageId", page.id); form.set("conversationId", selected); form.set("message", draft.trim()); if (file) form.set("file", file);
-      const response = await fetch("/api/business-chat", { method: "POST", headers: auth, body: form });
+      let attachmentPath: string | null = null;
+      let attachmentType: string | null = null;
+      if (file) {
+        const uploadResponse = await fetch("/api/business-chat/upload", {
+          method: "POST",
+          headers: { ...auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ pageId: page.id, conversationId: selected, fileType: file.type, fileSize: file.size }),
+        });
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResponse.ok || !uploadResult.path || !uploadResult.token) throw new Error(uploadResult.error || "A secure upload could not be prepared.");
+        const { error: uploadError } = await supabase.storage.from("business-private-media").uploadToSignedUrl(uploadResult.path, uploadResult.token, file, { contentType: file.type, upsert: false });
+        if (uploadError) throw new Error("The attachment could not be uploaded. Please try again.");
+        attachmentPath = uploadResult.path;
+        attachmentType = file.type;
+      }
+      const response = await fetch("/api/business-chat", {
+        method: "POST",
+        headers: { ...auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: page.id, conversationId: selected, message: draft.trim(), attachmentPath, attachmentType }),
+      });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Reply could not be sent.");
       setDraft(""); setFile(null); await loadMessages(selected); await loadInbox();
