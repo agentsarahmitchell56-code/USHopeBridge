@@ -39,23 +39,26 @@ jobs:
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 
+          ready=false
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:3000/ -o /tmp/platform-home.html; then
+              ready=true
               break
             fi
             sleep 2
           done
+          test "$ready" = "true"
 
-          test -s /tmp/hopebridge-home.html
-          grep -Eqi "<title>[^<]*Platform" /tmp/hopebridge-home.html
+          test -s /tmp/platform-home.html
+          grep -Eqi "<title>[^<]*Platform" /tmp/platform-home.html
 
           while IFS= read -r route; do
             echo "Checking $route"
-            curl --fail --silent --show-error "http://127.0.0.1:3000$route" -o "/tmp/platform-route.html"
-            test -s /tmp/hopebridge-route.html
+            curl --fail --silent --show-error "http://127.0.0.1:3000$route" -o /tmp/platform-route.html
+            test -s /tmp/platform-route.html
             # Check the document title only. Framework/client bundles may include
             # generic not-found text even when the requested route rendered correctly.
-            if grep -Eqi '<title>[^<]*404' /tmp/hopebridge-route.html; then
+            if grep -Eqi '<title>[^<]*404' /tmp/platform-route.html; then
               echo "Unexpected 404 document title for $route"
               exit 1
             fi
