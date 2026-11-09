@@ -5,7 +5,7 @@ export const metadata = {
   description: "How Platform handles business account, public profile, customer message and media information.",
 };
 
-const draftNotice = "Launch review required: confirm the retention schedule, applicable privacy requirements and service-provider arrangements before advertising or accepting public registrations.";
+const draftNotice = "Launch review required: confirm account and operational-log retention, applicable privacy requirements and service-provider arrangements before advertising or accepting public registrations.";
 
 export default function PlatformPrivacyPage() {
   return (
@@ -45,7 +45,8 @@ export default function PlatformPrivacyPage() {
         <p>Platform does not make private customer conversations public. Information may be processed by the service providers described above, disclosed when required by law, or shared when reasonably necessary to protect users, the operator or the service. Business owners are responsible for how they use information customers send to them.</p>
 
         <h2>7. Retention and deletion</h2>
-        <p>Account, profile, post, message and attachment retention periods must be set by the operator and published here. Current retention schedule: <strong>[INSERT RETENTION PERIODS FOR ACCOUNTS, MESSAGES, MEDIA, LOGS AND BACKUPS]</strong>. To request access, correction or deletion, contact <strong>hopebridge098@gmail.com</strong>. Requests may require reasonable identity verification and may be subject to legal retention obligations.</p>
+        <p><strong>Proposed customer-conversation schedule:</strong> business conversation messages and their attached photos or videos are intended to be deleted 12 months after the customer&apos;s most recent message in that conversation. A later customer message resets that period. This schedule applies to Platform business-page conversations only; it does not apply to HOPEBRIDGE applications, application records, support chats, business accounts, public posts, profile media, security logs or backups.</p>
+        <p>The scheduled cleanup implementation must be enabled and verified before this proposed schedule is treated as an active service commitment. Account, profile, public-post, security-log and backup retention periods, and the account-closure and data-export/deletion process, still require operator confirmation. To request access, correction or deletion, contact <strong>hopebridge098@gmail.com</strong>. Requests may require reasonable identity verification and may be subject to legal retention obligations.</p>
 
         <h2>8. Security</h2>
         <p>Platform uses access controls, server-side authorization, private storage for business media and rate limits intended to protect information. No online service can guarantee absolute security. Users should protect their passwords, sign out on shared devices and avoid sending sensitive information through customer chat.</p>
@@ -56,7 +57,7 @@ export default function PlatformPrivacyPage() {
         <h2>10. Changes and contact</h2>
         <p>This policy may change as Platform develops. Material changes should be reflected here with an updated review date. Contact the operator at <strong>hopebridge098@gmail.com</strong> for privacy questions or requests.</p>
 
-        <p style={{ padding: 14, borderRadius: 10, background: "#fff7e8", color: "#87520b", fontSize: 13 }}>This is a product-specific draft, not legal advice. The retention schedule, applicable jurisdictions and service-provider arrangements must be confirmed and reviewed before public launch.</p>
+        <p style={{ padding: 14, borderRadius: 10, background: "#fff7e8", color: "#87520b", fontSize: 13 }}>This is a product-specific draft, not legal advice. Confirm the retention automation, account and backup retention, applicable jurisdictions and service-provider arrangements before public launch.</p>
         <p><Link href="/platform/terms" style={{ color: "#1768dc" }}>Platform Terms &amp; Conditions</Link> · <Link href="/" style={{ color: "#1768dc" }}>Return to Platform</Link></p>
       </article>
     </main>
