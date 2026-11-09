@@ -1,4 +1,4 @@
-name: HOPEBRIDGE CI
+name: Platform CI
 
 on:
   pull_request:
@@ -35,23 +35,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/hopebridge-next.log 2>&1 &
+          npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/platform-next.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 
           for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:3000/ -o /tmp/hopebridge-home.html; then
+            if curl --fail --silent http://127.0.0.1:3000/ -o /tmp/platform-home.html; then
               break
             fi
             sleep 2
           done
 
           test -s /tmp/hopebridge-home.html
-          grep -Eqi "<title>[^<]*HOPEBRIDGE" /tmp/hopebridge-home.html
+          grep -Eqi "<title>[^<]*Platform" /tmp/hopebridge-home.html
 
           while IFS= read -r route; do
             echo "Checking $route"
-            curl --fail --silent --show-error "http://127.0.0.1:3000$route" -o "/tmp/hopebridge-route.html"
+            curl --fail --silent --show-error "http://127.0.0.1:3000$route" -o "/tmp/platform-route.html"
             test -s /tmp/hopebridge-route.html
             # Check the document title only. Framework/client bundles may include
             # generic not-found text even when the requested route rendered correctly.
