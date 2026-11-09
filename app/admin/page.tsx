@@ -291,18 +291,28 @@ export default function AdminDashboardPage() {
 
       let attachment: { imagePath?: string; imageType?: string; videoPath?: string; videoType?: string } = {};
       if (staffAttachmentFile) {
-        const form = new FormData();
-        form.append("file", staffAttachmentFile);
-        form.append("purpose", "chat");
-        form.append("conversationId", selectedConversation.id);
         let uploadResponse: Response;
         try {
-          uploadResponse = await fetch("/api/uploads", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` }, body: form });
+          uploadResponse = await fetch("/api/uploads/chat", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              conversationId: selectedConversation.id,
+              fileType: staffAttachmentFile.type,
+              fileSize: staffAttachmentFile.size,
+            }),
+          });
         } catch {
           throw new Error("The upload request could not reach HOPEBRIDGE. Check your connection and try again; your selected file is still attached.");
         }
-        const uploaded = await uploadResponse.json().catch(() => ({}));
-        if (!uploadResponse.ok) throw new Error(uploaded.error || `Attachment upload failed (HTTP ${uploadResponse.status}).`);
+        const uploaded = await uploadResponse.json().catch(() => ({})) as { path?: string; token?: string; error?: string };
+        if (!uploadResponse.ok || !uploaded.path || !uploaded.token) {
+          throw new Error(uploaded.error || `Attachment upload failed (HTTP ${uploadResponse.status}).`);
+        }
+        const { error: storageError } = await supabase.storage
+          .from("hopebridge-private-uploads")
+          .uploadToSignedUrl(uploaded.path, uploaded.token, staffAttachmentFile, { contentType: staffAttachmentFile.type });
+        if (storageError) throw new Error(storageError.message || "The attachment could not be saved to secure storage.");
         const isVideo = staffAttachmentFile.type.startsWith("video/");
         attachment = isVideo ? { videoPath: uploaded.path, videoType: staffAttachmentFile.type } : { imagePath: uploaded.path, imageType: staffAttachmentFile.type };
       }
