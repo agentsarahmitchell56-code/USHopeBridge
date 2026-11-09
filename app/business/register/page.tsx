@@ -33,7 +33,7 @@ export default function BusinessRegisterPage() {
         router.refresh();
       } else {
         setStep("verify");
-        setNotice(`We sent a 6-digit verification code to ${cleanEmail}. Enter it below to verify your business account.`);
+        setNotice(`We sent a verification code to ${cleanEmail}. Enter the complete code below to verify your business account.`);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "We couldn't create your business account.");
@@ -81,7 +81,7 @@ export default function BusinessRegisterPage() {
   return <main style={shell}><section style={card}>
     <Link href="/" style={brand}>PLATFORM <small>BUSINESS ACCOUNT</small></Link>
     <h1 style={{ margin: "28px 0 8px", color: "#15395f" }}>{step === "register" ? "Create your business workspace" : "Verify your email address"}</h1>
-    <p style={muted}>{step === "register" ? "Set up an independent public profile for your business. Your workspace and media stay separate from other businesses." : "Enter the 6-digit code we sent to your email. Your business workspace will open after verification."}</p>
+    <p style={muted}>{step === "register" ? "Set up an independent public profile for your business. Your workspace and media stay separate from other businesses." : "Enter the complete verification code we sent to your email. Your business workspace will open after verification."}</p>
 
     {step === "register" ? (
       <form onSubmit={submit} style={{ display: "grid", gap: 14, marginTop: 22 }}>
@@ -94,11 +94,11 @@ export default function BusinessRegisterPage() {
       </form>
     ) : (
       <form onSubmit={verify} style={{ display: "grid", gap: 14, marginTop: 22 }}>
-        <label style={label}>6-digit verification code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="Enter code" style={{ ...input, letterSpacing: ".3em", textAlign: "center", fontSize: 22 }} /></label>
+        <label style={label}>Verification code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" maxLength={8} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))} placeholder="Enter code" style={{ ...input, letterSpacing: ".3em", textAlign: "center", fontSize: 22 }} /></label>
         <p style={muted}>Sent to <strong>{email.trim().toLowerCase()}</strong></p>
         {error && <p role="alert" style={alert}>{error}</p>}
         {notice && <p role="status" style={success}>{notice}</p>}
-        <button className="btn primary" disabled={busy || code.length !== 6}>{busy ? "Verifying…" : "Verify email and continue"}</button>
+        <button className="btn primary" disabled={busy || (code.length !== 6 && code.length !== 8)}>{busy ? "Verifying…" : "Verify email and continue"}</button>
         <button type="button" className="btn" disabled={busy} onClick={resendCode}>Resend verification code</button>
         <button type="button" onClick={() => { setStep("register"); setCode(""); setError(""); setNotice(""); }} style={textButton}>Use a different email</button>
       </form>
