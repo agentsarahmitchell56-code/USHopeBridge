@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   let imageUrl: string | undefined;
 
   if (mediaPath) {
-    if (/^https?:\\/\\//i.test(mediaPath)) {
+    if (mediaPath.startsWith("http://") || mediaPath.startsWith("https://")) {
       imageUrl = mediaPath;
     } else {
       const { data } = await db.storage.from(BUSINESS_CHAT_BUCKET).createSignedUrl(mediaPath, 3600);
