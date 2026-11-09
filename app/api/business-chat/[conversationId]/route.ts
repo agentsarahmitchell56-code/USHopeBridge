@@ -56,22 +56,42 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!conversation) return chatError("This chat link is invalid or expired.", 403);
     if (!await rateLimitBusinessChat(db, request, "customer-message", 30, 60)) return chatError("You are sending messages too quickly. Please wait a moment.", 429);
 
-    const form = await request.formData();
-    const body = String(form.get("message") || "").trim();
-    const file = form.get("file");
+    let body = "";
+    let file: File | null = null;
     let attachmentType: string | null = null;
+    let attachmentPath: string | null = null;
+    if (request.headers.get("content-type")?.includes("multipart/form-data")) {
+      const form = await request.formData();
+      body = String(form.get("message") || "").trim();
+      const candidate = form.get("file");
+      if (candidate instanceof File && candidate.size > 0) file = candidate;
+    } else {
+      const input: unknown = await request.json();
+      if (!input || typeof input !== "object" || Array.isArray(input)) return chatError("Enter a message or attach a file.", 400);
+      const values = input as Record<string, unknown>;
+      body = typeof values.message === "string" ? values.message.trim() : "";
+      attachmentPath = typeof values.attachmentPath === "string" ? values.attachmentPath : null;
+      attachmentType = typeof values.attachmentType === "string" ? values.attachmentType : null;
+    }
     if (body.length > 4000) return chatError("Messages must be 4,000 characters or fewer.", 400);
-    if (file && file instanceof File && file.size > 0) {
-      attachmentType = file.type;
-      const extension = allowedTypes[attachmentType];
+    if (file && attachmentPath) return chatError("Choose one attachment at a time.", 400);
+
+    if (file) {
+      const extension = allowedTypes[file.type];
       if (!extension || file.size > 25 * 1024 * 1024) return chatError("Attach a JPG, PNG, WebP, GIF, MP4, or WebM file up to 25 MB.", 400);
       uploadedPath = `business-chat/${conversationId}/${randomUUID()}.${extension}`;
-      const { error: uploadError } = await db.storage.from(BUSINESS_CHAT_BUCKET).upload(uploadedPath, file, { contentType: attachmentType, upsert: false });
-      if (uploadError) {
-        console.error("Customer business chat upload failed:", uploadError);
-        return chatError("The attachment could not be uploaded. Please try again.", 502);
-      }
+      const { error: uploadError } = await db.storage.from(BUSINESS_CHAT_BUCKET).upload(uploadedPath, file, { contentType: file.type, upsert: false });
+      if (uploadError) return chatError("The attachment could not be uploaded. Please try again.", 502);
+      attachmentType = file.type;
+    } else if (attachmentPath) {
+      const extension = allowedTypes[attachmentType || ""];
+      const expected = new RegExp(`^business-chat/${conversationId}/[0-9a-f-]{36}\\.${extension || "invalid"}$`, "i");
+      if (!extension || !expected.test(attachmentPath)) return chatError("The attachment is invalid for this conversation.", 400);
+      const { data, error } = await db.storage.from(BUSINESS_CHAT_BUCKET).createSignedUrl(attachmentPath, 60);
+      if (error || !data?.signedUrl) return chatError("Upload the attachment again before sending.", 400);
+      uploadedPath = attachmentPath;
     }
+
     if (!body && !uploadedPath) return chatError("Write a message or attach a file.", 400);
     const { data, error } = await db.from("business_page_messages").insert({
       conversation_id: conversationId, sender_type: "customer", sender_id: null,
