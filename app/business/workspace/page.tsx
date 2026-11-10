@@ -37,7 +37,9 @@ export default function BusinessWorkspacePage() {
       if (data) {
         setBusiness(data as Business);
         const isHopebridge = data.name.trim().toLowerCase() === "hopebridge financial assistance";
-        const websiteUrl = isHopebridge && (!data.website_url || /^https?:\\/\\/example\\.com\\/?$/i.test(data.website_url.trim()))
+        const currentWebsite = (data.website_url || "").trim().toLowerCase();
+        const isPlaceholderWebsite = ["", "https://example.com", "http://example.com", "https://example.com/", "http://example.com/"].includes(currentWebsite);
+        const websiteUrl = isHopebridge && isPlaceholderWebsite
           ? "https://us-hope-bridge.vercel.app"
           : data.website_url;
         setDraft({ owner_id: data.owner_id, name: data.name, slug: data.slug, category: data.category, description: data.description, contact_email: data.contact_email, contact_phone: data.contact_phone || "", website_url: websiteUrl, avatar_url: data.avatar_url, cover_url: data.cover_url, published: data.published });
