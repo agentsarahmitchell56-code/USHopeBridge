@@ -1,4 +1,4 @@
-const CACHE_NAME = "platform-shell-v3";
+const CACHE_NAME = "eazreal-shell-v4";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE_URLS = [OFFLINE_URL, "/manifest.json", "/icon.svg", "/icon-maskable.svg", "/apple-touch-icon.svg"];
 
