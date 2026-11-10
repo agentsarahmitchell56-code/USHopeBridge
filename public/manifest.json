@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Platform Business Workspace",
-  "short_name": "Platform",
-  "description": "Create a business profile and publish updates from one workspace.",
+  "name": "EAZREAL Business Workspace",
+  "short_name": "EAZREAL",
+  "description": "Connect. Create. Grow. Manage business profiles, updates, customer messages and teams in one workspace.",
   "lang": "en-US",
   "start_url": "/",
   "scope": "/",

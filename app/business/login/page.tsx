@@ -20,7 +20,7 @@ export default function BusinessLoginPage() {
     } catch (e) { setError(e instanceof Error && /confirm/i.test(e.message) ? "Confirm your email before signing in." : "Sign-in failed. Check your email and password."); }
     finally { setBusy(false); }
   }
-  return <main style={shell}><section style={card}><Link href="/" style={brand}>PLATFORM <small>BUSINESS ACCOUNT</small></Link><h1 style={{ margin: "28px 0 8px", color: "#15395f" }}>Business sign in</h1><p style={muted}>Sign in to manage your business profile and posts.</p>
+  return <main style={shell}><section style={card}><Link href="/" style={brand}>EAZREAL <small>BUSINESS ACCOUNT</small></Link><h1 style={{ margin: "28px 0 8px", color: "#15395f" }}>Business sign in</h1><p style={muted}>Sign in to manage your business profile and posts.</p>
     <form onSubmit={submit} style={{ display: "grid", gap: 14, marginTop: 22 }}>
       <label style={label}>Email address<input required type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} style={input} /></label>
       <label style={label}>Password<input required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} style={input} /></label>
