@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -8,6 +9,7 @@ type InstallPromptEvent = Event & {
 };
 
 export default function PWAInstall() {
+  const pathname = usePathname();
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -49,7 +51,8 @@ export default function PWAInstall() {
     };
   }, []);
 
-  if (isInstalled) return null;
+  // Keep the fixed install control away from the business inbox composer on small screens.
+  if (isInstalled || pathname === "/business/inbox") return null;
 
   async function installApp() {
     if (!installPrompt) {
