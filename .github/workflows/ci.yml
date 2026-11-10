@@ -58,7 +58,7 @@ jobs:
           test "$ready" = "true"
 
           test -s /tmp/platform-home.html
-          grep -Eqi "<title>[^<]*Platform" /tmp/platform-home.html
+          grep -Eqi "<title>[^<]*(EAZREAL|Platform)" /tmp/platform-home.html
 
           cron_status=$(curl --silent --show-error -o /tmp/platform-retention-cron.json -w "%{http_code}" http://127.0.0.1:3000/api/cron/retention)
           test "$cron_status" = "401"
