@@ -160,8 +160,8 @@ export default function CommunityPage() {
 
   const peopleList = tab === "friends" ? friends.map(id => memberMap.get(id)).filter(Boolean) as Member[] : filteredMembers;
 
-  return <main style={{ minHeight: "100vh", background: "#f3f6fb", color: "#182b45" }}>
-    <header style={{ position: "sticky", top: 0, zIndex: 5, background: "#fff", borderBottom: "1px solid #e3eaf2" }}>
+  return <main className="eazreal-community" style={{ minHeight: "100vh", background: "#f3f6fb", color: "#182b45" }}>
+    <header className="eazreal-social-topbar" style={{ position: "sticky", top: 0, zIndex: 5, background: "#fff", borderBottom: "1px solid #e3eaf2" }}>
       <div style={{ maxWidth: 1180, margin: "auto", padding: "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <Link href="/" style={{ fontSize: 22, fontWeight: 950, color: "#123c69", letterSpacing: ".04em" }}>EAZREAL</Link>
         <nav aria-label="Community navigation" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -172,7 +172,7 @@ export default function CommunityPage() {
       </div>
     </header>
 
-    <div style={{ maxWidth: 1180, margin: "24px auto", padding: "0 16px", display: "grid", gridTemplateColumns: "minmax(210px, 260px) minmax(0, 1fr) minmax(210px, 260px)", gap: 18, alignItems: "start" }}>
+    <div className="eazreal-community-layout" style={{ maxWidth: 1180, margin: "24px auto", padding: "0 16px", display: "grid", gridTemplateColumns: "minmax(210px, 260px) minmax(0, 1fr) minmax(210px, 260px)", gap: 18, alignItems: "start" }}>
       <aside style={{ display: "grid", gap: 14 }}>
         <section style={panel}>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -248,7 +248,7 @@ export default function CommunityPage() {
         <section style={panel}><strong>Discover members</strong><p style={{ color: "#718096", fontSize: 13 }}>Find people by their name or EAZREAL ID and start building your network.</p><button onClick={() => setTab("discover")} style={button}>Explore people</button></section>
       </aside>
     </div>
-    <footer style={{ maxWidth: 1180, margin: "0 auto", padding: "0 16px 30px", color: "#7b8797", fontSize: 12 }}>EAZREAL · Connect. Create. Grow. · <Link href="/" style={{ color: "#1264eb" }}>About</Link></footer>
+    <footer className="eazreal-community-footer" style={{ maxWidth: 1180, margin: "0 auto", padding: "0 16px 30px", color: "#7b8797", fontSize: 12 }}>EAZREAL · Connect. Create. Grow. · <Link href="/" style={{ color: "#1264eb" }}>About</Link></footer>
     <style jsx>{`@media(max-width:900px){div[style*="grid-template-columns: minmax(210px"]{grid-template-columns:1fr!important} } @media(max-width:600px){header nav{order:3;width:100%;justify-content:space-between} header>div{flex-wrap:wrap} }`}</style>
   </main>;
 }
