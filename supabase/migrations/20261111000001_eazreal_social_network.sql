@@ -252,3 +252,23 @@ with check (
 grant select, insert on public.eazreal_dm_conversations to authenticated;
 grant select, insert on public.eazreal_dm_messages to authenticated;
 revoke all on public.eazreal_dm_conversations, public.eazreal_dm_messages from anon;
+
+
+create or replace function public.eazreal_touch_dm_conversation()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+begin
+  update public.eazreal_dm_conversations
+  set updated_at = now()
+  where id = new.conversation_id;
+  return new;
+end;
+$$;
+revoke all on function public.eazreal_touch_dm_conversation() from public, anon, authenticated;
+drop trigger if exists eazreal_dm_message_touch_conversation on public.eazreal_dm_messages;
+create trigger eazreal_dm_message_touch_conversation
+after insert on public.eazreal_dm_messages
+for each row execute function public.eazreal_touch_dm_conversation();
