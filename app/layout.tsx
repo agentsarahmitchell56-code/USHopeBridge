@@ -5,16 +5,16 @@ import "./globals.css";
 export const metadata = {
   metadataBase: new URL("https://us-hope-bridge.vercel.app"),
   title: {
-    default: "EAZREAL | Business Workspace",
+    default: "EAZREAL | Social Community",
     template: "%s | EAZREAL",
   },
-  description: "EAZREAL brings business profiles, updates, customer conversations and team tools together in one workspace.",
+  description: "EAZREAL is a social community to create your profile, find friends, follow members and share posts.",
   openGraph: {
     type: "website",
     url: "https://us-hope-bridge.vercel.app",
     siteName: "EAZREAL",
-    title: "EAZREAL | Business Workspace",
-    description: "Connect. Create. Grow. Manage your business presence and customer conversations in one workspace.",
+    title: "EAZREAL | Social Community",
+    description: "Connect. Create. Grow. Find friends, follow people, share posts and build your community.",
   },
   twitter: {
     card: "summary",
