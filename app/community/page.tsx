@@ -197,7 +197,7 @@ export default function CommunityPage() {
 
         {tab === "feed" && <>
           <form onSubmit={publishPost} style={panel}>
-            <strong>What's on your mind?</strong>
+            <strong>What&apos;s on your mind?</strong>
             <textarea value={postBody} onChange={e => setPostBody(e.target.value)} maxLength={5000} placeholder="Share an update with the EAZREAL community…" style={{ ...field, minHeight: 110, resize: "vertical", marginTop: 12 }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginTop: 10 }}><small style={{ color: "#718096" }}>{postBody.length}/5000</small><button disabled={busy || !postBody.trim()} style={button}>{busy ? "Publishing…" : "Publish post"}</button></div>
           </form>
