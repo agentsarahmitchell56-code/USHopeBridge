@@ -166,6 +166,7 @@ export default function CommunityPage() {
         <Link href="/" style={{ fontSize: 22, fontWeight: 950, color: "#123c69", letterSpacing: ".04em" }}>EAZREAL</Link>
         <nav aria-label="Community navigation" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {(["feed", "discover", "friends", "profile"] as Tab[]).map(t => <button key={t} onClick={() => setTab(t)} style={{ ...lightButton, background: tab === t ? "#1264eb" : "#edf4ff", color: tab === t ? "#fff" : "#17406f", padding: "8px 12px" }}>{t === "feed" ? "Home" : t === "discover" ? "Explore" : t === "friends" ? `Friends ${friends.length}` : "My profile"}</button>)}
+          <Link href="/messages" style={{ ...lightButton, textDecoration: "none", padding: "8px 12px", display: "inline-flex", alignItems: "center" }}>Chat</Link>
         </nav>
         <button onClick={signOut} style={{ ...lightButton, padding: "8px 12px" }}>Sign out</button>
       </div>
@@ -187,6 +188,7 @@ export default function CommunityPage() {
             <button onClick={() => setTab("feed")} style={{ ...lightButton, textAlign: "left" }}>⌂ Home feed</button>
             <button onClick={() => setTab("discover")} style={{ ...lightButton, textAlign: "left" }}>⌕ Find people</button>
             <button onClick={() => setTab("friends")} style={{ ...lightButton, textAlign: "left" }}>♧ Friends and requests ({incoming.length})</button>
+            <Link href="/messages" style={{ ...lightButton, textAlign: "left", textDecoration: "none" }}>💬 Private chats</Link>
           </div>
         </section>
       </aside>
