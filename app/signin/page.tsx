@@ -20,7 +20,7 @@ export default function SigninPage() {
     } catch (e2) { setError(e2 instanceof Error && /confirm/i.test(e2.message) ? "Confirm your email before signing in." : "Sign-in failed. Check your email and password."); }
     finally { setBusy(false); }
   }
-  return <main style={shell}><section style={card}>
+  return <main className="eazreal-auth-page" style={shell}><section className="eazreal-auth-card" style={card}>
     <Link href="/" style={brand}>EAZREAL <small>CONNECT. CREATE. GROW.</small></Link>
     <h1 style={{ margin: "28px 0 8px" }}>Welcome back</h1>
     <p style={muted}>Sign in to your EAZREAL community account.</p>
