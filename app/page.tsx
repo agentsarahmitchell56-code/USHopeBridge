@@ -23,7 +23,7 @@ export default function HomePage() {
     </header>
 
     <section style={{ padding: "clamp(55px,9vw,110px) 0", background: "linear-gradient(135deg,#eaf3ff 0%,#fff 55%,#eef8f7 100%)" }}>
-      <div className="container" style={{ display: "grid", gridTemplateColumns: "1.1fr .9fr", gap: 46, alignItems: "center" }}>
+      <div className="container hero-grid">
         <div>
           <span className="eyebrow">A COMMUNITY BUILT AROUND PEOPLE</span>
           <h1 style={{ fontSize: "clamp(42px,6vw,70px)", lineHeight: 1.02, letterSpacing: "-.055em", margin: "16px 0 20px" }}>Your people.<br/><span style={{ color: "#1464f4" }}>Your space.</span></h1>
@@ -49,7 +49,7 @@ export default function HomePage() {
 
     <section className="section" id="features"><div className="container">
       <span className="eyebrow" style={{ display: "block", textAlign: "center" }}>WHAT YOU CAN DO</span><h2>More than a business inbox</h2><p className="section-intro">A social space designed for members, friendships and sharing.</p>
-      <div className="grid3" style={{ gridTemplateColumns: "repeat(4,minmax(0,1fr))" }}>
+      <div className="grid3">
         {features.map(f=><article className="card feature" key={f.title}><div style={{ fontSize: 28, color: "#1464f4" }}>{f.icon}</div><h3>{f.title}</h3><p>{f.text}</p></article>)}
       </div>
       <div style={{ textAlign: "center", marginTop: 38 }}><Link href="/join" className="btn primary">Join the EAZREAL community</Link></div>
