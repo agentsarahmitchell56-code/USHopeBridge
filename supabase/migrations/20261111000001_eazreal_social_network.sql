@@ -187,3 +187,68 @@ grant select, insert, update, delete on public.eazreal_posts to authenticated;
 grant select, insert, delete on public.eazreal_post_likes to authenticated;
 
 revoke all on public.eazreal_members, public.eazreal_follows, public.eazreal_friend_requests, public.eazreal_posts, public.eazreal_post_likes from anon;
+
+
+-- Private one-to-one messages between accepted EAZREAL friends.
+create table if not exists public.eazreal_dm_conversations (
+  id uuid primary key default gen_random_uuid(),
+  member_one uuid not null references public.eazreal_members(user_id) on delete cascade,
+  member_two uuid not null references public.eazreal_members(user_id) on delete cascade,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint eazreal_dm_distinct_members check (member_one <> member_two)
+);
+create unique index if not exists eazreal_dm_pair_unique
+  on public.eazreal_dm_conversations (least(member_one, member_two), greatest(member_one, member_two));
+create table if not exists public.eazreal_dm_messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references public.eazreal_dm_conversations(id) on delete cascade,
+  sender_id uuid not null references public.eazreal_members(user_id) on delete cascade,
+  body text not null check (char_length(trim(body)) between 1 and 5000),
+  created_at timestamptz not null default now()
+);
+create index if not exists eazreal_dm_messages_conversation_idx
+  on public.eazreal_dm_messages (conversation_id, created_at);
+alter table public.eazreal_dm_conversations enable row level security;
+alter table public.eazreal_dm_messages enable row level security;
+
+drop policy if exists "Friends can view their DM conversations" on public.eazreal_dm_conversations;
+create policy "Friends can view their DM conversations"
+on public.eazreal_dm_conversations for select to authenticated
+using ((select auth.uid()) in (member_one, member_two));
+
+drop policy if exists "Friends can start a DM conversation" on public.eazreal_dm_conversations;
+create policy "Friends can start a DM conversation"
+on public.eazreal_dm_conversations for insert to authenticated
+with check (
+  (select auth.uid()) in (member_one, member_two)
+  and exists (
+    select 1 from public.eazreal_friend_requests fr
+    where fr.status = 'accepted'
+      and ((fr.requester_id = member_one and fr.recipient_id = member_two)
+        or (fr.requester_id = member_two and fr.recipient_id = member_one))
+  )
+);
+
+drop policy if exists "Friends can view messages in their conversation" on public.eazreal_dm_messages;
+create policy "Friends can view messages in their conversation"
+on public.eazreal_dm_messages for select to authenticated
+using (exists (
+  select 1 from public.eazreal_dm_conversations c
+  where c.id = conversation_id and (select auth.uid()) in (c.member_one, c.member_two)
+));
+
+drop policy if exists "Participants can send their own messages" on public.eazreal_dm_messages;
+create policy "Participants can send their own messages"
+on public.eazreal_dm_messages for insert to authenticated
+with check (
+  sender_id = (select auth.uid())
+  and exists (
+    select 1 from public.eazreal_dm_conversations c
+    where c.id = conversation_id and (select auth.uid()) in (c.member_one, c.member_two)
+  )
+);
+
+grant select, insert on public.eazreal_dm_conversations to authenticated;
+grant select, insert on public.eazreal_dm_messages to authenticated;
+revoke all on public.eazreal_dm_conversations, public.eazreal_dm_messages from anon;
