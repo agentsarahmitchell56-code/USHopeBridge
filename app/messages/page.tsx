@@ -121,14 +121,14 @@ export default function MessagesPage() {
   }
 
   if (busy) return <main style={{ padding: 40, textAlign: "center" }}>Opening your messages…</main>;
-  return <main style={{ minHeight: "100vh", background: "#f0f2f5", color: "#1c2b3a", padding: "18px 12px 40px" }}>
-    <header style={{ maxWidth: 1180, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", background: "#fff", borderRadius: 14, padding: "12px 16px" }}>
+  return <main className="eazreal-messages" style={{ minHeight: "100vh", background: "#f0f2f5", color: "#1c2b3a", padding: "18px 12px 40px" }}>
+    <header className="eazreal-social-topbar" style={{ maxWidth: 1180, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", background: "#fff", borderRadius: 14, padding: "12px 16px" }}>
       <Link href="/community" style={{ color: "#145db8", fontSize: 22, fontWeight: 900, textDecoration: "none" }}>EAZREAL</Link>
       <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <Link href="/community" style={navStyle}>Home</Link><Link href="/community?tab=friends" style={navStyle}>Friends</Link><Link href="/messages" style={{ ...navStyle, background: "#e8f1ff", color: "#145db8" }}>Chat</Link>
       </nav>
     </header>
-    <div style={{ maxWidth: 1180, margin: "auto", display: "grid", gridTemplateColumns: "minmax(250px,340px) minmax(0,1fr)", gap: 14, alignItems: "start" }}>
+    <div className="eazreal-messages-layout" style={{ maxWidth: 1180, margin: "auto", display: "grid", gridTemplateColumns: "minmax(250px,340px) minmax(0,1fr)", gap: 14, alignItems: "start" }}>
       <aside style={{ ...panel, minHeight: 560 }}>
         <h1 style={{ margin: "4px 0 12px", fontSize: 24 }}>Chats</h1>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search your friends" style={field} />
