@@ -26,6 +26,7 @@ export default function CommunityPage() {
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [likes, setLikes] = useState<string[]>([]);
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [tab, setTab] = useState<Tab>("feed");
   const [search, setSearch] = useState("");
   const [postBody, setPostBody] = useState("");
@@ -36,12 +37,13 @@ export default function CommunityPage() {
 
   const load = useCallback(async (uid: string) => {
     setError("");
-    const [profileResult, memberResult, followResult, requestResult, postResult, likeResult] = await Promise.all([
+    const [profileResult, memberResult, followResult, requestResult, postResult, allLikeResult, likeResult] = await Promise.all([
       supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url").eq("user_id", uid).maybeSingle(),
       supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url").order("created_at", { ascending: false }).limit(500),
       supabase.from("eazreal_follows").select("follower_id,following_id").or(`follower_id.eq.${uid},following_id.eq.${uid}`),
       supabase.from("eazreal_friend_requests").select("id,requester_id,recipient_id,status").or(`requester_id.eq.${uid},recipient_id.eq.${uid}`),
       supabase.from("eazreal_posts").select("id,author_id,body,created_at").order("created_at", { ascending: false }).limit(60),
+      supabase.from("eazreal_post_likes").select("post_id"),
       supabase.from("eazreal_post_likes").select("post_id").eq("user_id", uid),
     ]);
     if (profileResult.error) throw profileResult.error;
@@ -49,6 +51,7 @@ export default function CommunityPage() {
     if (followResult.error) throw followResult.error;
     if (requestResult.error) throw requestResult.error;
     if (postResult.error) throw postResult.error;
+    if (allLikeResult.error) throw allLikeResult.error;
     if (likeResult.error) throw likeResult.error;
     setMe(profileResult.data as Member);
     setMembers((memberResult.data || []) as Member[]);
@@ -56,6 +59,7 @@ export default function CommunityPage() {
     setRequests((requestResult.data || []) as FriendRequest[]);
     setPosts((postResult.data || []) as Post[]);
     setLikes((likeResult.data || []).map((x: { post_id: string }) => x.post_id));
+    setLikeCounts((allLikeResult.data || []).reduce((acc: Record<string, number>, x: { post_id: string }) => { acc[x.post_id] = (acc[x.post_id] || 0) + 1; return acc; }, {}));
   }, []);
 
   useEffect(() => {
@@ -139,9 +143,11 @@ export default function CommunityPage() {
       if (likes.includes(post.id)) {
         const { error: e } = await supabase.from("eazreal_post_likes").delete().eq("post_id", post.id).eq("user_id", user.id); if (e) throw e;
         setLikes(old => old.filter(id => id !== post.id));
+        setLikeCounts(old => ({ ...old, [post.id]: Math.max(0, (old[post.id] || 0) - 1) }));
       } else {
         const { error: e } = await supabase.from("eazreal_post_likes").insert({ post_id: post.id, user_id: user.id }); if (e) throw e;
         setLikes(old => [...old, post.id]);
+        setLikeCounts(old => ({ ...old, [post.id]: (old[post.id] || 0) + 1 }));
       }
     } catch (e) { setError(e instanceof Error ? e.message : "Like action failed."); }
     finally { setBusy(false); }
@@ -202,7 +208,7 @@ export default function CommunityPage() {
               <div><strong>{author?.display_name || "EAZREAL member"}</strong><div style={{ color: "#718096", fontSize: 12 }}>@{author?.handle || "member"} · {new Date(post.created_at).toLocaleString()}</div></div>
             </div>
             <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.65, overflowWrap: "anywhere" }}>{post.body}</p>
-            <button onClick={() => toggleLike(post)} disabled={busy} style={lightButton}>{likes.includes(post.id) ? "♥ Liked" : "♡ Like"}</button>
+            <button onClick={() => toggleLike(post)} disabled={busy} style={lightButton}>{likes.includes(post.id) ? "♥ Liked" : "♡ Like"} · {likeCounts[post.id] || 0}</button>
           </article>; })}
         </>}
 
