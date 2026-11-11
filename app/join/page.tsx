@@ -31,7 +31,7 @@ export default function JoinPage() {
         : message);
     } finally { setBusy(false); }
   }
-  return <main style={shell}><section style={card}>
+  return <main className="eazreal-auth-page" style={shell}><section className="eazreal-auth-card" style={card}>
     <Link href="/" style={brand}>EAZREAL <small>CONNECT. CREATE. GROW.</small></Link>
     <h1 style={{ margin: "28px 0 8px" }}>Join the community</h1>
     <p style={muted}>Create your free member account, get your EAZREAL ID, find people and share updates.</p>
