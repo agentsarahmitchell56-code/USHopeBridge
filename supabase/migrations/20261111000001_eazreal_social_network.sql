@@ -26,11 +26,13 @@ begin
   v_name := coalesce(
     nullif(trim(new.raw_user_meta_data ->> 'full_name'), ''),
     nullif(trim(new.raw_user_meta_data ->> 'name'), ''),
+    nullif(trim(new.raw_user_meta_data ->> 'business_name'), ''),
     nullif(split_part(new.email, '@', 1), ''),
     'New member'
   );
   v_base := trim(both '-' from regexp_replace(lower(v_name), '[^a-z0-9]+', '-', 'g'));
   if char_length(v_base) < 2 then v_base := 'member'; end if;
+  if char_length(v_name) < 2 then v_name := 'New member'; end if;
 
   insert into public.eazreal_members (user_id, handle, display_name)
   values (
@@ -41,7 +43,9 @@ begin
   on conflict (user_id) do nothing;
   return new;
 end;
-$$;
+$;
+
+revoke all on function public.eazreal_create_member() from public, anon, authenticated;
 
 drop trigger if exists on_auth_user_created_eazreal_member on auth.users;
 create trigger on_auth_user_created_eazreal_member
