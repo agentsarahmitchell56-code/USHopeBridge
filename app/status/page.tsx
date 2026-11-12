@@ -86,16 +86,14 @@ export default function ApplicationStatusPage() {
 
         <div className="form-wrap status-page-wrap">
           <p className="eyebrow">APPLICATION TRACKING</p>
-          <h1 style={{ marginBottom: 10 }}>Application status</h1>
+          <h1 style={{ marginBottom: 10 }}>Check your application</h1>
           <p style={{ color: "#627d98", lineHeight: 1.7 }}>
-            To retrieve the latest recorded status, enter the reference number from your confirmation and
-            the email address you used to apply. Your details are checked
-            privately.
+            Enter the reference number we gave you after you applied and the same email address you used on your form. We will show the latest update available.
           </p>
 
           <form className="card form status-search-form" onSubmit={checkStatus}>
             <div className="field">
-              <label htmlFor="reference">Application reference number</label>
+              <label htmlFor="reference">Your application reference number</label>
               <input
                 id="reference"
                 name="reference"
@@ -109,7 +107,7 @@ export default function ApplicationStatusPage() {
             </div>
 
             <div className="field">
-              <label htmlFor="email">Email address used to apply</label>
+              <label htmlFor="email">The email address you used to apply</label>
               <input
                 id="email"
                 name="email"
@@ -130,13 +128,12 @@ export default function ApplicationStatusPage() {
             )}
 
             <button className="btn primary" type="submit" disabled={loading}>
-              {loading ? "Checking..." : "Check Status"}
+              {loading ? "Checking…" : "Check my application"}
             </button>
 
             {searched && !result && (
               <div role="status" style={{ padding: 14, borderRadius: 10, background: "#fff7ed", color: "#9a3412", lineHeight: 1.6 }}>
-                We couldn&apos;t find an application matching those details. Check
-                your reference number and email address, then try again.
+                We could not find an application with those details. Please check that the reference number and email address match the ones you used when applying, then try again.
               </div>
             )}
           </form>
