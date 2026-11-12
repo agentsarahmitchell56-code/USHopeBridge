@@ -81,9 +81,7 @@ export default function HomePage() {
         <div className="container platform-legacy-inner">
           <div><span className="eyebrow">EXISTING SERVICE</span><h2>Looking for HOPEBRIDGE?</h2><p>HOPEBRIDGE Financial Assistance remains available as a separate service. You can still submit an assistance request, check an existing application or contact its support team.</p></div>
           <div className="actions">
-            <Link href="/apply" className="btn primary">Apply for assistance</Link>
-            <Link href="/status" className="btn secondary">Track an application</Link>
-            <Link href="/chat" className="btn secondary">Contact HOPEBRIDGE</Link>
+            <Link href="/hopebridge" className="btn primary">Open HOPEBRIDGE</Link>
           </div>
         </div>
       </section>
