@@ -124,9 +124,9 @@ export default function Apply() {
         <Link href="/status" className="text-link">Already applied? Check status →</Link>
       </div>
       <div className="form-wrap application-form-wrap">
-        <p className="eyebrow">APPLICATION PROCESS</p>
-        <h1>Start an application</h1>
-        <p className="page-lead">Complete the sections below and review your information before submitting. Fields marked * are required.</p>
+        <p className="eyebrow">HOPEBRIDGE FINANCIAL ASSISTANCE</p>
+        <h1>Apply for assistance</h1>
+        <p className="page-lead">This form has 3 simple steps. Tell us about yourself, explain what help you need, then check your answers before sending. Fields marked * must be completed.</p>
         <div className="form-progress" aria-label={`Step ${step} of 3`}>
           <span className={`progress-step ${step >= 1 ? "progress-step-active" : ""}`}><span>1</span>Your details</span>
           <span className="progress-line" />
@@ -136,21 +136,21 @@ export default function Apply() {
         </div>
         <div className="card form application-form" aria-live="polite">
           {step === 1 && <>
-            <div className="form-section-heading"><h2>Step 1: About you</h2><p>How can we contact you about your request?</p></div>
+            <div className="form-section-heading"><h2>Step 1: Your contact details</h2><p>Tell us who you are and how we can reach you about your application.</p></div>
             <div className="field"><label htmlFor="full_name">What is your full name? *</label><input id="full_name" value={values.full_name} onChange={(e) => update("full_name", e.target.value)} placeholder="Type your first and last name" autoComplete="name" minLength={2} maxLength={120} required /></div>
             <div className="field"><label htmlFor="email">What is your email address? *</label><input id="email" type="email" value={values.email} onChange={(e) => update("email", e.target.value)} placeholder="you@example.com" autoComplete="email" maxLength={254} required /><small>Use an email you can open. You’ll need it to check your application later.</small></div>
             <div className="field"><label htmlFor="phone">Phone number (optional)</label><input id="phone" type="tel" value={values.phone} onChange={(e) => update("phone", e.target.value)} placeholder="Your contact number" autoComplete="tel" maxLength={40} /></div>
             <div className="field"><label htmlFor="location">City and state (optional)</label><input id="location" value={values.location} onChange={(e) => update("location", e.target.value)} placeholder="Where do you live?" autoComplete="address-level2" maxLength={120} /></div>
           </>}
           {step === 2 && <>
-            <div className="form-section-heading"><h2>Step 2: What help do you need?</h2><p>Choose the closest option and explain in your own words. You don’t need special terms.</p></div>
+            <div className="form-section-heading"><h2>Step 2: Tell us what help you need</h2><p>Choose the option that best matches your situation and explain it in your own words. You do not need special or formal language.</p></div>
             <div className="field"><label htmlFor="assistance_type">What type of help are you asking for? *</label><select id="assistance_type" value={values.assistance_type} onChange={(e) => update("assistance_type", e.target.value)} required><option value="">Choose one option</option><option>Emergency assistance</option><option>Medical assistance</option><option>Housing assistance</option><option>Education assistance</option><option>Other</option></select></div>
             <div className="field"><label htmlFor="requested_amount">How much help do you need? (optional)</label><input id="requested_amount" value={values.requested_amount} onChange={(e) => update("requested_amount", e.target.value)} placeholder="For example: 500 USD" maxLength={80} /><small>If you enter an amount, include the currency.</small></div>
             <div className="field"><label htmlFor="details">Please tell us why you need help. *</label><textarea id="details" value={values.details} onChange={(e) => update("details", e.target.value)} required minLength={10} maxLength={5000} rows={5} placeholder="Explain your situation in a few sentences. There is no need to use formal language." /><small>At least 10 characters. Please do not include passwords or bank card details.</small></div>
             <div className="field"><label htmlFor="supporting_image">Add a supporting image (optional)</label><input id="supporting_image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setAttachment(e.target.files?.[0] || null)} /><small>JPG, PNG, or WebP, up to 5 MB. You can skip this.</small>{attachment && <small>Selected: {attachment.name}</small>}</div>
           </>}
           {step === 3 && <>
-            <div className="form-section-heading"><h2>Step 3: Check your answers</h2><p>Please check these details before sending your application.</p></div>
+            <div className="form-section-heading"><h2>Step 3: Review your application</h2><p>Check that everything is correct. You can go back and make changes before you submit.</p></div>
             <div className="field"><strong>Your name</strong><p>{values.full_name}</p></div>
             <div className="field"><strong>Email address</strong><p>{values.email}</p></div>
             <div className="field"><strong>Phone number</strong><p>{values.phone || "Not provided"}</p></div>
@@ -164,7 +164,7 @@ export default function Apply() {
           {error && <div role="alert" className="form-error"><strong>Please check this:</strong><span>{error}</span></div>}
           <div className="actions" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             {step > 1 && <button type="button" className="btn secondary" onClick={() => { setError(""); setStep((s) => s - 1); }} disabled={loading}>Back</button>}
-            {step < 3 ? <button type="button" className="btn primary application-submit" onClick={nextStep}>Continue to step {step + 1} →</button> : <button type="button" className="btn primary application-submit" onClick={submit} disabled={loading}>{loading ? "Sending your application…" : "Submit application"}</button>}
+            {step < 3 ? <button type="button" className="btn primary application-submit" onClick={nextStep}>Continue →</button> : <button type="button" className="btn primary application-submit" onClick={submit} disabled={loading}>{loading ? "Sending…" : "Send my application"}</button>}
           </div>
           <p className="form-footnote">Need help? <Link href="/chat" className="text-link">Chat with our support team</Link> or go back to the <Link href="/" className="text-link">home page</Link>.</p>
         </div>
