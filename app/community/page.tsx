@@ -234,7 +234,7 @@ export default function CommunityPage() {
 
         {tab === "profile" && <section style={panel}>
           <h1 style={{ marginTop: 0 }}>Your member profile</h1><p style={{ color: "#718096" }}>Your public EAZREAL identity.</p>
-          <form onSubmit={async e => { e.preventDefault(); if (!me) return; setBusy(true); const { error: e2 } = await supabase.from("eazreal_members").update({ display_name: me.display_name, bio: me.bio, updated_at: new Date().toISOString() }).eq("user_id", user?.id); setBusy(false); if (e2) setError(e2.message); else setNotice("Profile updated."); }}>
+          <form onSubmit={async e => { e.preventDefault(); if (!me) return; setBusy(true); const { error: e2 } = await supabase.from("eazreal_members").update({ display_name: me.display_name, bio: me.bio }).eq("user_id", user?.id); setBusy(false); if (e2) setError(e2.message); else setNotice("Profile updated."); }}>
             <label style={{ display: "grid", gap: 7, marginBottom: 14 }}>Display name<input value={me.display_name} onChange={e => setMe({ ...me, display_name: e.target.value })} maxLength={80} style={field} /></label>
             <label style={{ display: "grid", gap: 7, marginBottom: 14 }}>Bio<textarea value={me.bio} onChange={e => setMe({ ...me, bio: e.target.value })} maxLength={300} style={{ ...field, minHeight: 90 }} /></label>
             <div style={{ padding: 14, background: "#f2f6fc", borderRadius: 12, marginBottom: 14 }}><small style={{ color: "#718096" }}>YOUR UNIQUE EAZREAL ID</small><h2 style={{ margin: "4px 0", color: "#1264eb" }}>{me.member_id}</h2><small>@{me.handle}</small></div>
