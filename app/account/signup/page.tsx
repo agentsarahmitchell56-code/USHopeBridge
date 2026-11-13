@@ -29,7 +29,8 @@ export default function CustomerSignupPage() {
         router.replace("/account");
         router.refresh();
       } else {
-        setNotice("Account request received. If email confirmation is enabled, check your inbox for a confirmation link before signing in.");
+        window.sessionStorage.setItem("hopebridge-signup-email", email.trim().toLowerCase());
+        setNotice("Check your email for the six-digit confirmation code, then enter it to finish creating your account.");
       }
     } catch (e) {
       const message = e instanceof Error ? e.message.toLowerCase() : "";
@@ -61,6 +62,7 @@ export default function CustomerSignupPage() {
         {notice && <p role="status" style={{ ...alertStyle, color: "#155e35", background: "#effaf3", borderColor: "#b7e4c7" }}>{notice}</p>}
         <button className="btn primary" disabled={busy} type="submit">{busy ? "Creating account…" : "Create account"}</button>
       </form>
+      {notice && <p style={{ marginTop: 14 }}><Link href="/account/verify" style={{ color: "#1464f4" }}>Enter verification code</Link></p>}
       <p style={{ marginTop: 18, color: "#627d98" }}>Already registered? <Link href="/account/login" style={{ color: "#1464f4" }}>Sign in</Link></p>
       <Link href="/chat" style={{ color: "#1464f4" }}>Continue to support chat without an account</Link>
     </section>
@@ -69,3 +71,4 @@ export default function CustomerSignupPage() {
 
 const fieldStyle = { width: "100%", boxSizing: "border-box" as const, padding: 12, border: "1px solid #cbd5e1", borderRadius: 10, font: "inherit", background: "white" };
 const alertStyle = { margin: 0, padding: 12, borderRadius: 10, border: "1px solid #fecaca", background: "#fff1f2", color: "#b42318", overflowWrap: "anywhere" as const };
+
