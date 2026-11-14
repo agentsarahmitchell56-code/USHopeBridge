@@ -79,7 +79,12 @@ export default function PublicProfilePage() {
     if (!person || !me || blockedByThem) { router.push("/account/login"); return; }
     const { error } = await supabase.from("social_user_blocks").insert({ blocker_id:me, blocked_id:person.id });
     if (error) setNotice(error.code === "23505" ? "This account is already blocked." : error.message);
-    else { setBlocked(true); setPosts([]); setNotice("This account is now blocked. Its posts are hidden from this view."); }
+    else {
+      await supabase.from("follows").delete().or(`and(follower_id.eq.${me},following_id.eq.${person.id}),and(follower_id.eq.${person.id},following_id.eq.${me})`);
+      await supabase.from("friendships").delete().or(`and(requester_id.eq.${me},addressee_id.eq.${person.id}),and(requester_id.eq.${person.id},addressee_id.eq.${me})`);
+      setBlocked(true); setIsFollowing(false); setIsFriend(false); setPosts([]);
+      setNotice("This account is blocked. Posts, stories and messages between these accounts are restricted.");
+    }
   }
 
   async function unblockUser() {
