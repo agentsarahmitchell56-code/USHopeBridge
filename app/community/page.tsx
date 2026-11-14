@@ -207,6 +207,7 @@ export default function CommunityPage() {
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!user || !me || busy) return;
+    const userId = user.id;
     setBusy(true); setError(""); setNotice("");
     const uploadedPaths: string[] = [];
     try {
@@ -217,7 +218,7 @@ export default function CommunityPage() {
         if (!ext || file.size < 1 || file.size > 5 * 1024 * 1024) {
           throw new Error("Profile and cover photos must be JPG, PNG or WebP files up to 5 MB.");
         }
-        const path = `${user.id}/profile/${kind}-${crypto.randomUUID()}.${ext}`;
+        const path = `${userId}/profile/${kind}-${crypto.randomUUID()}.${ext}`;
         const { error: uploadError } = await supabase.storage.from("eazreal-media").upload(path, file, {
           contentType: file.type, cacheControl: "3600", upsert: false,
         });
@@ -227,7 +228,7 @@ export default function CommunityPage() {
       }
       if (avatarFile) updates.avatar_url = await uploadProfileImage(avatarFile, "avatar");
       if (coverFile) updates.cover_url = await uploadProfileImage(coverFile, "cover");
-      const { error: updateError } = await supabase.from("eazreal_members").update(updates).eq("user_id", user.id);
+      const { error: updateError } = await supabase.from("eazreal_members").update(updates).eq("user_id", userId);
       if (updateError) throw updateError;
       setMe({ ...me, ...updates });
       setAvatarFile(null); setCoverFile(null);
