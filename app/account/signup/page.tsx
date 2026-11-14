@@ -14,6 +14,10 @@ export default function CustomerSignupPage() {
   const [gender, setGender] = useState("prefer_not_to_say");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState("");
   const [code, setCode] = useState("");
@@ -149,6 +153,9 @@ export default function CustomerSignupPage() {
         </label>
         <label style={fieldLabel}>Full name<input value={name} onChange={e => setName(e.target.value)} autoComplete="name" required minLength={2} maxLength={120} style={fieldStyle} /></label>
         <label style={fieldLabel}>Username<input value={username} onChange={e => setUsername(e.target.value.replace(/\s/g, "").toLowerCase())} autoComplete="username" required minLength={3} maxLength={24} pattern="[a-z0-9_]{3,24}" placeholder="e.g. isreal_ayo" style={fieldStyle} /><small style={{ color: "#627d98", fontWeight: 400 }}>3–24 letters, numbers or underscores.</small></label>
+        <label style={fieldLabel}>Username<input value={username} onChange={e => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 24))} autoComplete="username" minLength={3} maxLength={24} required placeholder="Choose a username" style={fieldStyle} /><small style={{ color: "#627d98", fontWeight: 400 }}>3–24 letters, numbers or underscores.</small></label>
+        <label style={fieldLabel}>Date of birth<input type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} max={new Date(Date.now() - 13 * 365.25 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)} style={fieldStyle} /></label>
+        <label style={fieldLabel}>Gender<select value={gender} onChange={e => setGender(e.target.value)} style={fieldStyle}><option value="">Prefer not to say</option><option value="female">Female</option><option value="male">Male</option><option value="non_binary">Non-binary</option><option value="self_described">I describe myself another way</option></select></label>
         <label style={fieldLabel}>Email address<input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required style={fieldStyle} /></label>
         <label style={fieldLabel}>Date of birth<input type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} autoComplete="bday" required max={new Date().toISOString().slice(0, 10)} style={fieldStyle} /></label>
         <label style={fieldLabel}>Gender
@@ -162,7 +169,8 @@ export default function CustomerSignupPage() {
         </label>
         <label style={fieldLabel}>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" minLength={8} required style={fieldStyle} /><small style={{ color: "#627d98", fontWeight: 400 }}>Use at least 8 characters.</small></label>
         <label style={fieldLabel}>Confirm password<input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} autoComplete="new-password" minLength={8} required style={fieldStyle} /></label>
-        {error && <p role="alert" style={alertStyle}>{error}</p>}
+        <label style={fieldLabel}>Confirm password<input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} autoComplete="new-password" minLength={8} required style={fieldStyle} /></label>
+        {error && <p role="alert" style={alertStyle}>{error}</p>
         {notice && <p role="status" style={noticeStyle}>{notice}</p>}
         <button className="btn primary" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>
         <small style={{ color: "#667085", lineHeight: 1.5 }}>By creating an account, you confirm that the details you provide are accurate. Your date of birth and gender are stored in your account profile.</small>
