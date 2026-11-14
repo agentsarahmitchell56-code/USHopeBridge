@@ -25,7 +25,7 @@ export default function NotificationsPage() {
       const ids = [...new Set(rows.map(n => n.actor_id).filter(Boolean))] as string[];
       if (ids.length) {
         const { data: profiles } = await supabase.from("user_profiles").select("id,display_name,username").in("id", ids);
-        if (active) setActors(Object.fromEntries((profiles || []).map((p: any) => [p.id, p])));
+        if (active) setActors(Object.fromEntries((profiles || []).map((p: { id: string; display_name: string; username: string }) => [p.id, p])));
       }
       setLoading(false);
     })();
