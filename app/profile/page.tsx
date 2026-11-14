@@ -73,6 +73,7 @@ export default function ProfilePage() {
       }).eq("id", id);
       if (error) {
         if (uploaded.length) await supabase.storage.from("social-media").remove(uploaded);
+        if (error.code === "23505") throw new Error("That username is already taken. Please choose another one.");
         throw error;
       }
       if (avatarFile) {
