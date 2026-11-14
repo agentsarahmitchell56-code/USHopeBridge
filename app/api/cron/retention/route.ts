@@ -88,13 +88,49 @@ export async function GET(request: NextRequest) {
       deletedAttachments += paths.length;
     }
 
+    const { data: expiredStories, error: storyLookupError } = await db
+      .from("social_stories")
+      .select("id,media_path")
+      .lt("expires_at", now.toISOString())
+      .limit(BATCH_SIZE);
+    let deletedStories = 0;
+    let deletedStoryMedia = 0;
+    let failedStories = 0;
+    if (storyLookupError) {
+      failedStories += 1;
+      console.error("Expired story lookup failed:", storyLookupError);
+    } else if (expiredStories?.length) {
+      const storyPaths = expiredStories.map(item => item.media_path).filter((path): path is string => Boolean(path));
+      if (storyPaths.length) {
+        const { error: storyStorageError } = await db.storage.from("social-media").remove(storyPaths);
+        if (storyStorageError) {
+          failedStories += expiredStories.length;
+          console.error("Expired story media cleanup failed:", storyStorageError);
+        }
+      }
+      if (failedStories === 0) {
+        const { error: storyDeleteError } = await db.from("social_stories").delete().in("id", expiredStories.map(item => item.id));
+        if (storyDeleteError) {
+          failedStories += expiredStories.length;
+          console.error("Expired story record cleanup failed:", storyDeleteError);
+        } else {
+          deletedStories = expiredStories.length;
+          deletedStoryMedia = storyPaths.length;
+        }
+      }
+    }
+
     return NextResponse.json({
-      success: failedConversations === 0,
+      success: failedConversations === 0 && failedStories === 0,
       cutoff,
       examined: (expired || []).length,
       deletedConversations,
       deletedAttachments,
       failedConversations,
+      expiredStoriesExamined: (expiredStories || []).length,
+      deletedStories,
+      deletedStoryMedia,
+      failedStories,
       batchLimit: BATCH_SIZE,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
