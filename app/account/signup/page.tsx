@@ -67,9 +67,9 @@ export default function CustomerSignupPage() {
     } finally { setBusy(false); }
   }
 
-  return <main style={{ minHeight: "75vh", display: "grid", placeItems: "center", padding: 20, background: "#f3f7fc" }}>
-    <section className="card" style={{ width: "100%", maxWidth: 460, padding: 28 }}>
-      <Link href="/" className="brand">HOPEBRIDGE<span>CUSTOMER ACCOUNT</span></Link>
+  return <main className="auth-page">
+    <section className="card auth-card">
+      <Link href="/" className="brand">EAZREAL<span>PERSONAL ACCOUNT</span></Link>
       <h1 style={{ marginTop: 26, marginBottom: 8 }}>{step === "register" ? "Create your account" : "Confirm your email"}</h1>
       <p style={{ color: "#627d98", lineHeight: 1.6 }}>{step === "register" ? "Create a customer account to access your account area. This does not guarantee application approval or payment." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
       {step === "register" ? <form onSubmit={submit} style={{ display: "grid", gap: 14, marginTop: 22 }}>
