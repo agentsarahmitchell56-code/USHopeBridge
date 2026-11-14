@@ -7,14 +7,14 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
 type Profile = { id: string; username: string; display_name: string; avatar_url: string | null; bio?: string };
-type RawPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string };\ntype LikeRow = { post_id: string; user_id: string };\ntype FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean };
+type RawPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string };\ntype LikeRow = { post_id: string; user_id: string };\ntype FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean; media_url?: string };
 
 export default function SocialFeedPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState("");\n  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [visibility, setVisibility] = useState("public");
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
@@ -56,7 +56,7 @@ export default function SocialFeedPage() {
 
   async function publish(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!user || !draft.trim() || publishing) return;
+    if (!user || (!draft.trim() && !mediaFile) || publishing) return;
     setPublishing(true); setError("");
     const { error: insertError } = await supabase.from("social_posts").insert({
       author_id: user.id, body: draft.trim(), visibility,
@@ -111,7 +111,7 @@ export default function SocialFeedPage() {
         <div className="eaz-social-welcome"><div><span className="eyebrow">YOUR COMMUNITY</span><h1>News Feed</h1><p>See what your people are sharing.</p></div><span className="eaz-feed-live">● Your feed</span></div>
         <form className="eaz-social-composer card" onSubmit={publish}>
           <div className="eaz-composer-top"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><textarea value={draft} onChange={e => setDraft(e.target.value)} placeholder="What's on your mind?" maxLength={5000} rows={3} /></div>
-          <div className="eaz-composer-bottom"><label>Post audience <select value={visibility} onChange={e => setVisibility(e.target.value)}><option value="public">Public</option><option value="friends">Friends</option><option value="private">Only me</option></select></label><button className="btn primary" disabled={!draft.trim() || publishing}>{publishing ? "Posting…" : "Publish post"}</button></div>
+          <div className="eaz-composer-bottom"><label className="eaz-media-picker">＋ Photo / video<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={e => setMediaFile(e.target.files?.[0] || null)} /></label><label>Post audience <select value={visibility} onChange={e => setVisibility(e.target.value)}><option value="public">Public</option><option value="friends">Friends</option><option value="private">Only me</option></select></label><button className="btn primary" disabled={(!draft.trim() && !mediaFile) || publishing}>{publishing ? "Posting…" : "Publish post"}</button></div>{mediaFile && <small className="eaz-media-selected">{mediaFile.name}</small>}
         </form>
         {error && <p className="eaz-social-error" role="alert">{error}</p>}
         {posts.length === 0 ? <div className="card eaz-social-empty"><div>✦</div><h2>Your feed starts here</h2><p>Share your first update or find people to connect with.</p><Link className="btn primary" href="/friends">Find people</Link></div> : posts.map(post => <article className="card eaz-social-post" key={post.id}>
