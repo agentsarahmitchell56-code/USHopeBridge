@@ -57,7 +57,7 @@ export default function BusinessLoginPage() {
     finally { setBusy(false); }
   }
 
-  return <main style={shell}><section style={card}>
+  return <main className="auth-page"><section className="auth-card">
     <Link href="/" style={brand}>EAZREAL <small>BUSINESS ACCOUNT</small></Link>
     <h1 style={{ margin: "28px 0 8px", color: "#15395f" }}>{step === "login" ? "Business sign in" : "Confirm your email"}</h1>
     <p style={muted}>{step === "login" ? "Sign in to manage your business profile and posts." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
