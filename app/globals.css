@@ -2293,3 +2293,50 @@ body { color:var(--hb-ink); background:var(--hb-page); }
 
 .eaz-connections-page{max-width:1000px;margin:30px auto;padding:0 18px}.eaz-connections-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.eaz-connections-grid>.card{padding:16px}.eaz-connection-person{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #edf0f5}.eaz-connection-person>span:nth-child(2){flex:1}.eaz-connection-person small{display:block;color:#667085;font-size:11px}.eaz-connection-arrow{font-size:12px;color:#0866ff;font-weight:700}
 @media(max-width:650px){.eaz-connections-grid{grid-template-columns:1fr}}
+
+
+/* EAZREAL 2026 personal profile experience */
+.eaz-profile-form{gap:15px}
+.eaz-profile-form>label{display:grid;gap:7px;color:#26364a;font-size:13px;font-weight:750}
+.eaz-profile-form>label input:not([type=checkbox]),.eaz-profile-form>label textarea{width:100%;min-width:0;background:#fff;color:#172b45}
+.eaz-profile-form>label input[type=file]{font-size:12px;padding:10px;background:#f8fbff}
+.eaz-profile-form>label small{font-size:11px;color:#758399;font-weight:500}
+.eaz-profile-form .eaz-private-toggle{display:flex;align-items:center;gap:9px;padding:13px;border:1px solid #e3eaf3;border-radius:12px;background:#f7faff}
+.eaz-profile-form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:5px}
+.eaz-profile-nav{display:flex;gap:18px;align-items:center}
+.eaz-profile-nav a,.eaz-profile-section-heading a{font-size:13px;font-weight:750;color:#0866ff;text-decoration:none}
+.eaz-public-profile-info{display:flex;justify-content:space-between;align-items:flex-start;gap:22px;padding:22px 24px;border-radius:0 0 18px 18px}
+.eaz-public-identity{min-width:0;flex:1}
+.eaz-public-identity h1{font-size:clamp(25px,4vw,34px);line-height:1.12;margin:0 0 5px;color:#142b49}
+.eaz-profile-handle{color:#738198;font-size:13px;font-weight:650;margin:0 0 10px}
+.eaz-profile-bio{white-space:pre-wrap;overflow-wrap:anywhere;color:#34465d;line-height:1.55;margin:10px 0}
+.eaz-public-identity>p>a,.eaz-profile-about a{color:#0866ff;font-weight:650;overflow-wrap:anywhere}
+.eaz-public-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:390px}
+.eaz-public-actions .btn{white-space:nowrap}
+.eaz-profile-tabs{display:flex;gap:5px;overflow-x:auto;margin:18px 0 12px;padding:5px;background:#fff;border:1px solid #e6ebf2;border-radius:13px}
+.eaz-profile-tabs button{flex:1;min-width:72px;padding:11px 14px;border:0;border-radius:9px;background:transparent;color:#52627a;font:inherit;font-size:13px;font-weight:750;cursor:pointer}
+.eaz-profile-tabs button.active{background:#eaf2ff;color:#075de0}
+.eaz-profile-about{padding:22px;margin-bottom:16px}
+.eaz-profile-about h2{margin:0 0 14px;color:#142b49}
+.eaz-profile-about p{padding:10px 0;margin:0;border-top:1px solid #edf1f6;color:#475467;overflow-wrap:anywhere}
+.eaz-profile-about strong{display:inline-block;min-width:112px;color:#24364d}
+.eaz-profile-timeline{display:grid;gap:14px}
+.eaz-profile-section-heading{display:flex;align-items:center;justify-content:space-between}
+.eaz-profile-section-heading h2{font-size:19px;color:#142b49}
+.eaz-profile-discovery{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0 36px}
+.eaz-profile-discovery a{padding:9px 13px;border:1px solid #e2eaf4;border-radius:999px;background:#fff;color:#31506f;text-decoration:none;font-size:12px;font-weight:750}
+.eaz-profile-timeline .eaz-post-author{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.eaz-profile-timeline .eaz-post-author small{display:block;color:#7a8798;font-size:11px}
+.eaz-profile-timeline .eaz-post-actions{display:flex;gap:18px;align-items:center;border-top:1px solid #edf1f5;padding-top:10px;margin-top:12px}
+.eaz-profile-timeline .eaz-post-actions a,.eaz-profile-timeline .eaz-post-actions button{border:0;background:none;color:#52647c;font:inherit;font-size:12px;font-weight:750;text-decoration:none;cursor:pointer}
+@media(max-width:650px){
+ .eaz-public-profile{margin:14px auto;padding:0 10px}
+ .eaz-public-cover{height:170px;border-radius:14px 14px 0 0}
+ .eaz-public-profile-info{display:block;padding:18px 15px}
+ .eaz-public-actions{justify-content:flex-start;max-width:none;margin-top:16px}
+ .eaz-public-actions .btn{flex:1;min-width:calc(50% - 8px);padding:10px 8px;font-size:12px}
+ .eaz-profile-tabs{position:sticky;top:0;z-index:5}
+ .eaz-profile-nav{gap:10px}.eaz-profile-nav a{font-size:11px}
+ .eaz-profile-form-actions{display:grid;grid-template-columns:1fr}
+ .eaz-profile-form-actions .btn{width:100%;text-align:center}
+}
