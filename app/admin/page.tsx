@@ -529,6 +529,7 @@ export default function AdminDashboardPage() {
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <StaffNotifications />
             <a href="/admin/analytics" className="btn secondary">Analytics</a>
+            <a href="/admin/social-reports" className="btn secondary">Social reports</a>
             {role === "admin" && <a href="/admin/team" className="btn secondary">Team & permissions</a>}
             <a href="/admin/studio" className="btn secondary">Business tools</a>
             <div style={{ textAlign: "right" }}><strong>{staffEmail}</strong><div style={{ color: "#627d98", fontSize: 12, textTransform: "capitalize" }}>{role}</div></div>
@@ -540,6 +541,7 @@ export default function AdminDashboardPage() {
           <a href="#support-inbox" className="hb-nav-messages">💬 Messages</a>
           <a href="#applications">Applications</a>
           <a href="/admin/analytics">Analytics</a>
+          <a href="/admin/social-reports">Social reports</a>
           {role === "admin" && <a href="/admin/team">Team &amp; permissions</a>}
           <a href="/admin/studio">Business tools</a>
         </nav>
