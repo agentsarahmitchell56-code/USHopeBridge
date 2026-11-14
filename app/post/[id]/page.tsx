@@ -15,7 +15,7 @@ export default function PostPage() {
   const [mediaUrl, setMediaUrl] = useState("");
   const [author, setAuthor] = useState<{ display_name: string; username: string; avatar_url: string | null } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [commentProfiles, setCommentProfiles] = useState<Record<string, any>>({});
+  const [commentProfiles, setCommentProfiles] = useState<Record<string, { display_name: string; username: string }>>({});
   const [body, setBody] = useState("");
   const [error, setError] = useState("");
 
