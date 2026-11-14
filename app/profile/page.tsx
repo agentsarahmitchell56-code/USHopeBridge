@@ -102,7 +102,7 @@ export default function ProfilePage() {
     <div className="eaz-social-subcontent">
       <h1>Your profile</h1><p className="eaz-subtitle">Choose how people see you on EAZREAL.</p>
       <form className="card eaz-profile-form" onSubmit={save}>
-        <div className="eaz-profile-cover" style={coverFile ? { backgroundImage: `url(${URL.createObjectURL(coverFile)})` } : coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined}>
+        <div className="eaz-profile-cover" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined}>
           {avatarUrl ? <img className="eaz-profile-avatar-img" src={avatarUrl} alt="Profile photo" /> : <span className="eaz-social-avatar eaz-profile-avatar">{name[0] || "E"}</span>}
         </div>
         <label>Profile photo<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setAvatarFile(event.target.files?.[0] || null)} /><small>JPG, PNG or WebP · Maximum 5 MB</small></label>
