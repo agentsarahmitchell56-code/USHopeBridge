@@ -169,8 +169,7 @@ export default function CustomerSignupPage() {
         </label>
         <label style={fieldLabel}>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" minLength={8} required style={fieldStyle} /><small style={{ color: "#627d98", fontWeight: 400 }}>Use at least 8 characters.</small></label>
         <label style={fieldLabel}>Confirm password<input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} autoComplete="new-password" minLength={8} required style={fieldStyle} /></label>
-        <label style={fieldLabel}>Confirm password<input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} autoComplete="new-password" minLength={8} required style={fieldStyle} /></label>
-        {error && <p role="alert" style={alertStyle}>{error}</p>
+        {error && <p role="alert" style={alertStyle}>{error}</p>}
         {notice && <p role="status" style={noticeStyle}>{notice}</p>}
         <button className="btn primary" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>
         <small style={{ color: "#667085", lineHeight: 1.5 }}>By creating an account, you confirm that the details you provide are accurate. Your date of birth and gender are stored in your account profile.</small>
