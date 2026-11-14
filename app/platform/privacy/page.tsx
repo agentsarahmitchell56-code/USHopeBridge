@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Privacy Policy | Platform",
-  description: "How Platform handles business account, public profile, customer message and media information.",
+  title: "Privacy Policy | EAZREAL",
+  description: "How EAZREAL handles personal accounts, social content, business pages, messages and media.",
 };
 
 const draftNotice = "Launch review required: confirm account and operational-log retention, applicable privacy requirements and service-provider arrangements before advertising or accepting public registrations.";
@@ -11,7 +11,7 @@ export default function PlatformPrivacyPage() {
   return (
     <main style={{ minHeight: "75vh", background: "#f3f7fc", padding: "38px 16px 60px" }}>
       <article style={{ maxWidth: 820, margin: "0 auto", padding: 28, borderRadius: 18, background: "white", color: "#334e68", lineHeight: 1.75, boxShadow: "0 8px 28px #15395f10" }}>
-        <Link href="/" style={{ color: "#15395f", fontWeight: 900, textDecoration: "none", letterSpacing: ".08em" }}>PLATFORM</Link>
+        <Link href="/" style={{ color: "#15395f", fontWeight: 900, textDecoration: "none", letterSpacing: ".08em" }}>EAZREAL</Link>
         <p style={{ marginTop: 24, color: "#a15c12", fontSize: 13, fontWeight: 800 }}>DRAFT — NOT READY FOR PUBLIC PROMOTION</p>
         <h1 style={{ color: "#15395f" }}>Privacy Policy</h1>
         <p>Last reviewed: November 9, 2026</p>
@@ -28,10 +28,22 @@ export default function PlatformPrivacyPage() {
         <p>Business profile details and posts that a business owner publishes are visible to visitors. Customers should not include passwords, payment-card details, government identity numbers or other highly sensitive information in public posts or messages.</p>
         <p>Business conversations are intended to be private between the customer and the relevant business. Access is restricted through authenticated business workspaces and protected chat-session tokens. Platform operators and service providers may process message data when necessary to operate, secure, troubleshoot or support the service.</p>
 
+
+        <h2>3A. Personal accounts and social profiles</h2>
+        <p>When a person creates an EAZREAL personal account, the service may process their email address, username, display name, date of birth or age-related signup information, profile photo, cover photo, biography, account privacy setting and authentication records. A public profile may display the information and posts the member chooses to make public. A private account is intended to limit its posts and stories to approved followers and accepted friends, subject to the access controls implemented by the service.</p>
+
+        <h2>3B. Posts, stories, communities and saved content</h2>
+        <p>Members may create text, photo and video posts, like and comment on posts, save posts to a private saved-posts list, publish stories, join or create communities, and submit membership requests. Public posts and public community content may be visible to other visitors. Friends-only content is intended for accepted friends. Private community discussions are intended for approved members. Stories are designed to expire from the active story feed after 24 hours; expired story files are scheduled for cleanup by the service, but the exact cleanup timing and backup-retention period must be confirmed before launch.</p>
+
+        <h2>3C. Direct messages, follows and safety actions</h2>
+        <p>Personal direct messages and their image or video attachments are intended to be visible only to the participants in the conversation. Follow relationships, friend requests, accepted connections and notifications are processed to provide social features. Members may report content or block another account. Reports may be reviewed by authorized moderation staff, and blocking controls may affect the experience within the product. Do not send passwords, one-time codes, financial account credentials or other highly sensitive information in social messages.</p>
+
         <h2>4. How information is used</h2>
         <ul>
           <li>Create and maintain business accounts and workspaces.</li>
-          <li>Display business profiles and owner-published updates.</li>
+          <li>Display business profiles, personal profiles and posts according to their visibility settings.</li>
+          <li>Support friends, follows, stories, communities, saved posts and private member messages.</li>
+          <li>Receive and review content reports and account-safety actions.</li>
           <li>Deliver customer messages and business replies.</li>
           <li>Store profile images, post media and chat attachments.</li>
           <li>Prevent spam, abuse, unauthorized access and service disruption.</li>
@@ -55,7 +67,7 @@ export default function PlatformPrivacyPage() {
         <p>Platform is intended for business use and is not designed for children. Do not create an account or submit another person&apos;s information unless you are legally permitted to do so.</p>
 
         <h2>10. Changes and contact</h2>
-        <p>This policy may change as Platform develops. Material changes should be reflected here with an updated review date. Contact the operator at <strong>hopebridge098@gmail.com</strong> for privacy questions or requests.</p>
+        <p>This policy may change as EAZREAL develops. Material changes should be reflected here with an updated review date. Contact the operator at <strong>hopebridge098@gmail.com</strong> for privacy questions or requests.</p>
 
         <p style={{ padding: 14, borderRadius: 10, background: "#fff7e8", color: "#87520b", fontSize: 13 }}>This is a product-specific draft, not legal advice. Confirm the retention automation, account and backup retention, applicable jurisdictions and service-provider arrangements before public launch.</p>
         <p><Link href="/platform/terms" style={{ color: "#1768dc" }}>Platform Terms &amp; Conditions</Link> · <Link href="/" style={{ color: "#1768dc" }}>Return to Platform</Link></p>
