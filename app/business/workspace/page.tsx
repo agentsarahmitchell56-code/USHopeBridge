@@ -74,39 +74,91 @@ export default function BusinessWorkspacePage() {
   }, [router]);
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); if (!draft || saving) return; setSaving(true); setError(""); setNotice("");
+    event.preventDefault();
+    if (!draft || saving) return;
+    setSaving(true); setError(""); setNotice("");
+    let saved: Business | null = null;
     try {
-      const values = { owner_id: draft.owner_id, name: draft.name.trim(), slug: slugify(draft.slug || draft.name), category: draft.category.trim().slice(0, 60), description: draft.description.trim().slice(0, 1000), contact_email: draft.contact_email.trim(), contact_phone: draft.contact_phone.trim().slice(0, 40), website_url: draft.website_url.trim(), avatar_url: draft.avatar_url, cover_url: draft.cover_url, published: draft.published };
+      const values = {
+        owner_id: draft.owner_id,
+        name: draft.name.trim(),
+        slug: slugify(draft.slug || draft.name),
+        category: draft.category.trim().slice(0, 60),
+        description: draft.description.trim().slice(0, 1000),
+        contact_email: draft.contact_email.trim(),
+        contact_phone: draft.contact_phone.trim().slice(0, 40),
+        website_url: draft.website_url.trim(),
+        avatar_url: business?.avatar_url ?? draft.avatar_url,
+        cover_url: business?.cover_url ?? draft.cover_url,
+        published: draft.published,
+      };
       if (!values.name || values.name.length < 2) throw new Error("Enter a business name with at least 2 characters.");
       if (values.slug.length < 3) throw new Error("The profile URL needs at least 3 letters or numbers.");
-      if (logo || cover) {
-        for (const [file, key] of [[logo, "avatar_url"], [cover, "cover_url"]] as const) {
-          if (!file) continue;
-          if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) throw new Error("Logos and cover photos must be JPG, PNG, or WebP and no larger than 5 MB.");
-          if (!business) throw new Error("Save your business profile before uploading images.");
-          const path = `${business.id}/${crypto.randomUUID()}.${fileExt(file)}`;
-          const { error: uploadError } = await supabase.storage.from("business-private-media").upload(path, file, { contentType: file.type, upsert: false });
-          if (uploadError) throw uploadError;
-          values[key] = path;
-        }
-      }
-      let saved: Business;
+
+      // Persist the business row before attempting any media uploads. New workspaces
+      // need a page ID before files can be placed in their private storage folder.
       if (business) {
         const { data, error: updateError } = await supabase.from("business_pages").update(values).eq("id", business.id).select("*").single();
-        if (updateError) throw updateError; saved = data as Business;
+        if (updateError) throw updateError;
+        saved = data as Business;
       } else {
         const { data, error: insertError } = await supabase.from("business_pages").insert(values).select("*").single();
-        if (insertError) throw insertError; saved = data as Business;
+        if (insertError) throw insertError;
+        saved = data as Business;
       }
-      setBusiness(saved); setDraft(saved); setLogo(null); setCover(null);
+      setBusiness(saved);
+      setDraft(saved);
+
+      const pendingImages = [
+        ["logo", logo, "avatar_url"],
+        ["cover", cover, "cover_url"],
+      ] as const;
+      let uploadedAny = false;
+      for (const [label, file, column] of pendingImages) {
+        if (!file) continue;
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+          throw new Error("Logos and cover photos must be JPG, PNG, or WebP and no larger than 5 MB.");
+        }
+        const storagePath = `${saved.id}/${crypto.randomUUID()}.${fileExt(file)}`;
+        const { error: uploadError } = await supabase.storage.from("business-private-media").upload(storagePath, file, { contentType: file.type, upsert: false });
+        if (uploadError) throw new Error(`Your business profile was saved, but the ${label} upload failed: ${uploadError.message}`);
+
+        const { data: updated, error: imageSaveError } = await supabase
+          .from("business_pages")
+          .update({ [column]: storagePath })
+          .eq("id", saved.id)
+          .select("*")
+          .single();
+        if (imageSaveError) throw new Error(`Your business profile was saved, but the ${label} could not be attached: ${imageSaveError.message}`);
+        saved = updated as Business;
+        uploadedAny = true;
+      }
+
+      setBusiness(saved);
+      setDraft(saved);
+      setLogo(null);
+      setCover(null);
       for (const ref of [logoRef, coverRef]) if (ref.current) ref.current.value = "";
+
       const imageUrls: Record<string, string> = {};
-      for (const [key, path] of [["logo", saved.avatar_url], ["cover", saved.cover_url]] as const) if (path && !path.startsWith("http")) {
-        const { data } = await supabase.storage.from("business-private-media").createSignedUrl(path, 3600); if (data?.signedUrl) imageUrls[key] = data.signedUrl;
+      for (const [key, storagePath] of [["logo", saved.avatar_url], ["cover", saved.cover_url]] as const) {
+        if (!storagePath || storagePath.startsWith("http")) continue;
+        const { data, error: signedError } = await supabase.storage.from("business-private-media").createSignedUrl(storagePath, 3600);
+        if (!signedError && data?.signedUrl) imageUrls[key] = data.signedUrl;
       }
-      setSigned(current => ({ ...current, ...imageUrls })); setNotice("Business profile saved.");
-    } catch (e) { setError(e instanceof Error && e.message.includes("duplicate key") ? "That public profile URL is already in use. Change it and try again." : e instanceof Error ? e.message : "The profile could not be saved."); }
-    finally { setSaving(false); }
+      setSigned(current => ({ ...current, ...imageUrls }));
+      setNotice(uploadedAny ? "Business profile saved and images uploaded." : "Business profile saved.");
+    } catch (e) {
+      if (saved) {
+        setBusiness(saved);
+        setDraft(saved);
+      }
+      setError(e instanceof Error && e.message.includes("duplicate key")
+        ? "That public profile URL is already in use. Change it and try again."
+        : e instanceof Error ? e.message : "The profile could not be saved.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function createPost(event: FormEvent<HTMLFormElement>) {
