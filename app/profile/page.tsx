@@ -13,6 +13,7 @@ export default function ProfilePage() {
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
+  const [website, setWebsite] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [avatarPath, setAvatarPath] = useState("");
   const [coverPath, setCoverPath] = useState("");
@@ -28,11 +29,11 @@ export default function ProfilePage() {
     let active = true;
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) { router.replace("/account/login?next=/profile"); return; }
-      const { data: row } = await supabase.from("user_profiles").select("id,username,display_name,bio,is_private,avatar_path,cover_path").eq("id", data.user.id).maybeSingle();
+      const { data: row } = await supabase.from("user_profiles").select("id,username,display_name,bio,website,is_private,avatar_path,cover_path").eq("id", data.user.id).maybeSingle();
       if (!active) return;
       setId(data.user.id);
       if (row) {
-        setUsername(row.username); setName(row.display_name || ""); setBio(row.bio || "");
+        setUsername(row.username); setName(row.display_name || ""); setBio(row.bio || ""); setWebsite(row.website || "");
         setIsPrivate(Boolean(row.is_private)); setAvatarPath(row.avatar_path || ""); setCoverPath(row.cover_path || "");
         if (row.avatar_path) { const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(row.avatar_path, 3600); if (active) setAvatarUrl(signed?.signedUrl || ""); }
         if (row.cover_path) { const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(row.cover_path, 3600); if (active) setCoverUrl(signed?.signedUrl || ""); }
@@ -68,7 +69,7 @@ export default function ProfilePage() {
       if (avatarFile) { nextAvatar = await uploadPhoto(avatarFile, "avatar"); uploaded.push(nextAvatar); }
       if (coverFile) { nextCover = await uploadPhoto(coverFile, "cover"); uploaded.push(nextCover); }
       const { error } = await supabase.from("user_profiles").update({
-        username: clean, display_name: name.trim(), bio: bio.trim(), is_private: isPrivate,
+        username: clean, display_name: name.trim(), bio: bio.trim(), website: website.trim() || null, is_private: isPrivate,
         avatar_path: nextAvatar || null, cover_path: nextCover || null, updated_at: new Date().toISOString(),
       }).eq("id", id);
       if (error) {
@@ -101,17 +102,17 @@ export default function ProfilePage() {
     <div className="eaz-social-subcontent">
       <h1>Your profile</h1><p className="eaz-subtitle">Choose how people see you on EAZREAL.</p>
       <form className="card eaz-profile-form" onSubmit={save}>
-        <div className="eaz-profile-cover" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined}>
+        <div className="eaz-profile-cover" style={coverFile ? { backgroundImage: `url(${URL.createObjectURL(coverFile)})` } : coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined}>
           {avatarUrl ? <img className="eaz-profile-avatar-img" src={avatarUrl} alt="Profile photo" /> : <span className="eaz-social-avatar eaz-profile-avatar">{name[0] || "E"}</span>}
         </div>
         <label>Profile photo<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setAvatarFile(event.target.files?.[0] || null)} /><small>JPG, PNG or WebP · Maximum 5 MB</small></label>
         <label>Cover photo<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setCoverFile(event.target.files?.[0] || null)} /><small>JPG, PNG or WebP · Maximum 5 MB</small></label>
         <label>Display name<input value={name} onChange={event => setName(event.target.value)} maxLength={120} required /></label>
         <label>Username<input value={username} onChange={event => setUsername(event.target.value.replace(/\s/g,"").toLowerCase())} maxLength={24} required /><small>Your profile username is unique.</small></label>
-        <label className="eaz-private-toggle"><input type="checkbox" checked={isPrivate} onChange={event => setIsPrivate(event.target.checked)} /> Private account (new followers need approval)</label>
-        <label>Bio<textarea value={bio} onChange={event => setBio(event.target.value)} rows={4} maxLength={500} placeholder="Tell people a little about yourself" /></label>
+        <label>Website or portfolio<input type="url" value={website} onChange={event => setWebsite(event.target.value)} maxLength={300} placeholder="https://example.com" /><small>Add a public website or portfolio link (optional).</small></label>\n        <label className="eaz-private-toggle"><input type="checkbox" checked={isPrivate} onChange={event => setIsPrivate(event.target.checked)} /> Private account (new followers need approval)</label>
+        <label>Bio<textarea value={bio} onChange={event => setBio(event.target.value)} rows={4} maxLength={500} placeholder="Tell people a little about yourself" /><small>{bio.length}/500 characters · Share your interests, work or what you would like people to know.</small></label>
         {notice && <p className="eaz-social-notice">{notice}</p>}
-        <Link href={`/u/${username}`} className="btn secondary">View public profile</Link><button className="btn primary" disabled={saving}>{saving ? "Saving…" : "Save profile"}</button>
+        <div className="eaz-profile-form-actions"><Link href={`/u/${username}`} className="btn secondary">Preview public profile</Link><button className="btn primary" disabled={saving}>{saving ? "Saving…" : "Save changes"}</button></div>
       </form>
     </div>
   </main>;
