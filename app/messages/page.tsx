@@ -86,6 +86,8 @@ export default function MessagesPage() {
     if (error) setNotice(error.message);
     else {
       setDraft("");
+      const recipientId = selected.user_one === me ? selected.user_two : selected.user_one;
+      await supabase.from("social_notifications").insert({ recipient_id: recipientId, actor_id: me, kind: "message", body: "sent you a message" });
       await supabase.from("social_conversations").update({ updated_at:new Date().toISOString() }).eq("id",selected.id);
       await loadMessages(selected);
       await loadConversations(me);
