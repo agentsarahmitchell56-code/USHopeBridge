@@ -2239,3 +2239,8 @@ body { color:var(--hb-ink); background:var(--hb-page); }
 .eaz-notification-row>span:nth-child(2){flex:1;font-size:13px;line-height:1.5}.eaz-notification-row small{display:block;color:#8a94a3;font-size:11px;margin-top:3px}.eaz-notification-dot{color:#0866ff;font-size:10px}
 .eaz-comment-form{display:grid;gap:10px;padding:15px}.eaz-comment-form textarea{border:1px solid #dce3ec;border-radius:10px;padding:12px;font:inherit;resize:vertical}
 .eaz-comment-row{margin-top:10px;padding:14px;border-radius:12px;box-shadow:none}.eaz-comment-row strong{font-size:13px}.eaz-comment-row strong small{font-weight:500;color:#8994a4}.eaz-comment-row p{font-size:13px;white-space:pre-wrap;margin:7px 0}.eaz-comment-row time{font-size:10px;color:#8994a4}
+
+.eaz-media-picker{display:flex;align-items:center;gap:7px;font-size:12px;color:#16804b;font-weight:800;cursor:pointer}
+.eaz-media-picker input{max-width:160px;font-size:10px;color:#718096}
+.eaz-media-selected{display:block;margin:8px 0 0 54px;color:#667085;font-size:11px}
+.eaz-post-media{display:block;width:100%;max-height:520px;object-fit:contain;background:#f3f5f8;border-radius:12px;margin:12px 0}
