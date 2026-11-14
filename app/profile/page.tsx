@@ -10,7 +10,8 @@ export default function ProfilePage() {
   const [id, setId] = useState("");
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
-  const [bio, setBio] = useState("");\n  const [isPrivate, setIsPrivate] = useState(false);
+  const [bio, setBio] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
@@ -46,7 +47,8 @@ export default function ProfilePage() {
         <div className="eaz-profile-cover"><span className="eaz-social-avatar eaz-profile-avatar">{name[0] || "E"}</span></div>
         <label>Display name<input value={name} onChange={e => setName(e.target.value)} maxLength={120} required /></label>
         <label>Username<input value={username} onChange={e => setUsername(e.target.value.replace(/\s/g,"").toLowerCase())} maxLength={24} required /><small>Your profile username is unique.</small></label>
-        <label className="eaz-private-toggle"><input type="checkbox" checked={isPrivate} onChange={e => setIsPrivate(e.target.checked)} /> Private account (new followers need approval)</label>\n        <label>Bio<textarea value={bio} onChange={e => setBio(e.target.value)} rows={4} maxLength={500} placeholder="Tell people a little about yourself" /></label>
+        <label className="eaz-private-toggle"><input type="checkbox" checked={isPrivate} onChange={e => setIsPrivate(e.target.checked)} /> Private account (new followers need approval)</label>
+        <label>Bio<textarea value={bio} onChange={e => setBio(e.target.value)} rows={4} maxLength={500} placeholder="Tell people a little about yourself" /></label>
         {notice && <p className="eaz-social-notice">{notice}</p>}
         <Link href={`/u/${username}`} className="btn secondary">View public profile</Link><button className="btn primary" disabled={saving}>{saving ? "Saving…" : "Save profile"}</button>
       </form>
