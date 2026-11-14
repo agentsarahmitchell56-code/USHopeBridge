@@ -9,7 +9,7 @@ import { supabase } from "../../lib/supabase";
 type Member = { user_id: string; member_id: string; handle: string; display_name: string; bio: string; avatar_url: string | null };
 type Follow = { follower_id: string; following_id: string };
 type FriendRequest = { id: string; requester_id: string; recipient_id: string; status: "pending" | "accepted" | "declined" };
-type Post = { id: string; author_id: string; body: string; created_at: string };
+type Post = { id: string; author_id: string; body: string; media_path: string | null; media_url: string | null; media_type: "image" | "video" | null; created_at: string };
 type PostComment = { id: string; post_id: string; author_id: string; body: string; created_at: string };
 type Tab = "feed" | "discover" | "friends" | "profile";
 
@@ -33,6 +33,7 @@ export default function CommunityPage() {
   const [tab, setTab] = useState<Tab>("feed");
   const [search, setSearch] = useState("");
   const [postBody, setPostBody] = useState("");
+  const [postMedia, setPostMedia] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
@@ -45,7 +46,7 @@ export default function CommunityPage() {
       supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url").order("created_at", { ascending: false }).limit(500),
       supabase.from("eazreal_follows").select("follower_id,following_id").or(`follower_id.eq.${uid},following_id.eq.${uid}`),
       supabase.from("eazreal_friend_requests").select("id,requester_id,recipient_id,status").or(`requester_id.eq.${uid},recipient_id.eq.${uid}`),
-      supabase.from("eazreal_posts").select("id,author_id,body,created_at").order("created_at", { ascending: false }).limit(60),
+      supabase.from("eazreal_posts").select("id,author_id,body,media_path,media_url,media_type,created_at").order("created_at", { ascending: false }).limit(60),
       supabase.from("eazreal_post_comments").select("id,post_id,author_id,body,created_at").order("created_at", { ascending: true }).limit(500),
       supabase.from("eazreal_post_likes").select("post_id"),
       supabase.from("eazreal_post_likes").select("post_id").eq("user_id", uid),
@@ -133,12 +134,39 @@ export default function CommunityPage() {
   }
 
   async function publishPost(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); if (!user || !postBody.trim() || busy) return;
+    event.preventDefault(); if (!user || (!postBody.trim() && !postMedia) || busy) return;
     setBusy(true); setError(""); setNotice("");
     try {
-      const { data, error: e } = await supabase.from("eazreal_posts").insert({ author_id: user.id, body: postBody.trim() }).select("id,author_id,body,created_at").single();
-      if (e) throw e;
-      setPosts(old => [data as Post, ...old]); setPostBody(""); setNotice("Your post is now on the community feed.");
+      let mediaPath: string | null = null;
+      let mediaUrl: string | null = null;
+      let mediaType: "image" | "video" | null = null;
+      if (postMedia) {
+        const supported: Record<string, { ext: string; kind: "image" | "video" }> = {
+          "image/jpeg": { ext: "jpg", kind: "image" },
+          "image/png": { ext: "png", kind: "image" },
+          "image/webp": { ext: "webp", kind: "image" },
+          "image/gif": { ext: "gif", kind: "image" },
+          "video/mp4": { ext: "mp4", kind: "video" },
+          "video/webm": { ext: "webm", kind: "video" },
+        };
+        const info = supported[postMedia.type];
+        if (!info || postMedia.size < 1 || postMedia.size > 25 * 1024 * 1024) throw new Error("Choose a JPG, PNG, WebP, GIF, MP4 or WebM file up to 25 MB.");
+        mediaPath = `${user.id}/${crypto.randomUUID()}.${info.ext}`;
+        mediaType = info.kind;
+        const { error: uploadError } = await supabase.storage.from("eazreal-media").upload(mediaPath, postMedia, {
+          contentType: postMedia.type, cacheControl: "3600", upsert: false,
+        });
+        if (uploadError) throw uploadError;
+        mediaUrl = supabase.storage.from("eazreal-media").getPublicUrl(mediaPath).data.publicUrl;
+      }
+      const { data, error: e } = await supabase.from("eazreal_posts")
+        .insert({ author_id: user.id, body: postBody.trim(), media_path: mediaPath, media_url: mediaUrl, media_type: mediaType })
+        .select("id,author_id,body,media_path,media_url,media_type,created_at").single();
+      if (e) {
+        if (mediaPath) await supabase.storage.from("eazreal-media").remove([mediaPath]);
+        throw e;
+      }
+      setPosts(old => [data as Post, ...old]); setPostBody(""); setPostMedia(null); setNotice("Your post is now on the community feed.");
     } catch (e) { setError(e instanceof Error ? e.message : "Your post could not be published."); }
     finally { setBusy(false); }
   }
@@ -222,7 +250,12 @@ export default function CommunityPage() {
           <form onSubmit={publishPost} style={panel}>
             <strong>What&apos;s on your mind?</strong>
             <textarea value={postBody} onChange={e => setPostBody(e.target.value)} maxLength={5000} placeholder="Share an update with the EAZREAL community…" style={{ ...field, minHeight: 110, resize: "vertical", marginTop: 12 }} />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginTop: 10 }}><small style={{ color: "#718096" }}>{postBody.length}/5000</small><button disabled={busy || !postBody.trim()} style={button}>{busy ? "Publishing…" : "Publish post"}</button></div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+              <label style={{ ...lightButton, display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer" }}>📷 Photo or video<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={e => setPostMedia(e.target.files?.[0] || null)} style={{ display: "none" }} /></label>
+              <small style={{ color: "#718096" }}>{postBody.length}/5000 · Media up to 25 MB</small>
+              <button disabled={busy || (!postBody.trim() && !postMedia)} style={button}>{busy ? "Publishing…" : "Publish post"}</button>
+            </div>
+            {postMedia && <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, fontSize: 13, color: "#52657c" }}><span>{postMedia.name} ({(postMedia.size / 1024 / 1024).toFixed(1)} MB)</span><button type="button" onClick={() => setPostMedia(null)} style={{ ...lightButton, padding: "5px 10px" }}>Remove</button></div>}
           </form>
           {posts.length === 0 && <section style={panel}><strong>Your community feed starts here.</strong><p style={{ color: "#718096", marginBottom: 0 }}>Publish your first post or explore members to start connecting.</p></section>}
           {posts.map(post => { const author = memberMap.get(post.author_id); return <article key={post.id} style={panel}>
@@ -230,7 +263,9 @@ export default function CommunityPage() {
               <div style={{ width: 42, height: 42, borderRadius: "50%", display: "grid", placeItems: "center", background: "#e4efff", color: "#0753c6", fontWeight: 900 }}>{author?.display_name.slice(0,1).toUpperCase() || "E"}</div>
               <div><strong>{author?.display_name || "EAZREAL member"}</strong><div style={{ color: "#718096", fontSize: 12 }}>@{author?.handle || "member"} · {new Date(post.created_at).toLocaleString()}</div></div>
             </div>
-            <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.65, overflowWrap: "anywhere" }}>{post.body}</p>
+            {post.body && <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.65, overflowWrap: "anywhere" }}>{post.body}</p>}
+            {post.media_url && post.media_type === "image" && <img src={post.media_url} alt="Post attachment" loading="lazy" style={{ display: "block", width: "100%", maxHeight: 560, objectFit: "contain", borderRadius: 12, background: "#f3f6fb" }} />}
+            {post.media_url && post.media_type === "video" && <video src={post.media_url} controls preload="metadata" style={{ display: "block", width: "100%", maxHeight: 560, borderRadius: 12, background: "#101828" }}>Your browser does not support video playback.</video>}
             <div style={{ display: "flex", alignItems: "center", gap: 14, paddingBottom: 12, borderBottom: "1px solid #edf1f6" }}><button onClick={() => toggleLike(post)} disabled={busy} style={lightButton}>{likes.includes(post.id) ? "♥ Liked" : "♡ Like"} · {likeCounts[post.id] || 0}</button><small style={{ color: "#718096" }}>{comments.filter(comment => comment.post_id === post.id).length} comments</small></div>
             <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
               {comments.filter(comment => comment.post_id === post.id).map(comment => { const commenter = memberMap.get(comment.author_id); return <div key={comment.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}><div style={{ width: 30, height: 30, flex: "0 0 30px", borderRadius: "50%", display: "grid", placeItems: "center", background: "#e4efff", color: "#0753c6", fontWeight: 800, fontSize: 12 }}>{commenter?.display_name.slice(0,1).toUpperCase() || "E"}</div><div style={{ background: "#f3f6fb", borderRadius: 14, padding: "8px 12px", minWidth: 0, flex: 1 }}><strong style={{ fontSize: 13 }}>{commenter?.display_name || "EAZREAL member"}</strong><p style={{ margin: "3px 0 0", whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: 14 }}>{comment.body}</p></div></div>; })}
