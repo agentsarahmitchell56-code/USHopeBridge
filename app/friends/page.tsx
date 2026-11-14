@@ -48,7 +48,14 @@ export default function FriendsPage() {
     setBusy(true); setMessage("");
     const { data, error } = await supabase.from("user_profiles").select("id,username,display_name,bio,avatar_url,is_private").or(`username.ilike.%${clean.replace(/ /g,"")}%,display_name.ilike.%${clean}%`).neq("id", userId).limit(20);
     if (error) setMessage(error.message);
-    else setResults((data || []) as Person[]);
+    else {
+      const people = (data || []) as Person[];
+      setResults(people);
+      if (people.length) {
+        const { data: follows } = await supabase.from("follows").select("following_id,status").eq("follower_id", userId).in("following_id", people.map(p => p.id));
+        setFollowStatuses(Object.fromEntries((follows || []).map(row => [row.following_id, row.status])));
+      }
+    }
     setBusy(false);
   }
 
