@@ -45,7 +45,7 @@ export default function CommunityPage() {
     setError("");
     const [profileResult, memberResult, followResult, requestResult, postResult, commentResult, allLikeResult, likeResult] = await Promise.all([
       supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url,cover_url").eq("user_id", uid).maybeSingle(),
-      supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url").order("created_at", { ascending: false }).limit(500),
+      supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url,cover_url").order("created_at", { ascending: false }).limit(500),
       supabase.from("eazreal_follows").select("follower_id,following_id").or(`follower_id.eq.${uid},following_id.eq.${uid}`),
       supabase.from("eazreal_friend_requests").select("id,requester_id,recipient_id,status").or(`requester_id.eq.${uid},recipient_id.eq.${uid}`),
       supabase.from("eazreal_posts").select("id,author_id,body,media_path,media_url,media_type,created_at").order("created_at", { ascending: false }).limit(60),
