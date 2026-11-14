@@ -14,10 +14,6 @@ export default function CustomerSignupPage() {
   const [gender, setGender] = useState("prefer_not_to_say");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [username, setUsername] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [gender, setGender] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState("");
   const [code, setCode] = useState("");
