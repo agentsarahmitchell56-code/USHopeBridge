@@ -25,7 +25,7 @@ export default function CustomerSignupPage() {
       const { data, error: signupError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
-        options: { data: { full_name: name.trim() } },
+        options: { data: { full_name: name.trim() }, emailRedirectTo: `${window.location.origin}/account/login?confirmed=1` },
       });
       if (signupError) throw signupError;
       if (data.session) {
@@ -59,7 +59,7 @@ export default function CustomerSignupPage() {
     if (busy) return;
     setBusy(true); setError(""); setNotice("");
     try {
-      const { error: resendError } = await supabase.auth.resend({ type: "signup", email: email.trim().toLowerCase() });
+      const { error: resendError } = await supabase.auth.resend({ type: "signup", email: email.trim().toLowerCase(), options: { emailRedirectTo: `${window.location.origin}/account/login?confirmed=1` } });
       if (resendError) throw resendError;
       setCode(""); setNotice("A new confirmation code was requested. Check your email.");
     } catch (e) {
