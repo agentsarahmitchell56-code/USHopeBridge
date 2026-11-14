@@ -43,7 +43,7 @@ export default function JoinPage() {
       const { data, error: signupError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
-        options: { data: { full_name: name.trim() } },
+        options: { data: { full_name: name.trim() }, emailRedirectTo: `${window.location.origin}/community` },
       });
       if (signupError) throw signupError;
       if (data.session) {
