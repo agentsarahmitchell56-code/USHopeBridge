@@ -57,6 +57,14 @@ export default function MessagesPage() {
     return () => { active = false; };
   }, [router]);
 
+  useEffect(() => {
+    if (!selected) return;
+    const channel = supabase.channel(`social-messages-${selected.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "social_messages", filter: `conversation_id=eq.${selected.id}` }, () => { void loadMessages(selected); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [selected?.id, me]);
+
   async function findPeople(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const term = search.trim().replace(/[^a-zA-Z0-9_ ]/g,"");
