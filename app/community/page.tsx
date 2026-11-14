@@ -10,6 +10,7 @@ type Member = { user_id: string; member_id: string; handle: string; display_name
 type Follow = { follower_id: string; following_id: string };
 type FriendRequest = { id: string; requester_id: string; recipient_id: string; status: "pending" | "accepted" | "declined" };
 type Post = { id: string; author_id: string; body: string; created_at: string };
+type PostComment = { id: string; post_id: string; author_id: string; body: string; created_at: string };
 type Tab = "feed" | "discover" | "friends" | "profile";
 
 const panel: React.CSSProperties = { background: "#fff", border: "1px solid #e4eaf2", borderRadius: 16, padding: 18, boxShadow: "0 4px 18px #172b4d08" };
@@ -25,6 +26,8 @@ export default function CommunityPage() {
   const [follows, setFollows] = useState<Follow[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [comments, setComments] = useState<PostComment[]>([]);
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [likes, setLikes] = useState<string[]>([]);
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [tab, setTab] = useState<Tab>("feed");
@@ -37,12 +40,13 @@ export default function CommunityPage() {
 
   const load = useCallback(async (uid: string) => {
     setError("");
-    const [profileResult, memberResult, followResult, requestResult, postResult, allLikeResult, likeResult] = await Promise.all([
+    const [profileResult, memberResult, followResult, requestResult, postResult, commentResult, allLikeResult, likeResult] = await Promise.all([
       supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url").eq("user_id", uid).maybeSingle(),
       supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url").order("created_at", { ascending: false }).limit(500),
       supabase.from("eazreal_follows").select("follower_id,following_id").or(`follower_id.eq.${uid},following_id.eq.${uid}`),
       supabase.from("eazreal_friend_requests").select("id,requester_id,recipient_id,status").or(`requester_id.eq.${uid},recipient_id.eq.${uid}`),
       supabase.from("eazreal_posts").select("id,author_id,body,created_at").order("created_at", { ascending: false }).limit(60),
+      supabase.from("eazreal_post_comments").select("id,post_id,author_id,body,created_at").order("created_at", { ascending: true }).limit(500),
       supabase.from("eazreal_post_likes").select("post_id"),
       supabase.from("eazreal_post_likes").select("post_id").eq("user_id", uid),
     ]);
@@ -51,6 +55,7 @@ export default function CommunityPage() {
     if (followResult.error) throw followResult.error;
     if (requestResult.error) throw requestResult.error;
     if (postResult.error) throw postResult.error;
+    if (commentResult.error) throw commentResult.error;
     if (allLikeResult.error) throw allLikeResult.error;
     if (likeResult.error) throw likeResult.error;
     setMe(profileResult.data as Member);
@@ -58,6 +63,7 @@ export default function CommunityPage() {
     setFollows((followResult.data || []) as Follow[]);
     setRequests((requestResult.data || []) as FriendRequest[]);
     setPosts((postResult.data || []) as Post[]);
+    setComments((commentResult.data || []) as PostComment[]);
     setLikes((likeResult.data || []).map((x: { post_id: string }) => x.post_id));
     setLikeCounts((allLikeResult.data || []).reduce((acc: Record<string, number>, x: { post_id: string }) => { acc[x.post_id] = (acc[x.post_id] || 0) + 1; return acc; }, {}));
   }, []);
@@ -137,6 +143,21 @@ export default function CommunityPage() {
     finally { setBusy(false); }
   }
 
+  async function publishComment(event: FormEvent<HTMLFormElement>, post: Post) {
+    event.preventDefault();
+    if (!user || !commentDrafts[post.id]?.trim() || busy) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const { data, error: e } = await supabase.from("eazreal_post_comments")
+        .insert({ post_id: post.id, author_id: user.id, body: commentDrafts[post.id].trim() })
+        .select("id,post_id,author_id,body,created_at").single();
+      if (e) throw e;
+      setComments(old => [...old, data as PostComment]);
+      setCommentDrafts(old => ({ ...old, [post.id]: "" }));
+    } catch (e) { setError(e instanceof Error ? e.message : "Your comment could not be published."); }
+    finally { setBusy(false); }
+  }
+
   async function toggleLike(post: Post) {
     if (!user) return; setBusy(true); setError("");
     try {
@@ -210,7 +231,11 @@ export default function CommunityPage() {
               <div><strong>{author?.display_name || "EAZREAL member"}</strong><div style={{ color: "#718096", fontSize: 12 }}>@{author?.handle || "member"} · {new Date(post.created_at).toLocaleString()}</div></div>
             </div>
             <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.65, overflowWrap: "anywhere" }}>{post.body}</p>
-            <button onClick={() => toggleLike(post)} disabled={busy} style={lightButton}>{likes.includes(post.id) ? "♥ Liked" : "♡ Like"} · {likeCounts[post.id] || 0}</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, paddingBottom: 12, borderBottom: "1px solid #edf1f6" }}><button onClick={() => toggleLike(post)} disabled={busy} style={lightButton}>{likes.includes(post.id) ? "♥ Liked" : "♡ Like"} · {likeCounts[post.id] || 0}</button><small style={{ color: "#718096" }}>{comments.filter(comment => comment.post_id === post.id).length} comments</small></div>
+            <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+              {comments.filter(comment => comment.post_id === post.id).map(comment => { const commenter = memberMap.get(comment.author_id); return <div key={comment.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}><div style={{ width: 30, height: 30, flex: "0 0 30px", borderRadius: "50%", display: "grid", placeItems: "center", background: "#e4efff", color: "#0753c6", fontWeight: 800, fontSize: 12 }}>{commenter?.display_name.slice(0,1).toUpperCase() || "E"}</div><div style={{ background: "#f3f6fb", borderRadius: 14, padding: "8px 12px", minWidth: 0, flex: 1 }}><strong style={{ fontSize: 13 }}>{commenter?.display_name || "EAZREAL member"}</strong><p style={{ margin: "3px 0 0", whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: 14 }}>{comment.body}</p></div></div>; })}
+              <form onSubmit={event => publishComment(event, post)} style={{ display: "flex", gap: 8, alignItems: "center" }}><input aria-label="Write a comment" value={commentDrafts[post.id] || ""} onChange={event => setCommentDrafts(old => ({ ...old, [post.id]: event.target.value.slice(0, 1000) }))} placeholder="Write a comment…" style={{ ...field, borderRadius: 999, padding: "10px 14px" }} /><button disabled={busy || !commentDrafts[post.id]?.trim()} style={{ ...button, whiteSpace: "nowrap" }}>Comment</button></form>
+            </div>
           </article>; })}
         </>}
 
