@@ -24,7 +24,7 @@ export default function BusinessRegisterPage() {
     try {
       const { data, error: signupError } = await supabase.auth.signUp({
         email: cleanEmail, password,
-        options: { data: { full_name: cleanName, business_name: cleanName } },
+        options: { data: { full_name: cleanName, business_name: cleanName }, emailRedirectTo: `${window.location.origin}/business/login?confirmed=1` },
       });
       if (signupError) throw signupError;
       if (data.session) { router.replace("/business/workspace"); router.refresh(); }
@@ -54,7 +54,7 @@ export default function BusinessRegisterPage() {
     if (busy) return;
     setBusy(true); setError(""); setNotice("");
     try {
-      const { error: resendError } = await supabase.auth.resend({ type: "signup", email: email.trim().toLowerCase() });
+      const { error: resendError } = await supabase.auth.resend({ type: "signup", email: email.trim().toLowerCase(), options: { emailRedirectTo: `${window.location.origin}/business/login?confirmed=1` } });
       if (resendError) throw resendError;
       setCode(""); setNotice("A new confirmation code was requested. Check your inbox.");
     } catch (e) {
