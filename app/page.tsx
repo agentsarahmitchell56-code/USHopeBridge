@@ -3,7 +3,9 @@ import Link from "next/link";
 const features = [
   { icon: "✦", title: "Share your life", text: "Publish updates, photos and videos, and let your friends follow what matters to you." },
   { icon: "◎", title: "Find your people", text: "Discover people, send friend requests, follow creators and build your community." },
-  { icon: "▤", title: "Stay connected", text: "Keep conversations, notifications and your social activity together." },
+  { icon: "▤", title: "Stay connected", text: "Keep private messages, notifications and saved posts together." },
+  { icon: "◉", title: "Stories and Reels", text: "Share short-lived moments and discover video posts from the community." },
+  { icon: "♧", title: "Join communities", text: "Find public and private groups built around shared interests." },
   { icon: "▣", title: "Build a business presence", text: "Create a public business page, publish updates and chat with customers." },
 ];
 
@@ -38,8 +40,8 @@ export default function HomePage() {
           <div className="card eaz-social-preview">
             <div className="eaz-preview-top"><span className="eaz-preview-logo">E</span><div><strong>Your social feed</strong><small>Friends · Creators · Communities</small></div><span className="eaz-online" /></div>
             <div className="eaz-preview-post">
-              <div className="eaz-preview-person"><span className="eaz-avatar">A</span><div><strong>Alex Morgan</strong><small>Just now · Public</small></div></div>
-              <p>Good moments are even better when you share them. ✨</p>
+              <div className="eaz-preview-person"><span className="eaz-avatar">A</span><div><strong>EAZREAL member</strong><small>Illustrative preview · Public</small></div></div>
+              <p>A place to share moments, discover new interests and connect with your people. ✨</p>
               <div className="eaz-preview-photo"><span>YOUR MOMENTS, SHARED</span></div>
               <div className="eaz-preview-actions"><span>♡ Like</span><span>◯ Comment</span><span>↗ Share</span></div>
             </div>
