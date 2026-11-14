@@ -15,6 +15,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     let active = true;
+    let channel: ReturnType<typeof supabase.channel> | undefined;
     (async () => {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) { router.replace("/account/login?next=/notifications"); return; }
@@ -27,9 +28,18 @@ export default function NotificationsPage() {
         const { data: profiles } = await supabase.from("user_profiles").select("id,display_name,username").in("id", ids);
         if (active) setActors(Object.fromEntries((profiles || []).map((p: { id: string; display_name: string; username: string }) => [p.id, p])));
       }
+      channel = supabase.channel(`social-notifications-${auth.user.id}`)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "social_notifications", filter: `recipient_id=eq.${auth.user.id}` }, async payload => {
+          const incoming = payload.new as Notice;
+          setItems(current => [incoming, ...current.filter(item => item.id !== incoming.id)].slice(0, 50));
+          if (incoming.actor_id) {
+            const { data: actor } = await supabase.from("user_profiles").select("id,display_name,username").eq("id", incoming.actor_id).maybeSingle();
+            if (actor) setActors(current => ({ ...current, [incoming.actor_id as string]: actor }));
+          }
+        }).subscribe();
       setLoading(false);
     })();
-    return () => { active = false; };
+    return () => { active = false; if (channel) void supabase.removeChannel(channel); };
   }, [router]);
 
   async function markRead(item: Notice) {
