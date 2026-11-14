@@ -77,6 +77,13 @@ export default function PublicProfilePage() {
     else { setBlocked(true); setPosts([]); setNotice("This account is now blocked. Its posts are hidden from this view."); }
   }
 
+  async function unblockUser() {
+    if (!person || !me) return;
+    const { error } = await supabase.from("social_user_blocks").delete().eq("blocker_id", me).eq("blocked_id", person.id);
+    if (error) setNotice(error.message);
+    else { setBlocked(false); setNotice("This account has been unblocked."); }
+  }
+
   async function addFriend() {
     if (!person) return;
     if (!me) { router.push("/account/login"); return; }
@@ -95,7 +102,7 @@ export default function PublicProfilePage() {
     <div className="eaz-public-profile">
       <div className="eaz-public-cover" style={coverUrl?{backgroundImage:`url(${coverUrl})`}:undefined}>{avatarUrl?<img className="eaz-public-avatar-img" src={avatarUrl} alt="Profile photo"/>:<span className="eaz-public-avatar">{person.display_name?.[0]||"E"}</span>}</div>
       <section className="card eaz-public-profile-info"><div><h1>{person.display_name}</h1><p>@{person.username}</p><p>{person.bio}</p><div className="eaz-public-counts"><span><strong>{followers}</strong> followers</span><span><strong>{following}</strong> following</span><span><strong>{posts.length}</strong> posts</span></div></div>
-        {me && me!==person.id && <div className="eaz-public-actions"><button className="btn primary" onClick={follow} disabled={isFollowing || blocked}>{isFollowing?"Following":"Follow"}</button><button className="btn secondary" onClick={addFriend} disabled={isFriend || blocked}> {isFriend?"Friends":"Add friend"}</button><button className="btn secondary" onClick={()=>router.push("/messages")} disabled={blocked}>Message</button><button className="btn secondary" onClick={blockUser} disabled={blocked}> {blocked?"Blocked":"Block"} </button></div>}
+        {me && me!==person.id && <div className="eaz-public-actions"><button className="btn primary" onClick={follow} disabled={isFollowing || blocked}>{isFollowing?"Following":"Follow"}</button><button className="btn secondary" onClick={addFriend} disabled={isFriend || blocked}> {isFriend?"Friends":"Add friend"}</button><button className="btn secondary" onClick={()=>router.push("/messages")} disabled={blocked}>Message</button><button className="btn secondary" onClick={blocked?unblockUser:blockUser}> {blocked?"Unblock":"Block"} </button></div>}
       </section>
       {notice&&<p className="eaz-social-notice">{notice}</p>}
       <h2 className="eaz-public-post-title">Posts</h2>{blocked?<p className="eaz-muted">You blocked this account. Posts are hidden.</p>:null}
