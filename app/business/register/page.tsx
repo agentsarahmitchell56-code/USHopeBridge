@@ -62,7 +62,7 @@ export default function BusinessRegisterPage() {
     } finally { setBusy(false); }
   }
 
-  return <main style={shell}><section style={card}>
+  return <main className="auth-page"><section className="auth-card">
     <Link href="/" style={brand}>EAZREAL <small>BUSINESS ACCOUNT</small></Link>
     <h1 style={{ margin: "28px 0 8px", color: "#15395f" }}>{step === "register" ? "Create your business workspace" : "Confirm your email address"}</h1>
     <p style={muted}>{step === "register" ? "Set up an independent public profile for your business. Your workspace and media stay separate from other businesses." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
