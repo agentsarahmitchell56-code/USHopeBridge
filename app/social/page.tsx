@@ -132,6 +132,8 @@ export default function SocialFeedPage() {
         <Link href="/friends">♧ <span>Friends</span></Link>
         <Link href="/messages">✉ <span>Messages</span></Link>
         <Link href="/reels">▶ <span>Reels</span></Link>
+        <Link href="/stories">◉ <span>Stories</span></Link>
+        <Link href="/communities">♧ <span>Communities</span></Link>
         <Link href="/profile">◉ <span>My Profile</span></Link>
         <Link href="/business/workspace">▣ <span>Business Pages</span></Link>
         <Link href="/apply">♡ <span>HOPEBRIDGE Assistance</span></Link>
