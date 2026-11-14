@@ -10,8 +10,8 @@ export default function PostPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [userId, setUserId] = useState("");
-  const [post, setPost] = useState<any>(null);
-  const [author, setAuthor] = useState<any>(null);
+  const [post, setPost] = useState<{ id: string; author_id: string; body: string; created_at: string } | null>(null);
+  const [author, setAuthor] = useState<{ display_name: string; username: string; avatar_url: string | null } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentProfiles, setCommentProfiles] = useState<Record<string, any>>({});
   const [body, setBody] = useState("");
@@ -33,7 +33,7 @@ export default function PostPage() {
     const ids = [...new Set(rows.map(c => c.author_id))];
     if (ids.length) {
       const { data: profiles } = await supabase.from("user_profiles").select("id,display_name,username").in("id", ids);
-      setCommentProfiles(Object.fromEntries((profiles || []).map((p: any) => [p.id,p])));
+      setCommentProfiles(Object.fromEntries((profiles || []).map((p: { id: string; display_name: string; username: string }) => [p.id,p])));
     }
   }
 
