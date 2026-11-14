@@ -98,8 +98,8 @@ export default function JoinPage() {
         <label style={label}>Email address<input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} style={input} /></label>
         <label style={label}>Password<input required type="password" minLength={8} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} style={input} /><small style={muted}>At least 8 characters.</small></label>
       </> : <>
-        <label style={label}>6-digit confirmation code
-          <input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} style={{ ...input, letterSpacing: ".3em", textAlign: "center", fontSize: 22 }} />
+        <label style={label}>8-digit confirmation code
+          <input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{8}" minLength={8} maxLength={8} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))} style={{ ...input, letterSpacing: ".3em", textAlign: "center", fontSize: 22 }} />
         </label>
       </>}
       {error && <p role="alert" style={alert}>{error}</p>}
