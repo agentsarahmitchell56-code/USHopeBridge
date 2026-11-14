@@ -7,7 +7,7 @@ import { supabase } from "../../lib/supabase";
 
 type Person = { id: string; username: string; display_name: string; avatar_url: string | null };
 type Conversation = { id: string; user_one: string; user_two: string; updated_at: string };
-type Message = { id: string; conversation_id: string; sender_id: string; body: string; created_at: string };
+type Message = { id: string; conversation_id: string; sender_id: string; body: string; created_at: string; media_path: string | null; media_type: string | null; media_url?: string };
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -19,6 +19,7 @@ export default function MessagesPage() {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Person[]>([]);
   const [draft, setDraft] = useState("");
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -35,7 +36,7 @@ export default function MessagesPage() {
   }
 
   async function loadMessages(conversation: Conversation) {
-    const { data, error } = await supabase.from("social_messages").select("id,conversation_id,sender_id,body,created_at").eq("conversation_id", conversation.id).order("created_at", { ascending: true }).limit(100);
+    const { data, error } = await supabase.from("social_messages").select("id,conversation_id,sender_id,body,created_at,media_path,media_type").eq("conversation_id", conversation.id).order("created_at", { ascending: true }).limit(100);
     if (error) setNotice(error.message);
     else setMessages((data || []) as Message[]);
   }
@@ -80,7 +81,7 @@ export default function MessagesPage() {
 
   async function sendMessage(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!selected || !draft.trim() || busy) return;
+    if (!selected || (!draft.trim() && !mediaFile) || busy) return;
     setBusy(true); setNotice("");
     const { error } = await supabase.from("social_messages").insert({ conversation_id:selected.id,sender_id:me,body:draft.trim() });
     if (error) setNotice(error.message);
@@ -112,8 +113,8 @@ export default function MessagesPage() {
       <section className="card eaz-message-window">
         {selected ? <>
           <header className="eaz-message-heading"><span className="eaz-social-avatar">{other?.display_name?.[0]||"E"}</span><div><strong>{other?.display_name||"EAZREAL member"}</strong><small>@{other?.username||"member"}</small></div></header>
-          <div className="eaz-message-list">{messages.map(m=><div className={`eaz-dm-bubble ${m.sender_id===me?"mine":""}`} key={m.id}><p>{m.body}</p><small>{new Date(m.created_at).toLocaleString()}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}</div>
-          <form className="eaz-dm-composer" onSubmit={sendMessage}><input value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Write a message…" maxLength={5000}/><button className="btn primary" disabled={!draft.trim()||busy}>Send</button></form>
+          <div className="eaz-message-list">{messages.map(m=><div className={`eaz-dm-bubble ${m.sender_id===me?"mine":""}`} key={m.id}>{m.body&&<p>{m.body}</p>}{m.media_url&&(m.media_type==="video"?<video className="eaz-dm-media" src={m.media_url} controls playsInline/>:<img className="eaz-dm-media" src={m.media_url} alt="Message attachment"/>)}<small>{new Date(m.created_at).toLocaleString()}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}</div>
+          <form className="eaz-dm-composer" onSubmit={sendMessage}><label className="eaz-dm-attach">＋<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={e=>setMediaFile(e.target.files?.[0]||null)}/></label><input value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Write a message…" maxLength={5000}/><button className="btn primary" disabled={(!draft.trim()&&!mediaFile)||busy}>Send</button></form>
         </> : <div className="eaz-message-empty"><span>✉</span><h2>Your messages</h2><p>Choose a conversation or search for a person to start chatting privately.</p></div>}
         {notice&&<p className="eaz-social-notice">{notice}</p>}
       </section>
