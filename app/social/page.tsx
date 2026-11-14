@@ -7,7 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
 type Profile = { id: string; username: string; display_name: string; avatar_url: string | null; bio?: string };
-type FeedPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string; profile?: Profile; likes: number; liked: boolean };
+type RawPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string };\ntype LikeRow = { post_id: string; user_id: string };\ntype FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean };
 
 export default function SocialFeedPage() {
   const router = useRouter();
@@ -25,8 +25,8 @@ export default function SocialFeedPage() {
     setProfile(profileData as Profile | null);
     const { data: postData, error: postError } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,visibility,created_at").order("created_at", { ascending: false }).limit(40);
     if (postError) throw postError;
-    const rows = postData || [];
-    const ids = [...new Set(rows.map((p: any) => p.author_id))];
+    const rows = (postData || []) as RawPost[];
+    const ids = [...new Set(rows.map(p => p.author_id))];
     const [{ data: profiles }, { data: likes }] = await Promise.all([
       ids.length ? supabase.from("user_profiles").select("id,username,display_name,avatar_url").in("id", ids) : Promise.resolve({ data: [] as any[] }),
       rows.length ? supabase.from("social_post_likes").select("post_id,user_id").in("post_id", rows.map((p: any) => p.id)) : Promise.resolve({ data: [] as any[] }),
@@ -36,8 +36,8 @@ export default function SocialFeedPage() {
     setPosts(rows.map((p: any) => ({
       ...p,
       profile: profileMap.get(p.author_id),
-      likes: likeRows.filter((l: any) => l.post_id === p.id).length,
-      liked: likeRows.some((l: any) => l.post_id === p.id && l.user_id === currentUser.id),
+      likes: likeRows.filter(l => l.post_id === p.id).length,
+      liked: likeRows.some(l => l.post_id === p.id && l.user_id === currentUser.id),
     })));
   }, []);
 
