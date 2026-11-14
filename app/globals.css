@@ -1879,3 +1879,77 @@ body { color:var(--hb-ink); background:var(--hb-page); }
   .platform-final-cta { padding: 23px; }
   .platform-final-cta h2 { font-size: 22px; }
 }
+
+
+
+/* EAZREAL social-style authentication screens */
+.auth-page {
+  min-height: calc(100vh - 76px) !important;
+  padding: 56px clamp(20px, 6vw, 8%) !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 440px) !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: clamp(36px, 7vw, 100px) !important;
+  background: #f0f2f5 !important;
+}
+.auth-page::before {
+  content: "EAZREAL\\A\\AConnect with people.\\A Discover businesses.\\A Share what matters.";
+  white-space: pre-wrap;
+  display: block;
+  max-width: 560px;
+  color: #0866ff;
+  font-size: clamp(36px, 5vw, 58px);
+  line-height: 1.08;
+  letter-spacing: -.055em;
+  font-weight: 800;
+}
+.auth-card {
+  width: 100% !important;
+  max-width: 440px !important;
+  padding: 26px !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  border: 1px solid #e4e6eb !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.12) !important;
+}
+.auth-card h1 { color: #1c1e21 !important; font-size: 25px !important; letter-spacing: -.03em; }
+.auth-card p { color: #65676b; }
+.auth-card label { color: #344054; font-size: 14px; }
+.auth-card input {
+  min-height: 50px;
+  border: 1px solid #ccd0d5 !important;
+  border-radius: 7px !important;
+  background: #f5f6f7 !important;
+  color: #1c1e21;
+  padding: 13px 15px !important;
+}
+.auth-card input:focus { outline: none; border-color: #0866ff !important; background: #fff !important; box-shadow: 0 0 0 2px rgba(8,102,255,.14); }
+.auth-card .btn.primary, .auth-card button.primary {
+  min-height: 48px;
+  width: 100%;
+  border-radius: 7px;
+  background: #0866ff;
+  font-size: 17px;
+  font-weight: 750;
+}
+.auth-card .btn.secondary { width: 100%; border-radius: 7px; min-height: 44px; }
+.auth-card a { color: #0866ff; font-weight: 650; }
+.auth-card > a:first-child { display: inline-block; color: #0866ff; font-size: 23px; font-weight: 900; letter-spacing: -.04em; }
+.auth-card > a:first-child small { display: block; color: #65676b; font-size: 10px; letter-spacing: .12em; }
+.auth-card form { gap: 13px !important; }
+@media (max-width: 760px) {
+  .auth-page {
+    min-height: calc(100dvh - 60px) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 18px !important;
+    padding: 28px 16px 40px !important;
+  }
+  .auth-page::before {
+    text-align: center;
+    font-size: 34px;
+    max-width: 100%;
+    line-height: 1.02;
+  }
+  .auth-card { max-width: 460px !important; justify-self: center; padding: 22px !important; }
+}
