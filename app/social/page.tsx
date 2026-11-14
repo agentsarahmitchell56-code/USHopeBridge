@@ -7,14 +7,17 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
 type Profile = { id: string; username: string; display_name: string; avatar_url: string | null; bio?: string };
-type RawPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string };\ntype LikeRow = { post_id: string; user_id: string };\ntype FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean; media_url?: string };
+type RawPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string };
+type LikeRow = { post_id: string; user_id: string };
+type FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean; media_url?: string };
 
 export default function SocialFeedPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [draft, setDraft] = useState("");\n  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [draft, setDraft] = useState("");
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [visibility, setVisibility] = useState("public");
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
@@ -99,7 +102,8 @@ export default function SocialFeedPage() {
       <aside className="eaz-social-sidebar">
         <div className="eaz-social-me"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><div><strong>{profile?.display_name || user?.email}</strong><small>@{profile?.username || "member"}</small></div></div>
         <Link className="eaz-social-side-active" href="/social">⌂ <span>News Feed</span></Link>
-        <Link href="/friends">♧ <span>Friends</span></Link>\n        <Link href="/messages">✉ <span>Messages</span></Link>
+        <Link href="/friends">♧ <span>Friends</span></Link>
+        <Link href="/messages">✉ <span>Messages</span></Link>
         <Link href="/profile">◉ <span>My Profile</span></Link>
         <Link href="/business/workspace">▣ <span>Business Pages</span></Link>
         <Link href="/apply">♡ <span>HOPEBRIDGE Assistance</span></Link>
