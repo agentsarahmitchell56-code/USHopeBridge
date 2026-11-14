@@ -9,7 +9,7 @@ import { supabase } from "../../lib/supabase";
 type Profile = { id: string; username: string; display_name: string; avatar_url: string | null; bio?: string };
 type RawPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string };
 type LikeRow = { post_id: string; user_id: string };
-type FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean; media_url?: string };
+type FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean; saved: boolean; media_url?: string };
 
 export default function SocialFeedPage() {
   const router = useRouter();
@@ -30,12 +30,14 @@ export default function SocialFeedPage() {
     if (postError) throw postError;
     const rows = (postData || []) as RawPost[];
     const ids = [...new Set(rows.map(post => post.author_id))];
-    const [profileResult, likeResult] = await Promise.all([
+    const [profileResult, likeResult, savedResult] = await Promise.all([
       ids.length ? supabase.from("user_profiles").select("id,username,display_name,avatar_url").in("id", ids) : Promise.resolve({ data: [] as Profile[] }),
       rows.length ? supabase.from("social_post_likes").select("post_id,user_id").in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as LikeRow[] }),
+      rows.length ? supabase.from("social_saved_posts").select("post_id").eq("user_id", currentUser.id).in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as Array<{post_id:string}> }),
     ]);
     const profileRows = (profileResult.data || []) as Profile[];
     const likeRows = (likeResult.data || []) as LikeRow[];
+    const savedIds = new Set((savedResult.data || []).map(item => item.post_id));
     const profileMap = new Map<string, Profile>(profileRows.map(item => [item.id, item]));
     const mapped = await Promise.all(rows.map(async post => {
       const signed = post.media_path ? await supabase.storage.from("social-media").createSignedUrl(post.media_path, 3600) : null;
@@ -44,6 +46,7 @@ export default function SocialFeedPage() {
         profile: profileMap.get(post.author_id),
         likes: likeRows.filter(item => item.post_id === post.id).length,
         liked: likeRows.some(item => item.post_id === post.id && item.user_id === currentUser.id),
+        saved: savedIds.has(post.id),
         media_url: signed?.data?.signedUrl,
       };
     }));
@@ -96,6 +99,16 @@ export default function SocialFeedPage() {
     setPublishing(false);
   }
 
+  async function toggleSave(post: FeedPost) {
+    if (!user) return;
+    const wasSaved = post.saved;
+    setPosts(current => current.map(item => item.id === post.id ? { ...item, saved: !wasSaved } : item));
+    const result = wasSaved
+      ? await supabase.from("social_saved_posts").delete().eq("post_id", post.id).eq("user_id", user.id)
+      : await supabase.from("social_saved_posts").insert({ post_id: post.id, user_id: user.id });
+    if (result.error) { setError(result.error.message); await loadFeed(user); }
+  }
+
   async function toggleLike(post: FeedPost) {
     if (!user) return;
     const wasLiked = post.liked;
@@ -132,6 +145,7 @@ export default function SocialFeedPage() {
         <Link href="/friends">♧ <span>Friends</span></Link>
         <Link href="/messages">✉ <span>Messages</span></Link>
         <Link href="/reels">▶ <span>Reels</span></Link>
+        <Link href="/saved">▣ <span>Saved posts</span></Link>
         <Link href="/stories">◉ <span>Stories</span></Link>
         <Link href="/communities">♧ <span>Communities</span></Link>
         <Link href="/profile">◉ <span>My Profile</span></Link>
@@ -160,7 +174,7 @@ export default function SocialFeedPage() {
           {post.body && <p className="eaz-post-body">{post.body}</p>}
           {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
           <div className="eaz-post-stats"><span>{post.likes} likes</span></div>
-          <div className="eaz-post-actions"><button onClick={() => toggleLike(post)} aria-pressed={post.liked}>{post.liked ? "♥ Liked" : "♡ Like"}</button><button onClick={() => router.push(`/post/${post.id}`)}>◯ Comment</button><button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/post/${post.id}`)}>↗ Copy link</button></div>
+          <div className="eaz-post-actions"><button onClick={() => toggleLike(post)} aria-pressed={post.liked}>{post.liked ? "♥ Liked" : "♡ Like"}</button><button onClick={() => router.push(`/post/${post.id}`)}>◯ Comment</button><button onClick={() => toggleSave(post)}>{post.saved ? "▣ Saved" : "▢ Save"}</button><button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/post/${post.id}`)}>↗ Copy link</button></div>
         </article>)}
       </section>
       <aside className="eaz-social-right">
