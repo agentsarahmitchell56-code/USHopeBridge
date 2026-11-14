@@ -25,7 +25,7 @@ export default function BusinessRegisterPage() {
       const { data, error: signupError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
-        options: { data: { full_name: cleanName, business_name: cleanName } },
+        options: { data: { full_name: cleanName, business_name: cleanName }, emailRedirectTo: `${window.location.origin}/business/workspace` },
       });
       if (signupError) throw signupError;
       if (data.session) {
