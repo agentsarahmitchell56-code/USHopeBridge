@@ -124,7 +124,7 @@ export default function CommunityPage() {
   async function respondToRequest(request: FriendRequest, status: "accepted" | "declined") {
     setBusy(true); setError(""); setNotice("");
     try {
-      const { error: e } = await supabase.from("eazreal_friend_requests").update({ status, updated_at: new Date().toISOString() }).eq("id", request.id);
+      const { error: e } = await supabase.from("eazreal_friend_requests").update({ status }).eq("id", request.id);
       if (e) throw e;
       setRequests(old => old.map(r => r.id === request.id ? { ...r, status } : r));
       setNotice(status === "accepted" ? "Friend request accepted." : "Friend request declined.");
