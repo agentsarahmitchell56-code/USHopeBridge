@@ -49,7 +49,7 @@ export default function BusinessRegisterPage() {
       const { error: verifyError } = await supabase.auth.verifyOtp({
         email: email.trim().toLowerCase(),
         token: code.trim(),
-        type: "email",
+        type: "signup",
       });
       if (verifyError) throw verifyError;
       router.replace("/business/workspace");
