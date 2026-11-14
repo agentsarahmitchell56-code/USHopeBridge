@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
-type Member = { user_id: string; member_id: string; handle: string; display_name: string; bio: string; avatar_url: string | null };
+type Member = { user_id: string; member_id: string; handle: string; display_name: string; bio: string; avatar_url: string | null; cover_url: string | null };
 type Follow = { follower_id: string; following_id: string };
 type FriendRequest = { id: string; requester_id: string; recipient_id: string; status: "pending" | "accepted" | "declined" };
 type Post = { id: string; author_id: string; body: string; media_path: string | null; media_url: string | null; media_type: "image" | "video" | null; created_at: string };
@@ -34,6 +34,8 @@ export default function CommunityPage() {
   const [search, setSearch] = useState("");
   const [postBody, setPostBody] = useState("");
   const [postMedia, setPostMedia] = useState<File | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
@@ -42,7 +44,7 @@ export default function CommunityPage() {
   const load = useCallback(async (uid: string) => {
     setError("");
     const [profileResult, memberResult, followResult, requestResult, postResult, commentResult, allLikeResult, likeResult] = await Promise.all([
-      supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url").eq("user_id", uid).maybeSingle(),
+      supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url,cover_url").eq("user_id", uid).maybeSingle(),
       supabase.from("eazreal_members").select("user_id,member_id,handle,display_name,bio,avatar_url").order("created_at", { ascending: false }).limit(500),
       supabase.from("eazreal_follows").select("follower_id,following_id").or(`follower_id.eq.${uid},following_id.eq.${uid}`),
       supabase.from("eazreal_friend_requests").select("id,requester_id,recipient_id,status").or(`requester_id.eq.${uid},recipient_id.eq.${uid}`),
@@ -202,6 +204,40 @@ export default function CommunityPage() {
     finally { setBusy(false); }
   }
 
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!user || !me || busy) return;
+    setBusy(true); setError(""); setNotice("");
+    const uploadedPaths: string[] = [];
+    try {
+      const updates: Record<string, string> = { display_name: me.display_name.trim(), bio: me.bio.trim() };
+      const imageTypes: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+      async function uploadProfileImage(file: File, kind: "avatar" | "cover") {
+        const ext = imageTypes[file.type];
+        if (!ext || file.size < 1 || file.size > 5 * 1024 * 1024) {
+          throw new Error("Profile and cover photos must be JPG, PNG or WebP files up to 5 MB.");
+        }
+        const path = `${user.id}/profile/${kind}-${crypto.randomUUID()}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from("eazreal-media").upload(path, file, {
+          contentType: file.type, cacheControl: "3600", upsert: false,
+        });
+        if (uploadError) throw uploadError;
+        uploadedPaths.push(path);
+        return supabase.storage.from("eazreal-media").getPublicUrl(path).data.publicUrl;
+      }
+      if (avatarFile) updates.avatar_url = await uploadProfileImage(avatarFile, "avatar");
+      if (coverFile) updates.cover_url = await uploadProfileImage(coverFile, "cover");
+      const { error: updateError } = await supabase.from("eazreal_members").update(updates).eq("user_id", user.id);
+      if (updateError) throw updateError;
+      setMe({ ...me, ...updates });
+      setAvatarFile(null); setCoverFile(null);
+      setNotice("Your profile has been updated.");
+    } catch (e) {
+      if (uploadedPaths.length) await supabase.storage.from("eazreal-media").remove(uploadedPaths);
+      setError(e instanceof Error ? e.message : "Your profile could not be saved.");
+    } finally { setBusy(false); }
+  }
+
   async function signOut() { await supabase.auth.signOut(); router.replace("/"); router.refresh(); }
 
   if (loading) return <main style={{ padding: 50, textAlign: "center" }}>Opening your EAZREAL community…</main>;
@@ -224,8 +260,11 @@ export default function CommunityPage() {
     <div className="eazreal-community-layout" style={{ maxWidth: 1180, margin: "24px auto", padding: "0 16px", display: "grid", gridTemplateColumns: "minmax(210px, 260px) minmax(0, 1fr) minmax(210px, 260px)", gap: 18, alignItems: "start" }}>
       <aside style={{ display: "grid", gap: 14 }}>
         <section style={panel}>
+          <div style={{ height: 92, borderRadius: 12, overflow: "hidden", background: "linear-gradient(120deg,#174b88,#3b82f6)", marginBottom: 14 }}>
+            {me.cover_url && <img src={me.cover_url} alt="Your cover photo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+          </div>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <div style={{ width: 52, height: 52, borderRadius: "50%", display: "grid", placeItems: "center", background: "#dbeafe", color: "#0753c6", fontWeight: 900, fontSize: 20 }}>{me.display_name.slice(0,1).toUpperCase()}</div>
+            {me.avatar_url ? <img src={me.avatar_url} alt="" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover" }} /> : <div style={{ width: 52, height: 52, borderRadius: "50%", display: "grid", placeItems: "center", background: "#dbeafe", color: "#0753c6", fontWeight: 900, fontSize: 20 }}>{me.display_name.slice(0,1).toUpperCase()}</div>}
             <div><strong>{me.display_name}</strong><div style={{ color: "#718096", fontSize: 13 }}>@{me.handle}</div></div>
           </div>
           <p style={{ color: "#718096", fontSize: 12, marginBottom: 6 }}>YOUR EAZREAL ID</p><strong style={{ color: "#1264eb", letterSpacing: ".05em" }}>{me.member_id}</strong>
@@ -260,7 +299,7 @@ export default function CommunityPage() {
           {posts.length === 0 && <section style={panel}><strong>Your community feed starts here.</strong><p style={{ color: "#718096", marginBottom: 0 }}>Publish your first post or explore members to start connecting.</p></section>}
           {posts.map(post => { const author = memberMap.get(post.author_id); return <article key={post.id} style={panel}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 42, height: 42, borderRadius: "50%", display: "grid", placeItems: "center", background: "#e4efff", color: "#0753c6", fontWeight: 900 }}>{author?.display_name.slice(0,1).toUpperCase() || "E"}</div>
+              {author?.avatar_url ? <img src={author.avatar_url} alt="" style={{ width: 42, height: 42, borderRadius: "50%", objectFit: "cover" }} /> : <div style={{ width: 42, height: 42, borderRadius: "50%", display: "grid", placeItems: "center", background: "#e4efff", color: "#0753c6", fontWeight: 900 }}>{author?.display_name.slice(0,1).toUpperCase() || "E"}</div>}
               <div><strong>{author?.display_name || "EAZREAL member"}</strong><div style={{ color: "#718096", fontSize: 12 }}>@{author?.handle || "member"} · {new Date(post.created_at).toLocaleString()}</div></div>
             </div>
             {post.body && <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.65, overflowWrap: "anywhere" }}>{post.body}</p>}
@@ -294,9 +333,13 @@ export default function CommunityPage() {
 
         {tab === "profile" && <section style={panel}>
           <h1 style={{ marginTop: 0 }}>Your member profile</h1><p style={{ color: "#718096" }}>Your public EAZREAL identity.</p>
-          <form onSubmit={async e => { e.preventDefault(); if (!me) return; setBusy(true); const { error: e2 } = await supabase.from("eazreal_members").update({ display_name: me.display_name, bio: me.bio }).eq("user_id", user?.id); setBusy(false); if (e2) setError(e2.message); else setNotice("Profile updated."); }}>
+          <form onSubmit={saveProfile}>
             <label style={{ display: "grid", gap: 7, marginBottom: 14 }}>Display name<input value={me.display_name} onChange={e => setMe({ ...me, display_name: e.target.value })} maxLength={80} style={field} /></label>
             <label style={{ display: "grid", gap: 7, marginBottom: 14 }}>Bio<textarea value={me.bio} onChange={e => setMe({ ...me, bio: e.target.value })} maxLength={300} style={{ ...field, minHeight: 90 }} /></label>
+            <label style={{ display: "grid", gap: 7, marginBottom: 14 }}>Profile photo (JPG, PNG or WebP, up to 5 MB)<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setAvatarFile(e.target.files?.[0] || null)} /></label>
+            {avatarFile && <small style={{ color: "#52657c" }}>Selected: {avatarFile.name}</small>}
+            <label style={{ display: "grid", gap: 7, marginBottom: 14 }}>Cover photo (JPG, PNG or WebP, up to 5 MB)<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setCoverFile(e.target.files?.[0] || null)} /></label>
+            {coverFile && <small style={{ color: "#52657c" }}>Selected: {coverFile.name}</small>}
             <div style={{ padding: 14, background: "#f2f6fc", borderRadius: 12, marginBottom: 14 }}><small style={{ color: "#718096" }}>YOUR UNIQUE EAZREAL ID</small><h2 style={{ margin: "4px 0", color: "#1264eb" }}>{me.member_id}</h2><small>@{me.handle}</small></div>
             <button disabled={busy || me.display_name.trim().length < 2} style={button}>Save profile</button>
           </form>
