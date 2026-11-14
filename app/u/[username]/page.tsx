@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
-type Person = { id: string; username: string; display_name: string; bio: string; avatar_url: string | null; cover_url: string | null; avatar_path: string | null; cover_path: string | null; is_private: boolean };
+type Person = { id: string; username: string; display_name: string; bio: string; website: string | null; avatar_url: string | null; cover_url: string | null; avatar_path: string | null; cover_path: string | null; is_private: boolean; created_at?: string };
 type Post = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; created_at: string; media_url?: string };
 
 export default function PublicProfilePage() {
@@ -24,6 +24,7 @@ export default function PublicProfilePage() {
   const [blockedByThem, setBlockedByThem] = useState(false);
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("posts");
 
   useEffect(() => {
     let active = true;
@@ -31,7 +32,7 @@ export default function PublicProfilePage() {
       const { data: auth } = await supabase.auth.getUser();
       const current = auth.user?.id || "";
       if (active) setMe(current);
-      const { data: profile } = await supabase.from("user_profiles").select("id,username,display_name,bio,avatar_url,cover_url,avatar_path,cover_path,is_private").eq("username", params.username.toLowerCase()).maybeSingle();
+      const { data: profile } = await supabase.from("user_profiles").select("id,username,display_name,bio,website,avatar_url,cover_url,avatar_path,cover_path,is_private,created_at").eq("username", params.username.toLowerCase()).maybeSingle();
       if (!profile) { if (active) { setNotice("This profile could not be found."); setLoading(false); } return; }
       if (!active) return;
       setPerson(profile as Person);
@@ -108,15 +109,55 @@ export default function PublicProfilePage() {
   if (loading) return <main className="eaz-social-loading">Loading profile…</main>;
   if (!person) return <main className="eaz-social-subpage"><div className="eaz-social-subcontent"><p>{notice}</p><Link href="/friends">Find people</Link></div></main>;
 
-  return <main className="eaz-social-subpage"><header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>PROFILE</span></Link><Link href="/social">Back to News Feed</Link></header>
+  const visiblePosts = posts.filter(post => activeTab === "posts" || activeTab === "about" || (activeTab === "photos" && post.media_type === "image") || (activeTab === "videos" && post.media_type === "video"));
+
+  return <main className="eaz-social-subpage">
+    <header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>PROFILE</span></Link><nav className="eaz-profile-nav"><Link href="/social">News Feed</Link><Link href="/friends">Friends</Link><Link href="/messages">Messages</Link></nav></header>
     <div className="eaz-public-profile">
-      <div className="eaz-public-cover" style={coverUrl?{backgroundImage:`url(${coverUrl})`}:undefined}>{avatarUrl?<img className="eaz-public-avatar-img" src={avatarUrl} alt="Profile photo"/>:<span className="eaz-public-avatar">{person.display_name?.[0]||"E"}</span>}</div>
-      <section className="card eaz-public-profile-info"><div><h1>{person.display_name}</h1><p>@{person.username}</p><p>{person.bio}</p><div className="eaz-public-counts"><Link href={`/u/${person.username}/connections`}><strong>{followers}</strong> followers</Link><Link href={`/u/${person.username}/connections`}><strong>{following}</strong> following</Link><span><strong>{posts.length}</strong> posts</span></div></div>
-        {me && me!==person.id && !blockedByThem && <div className="eaz-public-actions"><button className="btn primary" onClick={follow} disabled={isFollowing || blocked}>{isFollowing?"Following":"Follow"}</button><button className="btn secondary" onClick={addFriend} disabled={isFriend || blocked}> {isFriend?"Friends":"Add friend"}</button><button className="btn secondary" onClick={()=>router.push("/messages")} disabled={blocked}>Message</button><button className="btn secondary" onClick={blocked?unblockUser:blockUser}> {blocked?"Unblock":"Block"} </button></div>}
+      <div className="eaz-public-cover" style={coverUrl ? {backgroundImage: `url(${coverUrl})`} : undefined}>
+        {avatarUrl ? <img className="eaz-public-avatar-img" src={avatarUrl} alt={`${person.display_name}'s profile photo`} /> : <span className="eaz-public-avatar">{person.display_name?.[0] || "E"}</span>}
+      </div>
+      <section className="card eaz-public-profile-info">
+        <div className="eaz-public-identity">
+          <h1>{person.display_name}</h1><p className="eaz-profile-handle">@{person.username}</p>
+          {person.bio && <p className="eaz-profile-bio">{person.bio}</p>}
+          {person.website && <p><a href={person.website} target="_blank" rel="noreferrer">{person.website.replace(/^https?:\/\//, "")}</a></p>}
+          <div className="eaz-public-counts">
+            <Link href={`/u/${person.username}/connections`}><strong>{followers}</strong> followers</Link>
+            <Link href={`/u/${person.username}/connections`}><strong>{following}</strong> following</Link>
+            <span><strong>{posts.length}</strong> posts</span>
+          </div>
+          {person.is_private && <small className="eaz-muted">🔒 Private account</small>}
+        </div>
+        <div className="eaz-public-actions">
+          {me === person.id ? <Link className="btn primary" href="/profile">Edit profile</Link> : me ? <>
+            {!blockedByThem && <button className="btn primary" onClick={follow} disabled={isFollowing || blocked}>{isFollowing ? "Following" : person.is_private ? "Request to follow" : "Follow"}</button>}
+            <button className="btn secondary" onClick={addFriend} disabled={isFriend || blocked || blockedByThem}>{isFriend ? "Friends" : "Add friend"}</button>
+            <button className="btn secondary" onClick={() => router.push(`/messages?user=${person.username}`)} disabled={blocked || blockedByThem}>Message</button>
+            {!blockedByThem && <button className="btn secondary" onClick={blocked ? unblockUser : blockUser}>{blocked ? "Unblock" : "Block"}</button>}
+          </> : <button className="btn primary" onClick={() => router.push("/account/login")}>Sign in to connect</button>}
+          <button className="btn secondary" onClick={() => { const url = window.location.href; if (navigator.share) navigator.share({title: person.display_name + " on EAZREAL", url}).catch(() => {}); else navigator.clipboard?.writeText(url).then(() => setNotice("Profile link copied.")); }}>Share profile</button>
+        </div>
       </section>
-      {blockedByThem&&<p className="eaz-social-notice">This member has blocked your account. You cannot follow, friend or message them.</p>}{notice&&<p className="eaz-social-notice">{notice}</p>}
-      <h2 className="eaz-public-post-title">Posts</h2>{blocked?<p className="eaz-muted">You blocked this account. Posts are hidden.</p>:blockedByThem?<p className="eaz-muted">This member has blocked you. Posts are hidden.</p>:null}
-      {blocked?null:posts.length===0?<p className="eaz-muted">No public posts yet.</p>:posts.map(post=><article className="card eaz-social-post" key={post.id}><p className="eaz-post-body">{post.body}</p>{post.media_url&&(post.media_type==="video"?<video className="eaz-post-media" src={post.media_url} controls playsInline/>:<img className="eaz-post-media" src={post.media_url} alt="Post attachment"/>)}<small className="eaz-muted">{new Date(post.created_at).toLocaleString()}</small></article>)}
+      {blockedByThem && <p className="eaz-social-notice">This member has blocked your account. You cannot follow, friend or message them.</p>}
+      {notice && <p className="eaz-social-notice">{notice}</p>}
+      <nav className="eaz-profile-tabs" aria-label="Profile sections">
+        <button className={activeTab === "posts" ? "active" : ""} onClick={() => setActiveTab("posts")}>Posts</button>
+        <button className={activeTab === "photos" ? "active" : ""} onClick={() => setActiveTab("photos")}>Photos</button>
+        <button className={activeTab === "videos" ? "active" : ""} onClick={() => setActiveTab("videos")}>Videos</button>
+        <button className={activeTab === "about" ? "active" : ""} onClick={() => setActiveTab("about")}>About</button>
+      </nav>
+      {activeTab === "about" ? <section className="card eaz-profile-about"><h2>About {person.display_name}</h2><p><strong>Username</strong> @{person.username}</p>{person.bio && <p><strong>Bio</strong> {person.bio}</p>}{person.website && <p><strong>Website</strong> <a href={person.website} target="_blank" rel="noreferrer">{person.website}</a></p>}<p><strong>Account type</strong> {person.is_private ? "Private" : "Public"}</p><p><strong>Member since</strong> {person.created_at ? new Date(person.created_at).toLocaleDateString() : "EAZREAL member"}</p></section> :
+        <section className="eaz-profile-timeline" id="posts">
+          <div className="eaz-profile-section-heading"><h2>{activeTab === "photos" ? "Photos" : activeTab === "videos" ? "Videos" : "Posts"}</h2>{me === person.id && <Link href="/social">Create a post</Link>}</div>
+          {blocked ? <p className="eaz-muted">You blocked this account. Posts are hidden.</p> : blockedByThem ? <p className="eaz-muted">This member has blocked you. Posts are hidden.</p> : visiblePosts.length === 0 ? <div className="card eaz-social-empty"><h3>{activeTab === "photos" ? "No photos yet" : activeTab === "videos" ? "No videos yet" : "No posts yet"}</h3><p>Updates shared by this member will appear here.</p></div> : visiblePosts.map(post => <article className="card eaz-social-post" key={post.id}>
+            <div className="eaz-post-author"><span className="eaz-social-avatar">{person.display_name?.[0] || "E"}</span><div><strong>{person.display_name}</strong><small>@{person.username} · {new Date(post.created_at).toLocaleString()}</small></div></div>
+            {post.body && <p className="eaz-post-body">{post.body}</p>}
+            {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
+            <div className="eaz-post-actions"><Link href={`/post/${post.id}`}>View post and comments</Link><button onClick={() => { const url = `${window.location.origin}/post/${post.id}`; navigator.clipboard?.writeText(url).then(() => setNotice("Post link copied.")); }}>Share</button></div>
+          </article>)}
+        </section>}
+      <section className="eaz-profile-discovery"><Link href="/stories">Stories</Link><Link href="/reels">Reels</Link><Link href="/communities">Communities</Link><Link href="/friends">Find friends</Link></section>
     </div>
   </main>;
 }
