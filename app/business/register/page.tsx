@@ -27,6 +27,12 @@ export default function BusinessRegisterPage() {
         options: { data: { full_name: cleanName, business_name: cleanName }, emailRedirectTo: `${window.location.origin}/business/login?confirmed=1` },
       });
       if (signupError) throw signupError;
+      // Supabase may return a generic success for an already-registered email.
+      // An empty identities array means no new identity was created.
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        setError("This email address already has an EAZREAL account. Please sign in instead, or use Forgot password if you cannot access it.");
+        return;
+      }
       if (data.session) { router.replace("/business/workspace"); router.refresh(); }
       else { setStep("verify"); setNotice(`A confirmation code was requested for ${cleanEmail}. Check Inbox and Spam.`); }
     } catch (e) {
