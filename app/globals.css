@@ -2144,3 +2144,92 @@ body { color:var(--hb-ink); background:var(--hb-page); }
   .auth-page { padding-left: 11px !important; padding-right: 11px !important; }
   .auth-card { padding: 21px 16px !important; }
 }
+
+/* EAZREAL social platform */
+.mobile-platform-actions{display:none;align-items:center;gap:12px;font-size:13px;font-weight:750}
+.eaz-social-hero{background:radial-gradient(circle at 78% 20%,#dcecff 0,transparent 34%),linear-gradient(135deg,#f2f7ff,#fff 58%,#edf8ff)}
+.eaz-social-preview{max-width:470px;padding:18px;border-radius:24px}
+.eaz-preview-top,.eaz-preview-person,.eaz-post-author,.eaz-social-me{display:flex;align-items:center;gap:11px}
+.eaz-preview-logo{width:40px;height:40px;border-radius:13px;background:#0866ff;color:white;display:grid;place-items:center;font-weight:900;font-size:20px}
+.eaz-preview-top strong,.eaz-preview-person strong{display:block;font-size:14px}.eaz-preview-top small,.eaz-preview-person small{display:block;color:#8290a3;font-size:11px}
+.eaz-online{margin-left:auto;width:9px;height:9px;border-radius:50%;background:#20b26b}
+.eaz-preview-post{margin-top:18px;border:1px solid #edf0f5;border-radius:16px;padding:16px}
+.eaz-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(145deg,#6d9fff,#075be8);display:grid;place-items:center;color:white;font-weight:850}
+.eaz-preview-post p{font-size:14px;color:#344054;margin:16px 0}
+.eaz-preview-photo{height:155px;border-radius:12px;background:linear-gradient(135deg,#c9e4ff,#edf5ff 50%,#b8d4ff);display:grid;place-items:center;color:#3268a9;font-size:11px;font-weight:850;letter-spacing:.15em}
+.eaz-preview-actions,.eaz-preview-bottom{display:flex;justify-content:space-between;gap:8px;color:#63748b;font-size:11px;font-weight:700;padding-top:14px}
+.eaz-preview-bottom{border-top:1px solid #edf0f5;margin-top:15px;padding-top:15px}
+.eaz-social-cta{background:#f0f6ff}
+.eaz-social-app{min-height:100vh;background:#f0f2f5}
+.eaz-social-topbar{height:68px;background:#fff;border-bottom:1px solid #e4e6eb;display:flex;align-items:center;gap:28px;padding:0 4vw;position:sticky;top:0;z-index:10}
+.eaz-social-topbar .brand{font-size:23px}
+.eaz-social-search{height:40px;border-radius:22px;background:#f0f2f5;display:flex;align-items:center;padding:0 14px;gap:8px;max-width:350px;flex:1}
+.eaz-social-search span{font-size:22px;color:#7c8798}.eaz-social-search input{border:0;background:transparent;outline:0;width:100%;min-width:0}
+.eaz-social-top-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
+.eaz-social-top-actions a{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#f0f2f5;color:#0866ff;font-size:22px;font-weight:800}
+.eaz-social-top-actions button{border:0;background:#edf4ff;color:#075be8;border-radius:20px;padding:9px 14px;font-weight:750;cursor:pointer}
+.eaz-social-layout{max-width:1440px;margin:0 auto;padding:24px 26px;display:grid;grid-template-columns:240px minmax(0,660px) 280px;gap:24px;align-items:start}
+.eaz-social-sidebar{position:sticky;top:92px;display:grid;gap:7px;padding:12px 4px}
+.eaz-social-me{padding:8px 10px 18px;border-bottom:1px solid #e0e4ea;margin-bottom:5px}
+.eaz-social-me strong,.eaz-social-me small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.eaz-social-me small{font-size:12px;color:#778397}
+.eaz-social-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;background:linear-gradient(145deg,#67a5ff,#0866ff);color:white;font-weight:850;font-size:17px}
+.eaz-social-sidebar>a{display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:10px;color:#39465a;font-weight:700;font-size:14px}
+.eaz-social-sidebar>a:hover,.eaz-social-sidebar>a.eaz-social-side-active{background:#e2edff;color:#075be8}
+.eaz-social-sidebar>a:first-of-type{margin-top:4px}
+.eaz-social-side-divider{height:1px;background:#e0e4ea;margin:10px 4px}
+.eaz-social-side-label{font-size:10px;color:#8994a4;font-weight:850;letter-spacing:.12em;padding:0 12px}
+.eaz-social-feed{display:grid;gap:16px;min-width:0}
+.eaz-social-welcome{display:flex;align-items:center;justify-content:space-between;padding:5px 2px}
+.eaz-social-welcome h1{font-size:26px;letter-spacing:-.04em;margin:3px 0}
+.eaz-social-welcome p{margin:0;color:#718096;font-size:13px}
+.eaz-feed-live{font-size:11px;color:#14804a;background:#e8f7ef;padding:7px 10px;border-radius:20px;font-weight:750}
+.eaz-social-composer{padding:17px;border-radius:15px}
+.eaz-composer-top{display:flex;gap:12px;align-items:flex-start}
+.eaz-composer-top textarea{flex:1;resize:vertical;min-height:74px;border:0;outline:0;background:#f4f6f8;border-radius:13px;padding:13px;font:inherit}
+.eaz-composer-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #edf0f3;padding-top:13px;margin-top:12px}
+.eaz-composer-bottom label{font-size:12px;color:#667085;display:flex;align-items:center;gap:7px}
+.eaz-composer-bottom select{border:1px solid #e0e5ec;border-radius:8px;padding:7px;background:#fff;color:#344054}
+.eaz-social-post{padding:18px;border-radius:15px}
+.eaz-post-author strong{display:block;font-size:14px}.eaz-post-author small{display:block;color:#8993a2;font-size:11px;margin-top:2px}
+.eaz-post-body{white-space:pre-wrap;overflow-wrap:anywhere;color:#26364a;line-height:1.65;margin:17px 0}
+.eaz-post-stats{font-size:11px;color:#7b8797;padding-bottom:10px;border-bottom:1px solid #edf0f3}
+.eaz-post-actions{display:flex;gap:6px;padding-top:9px}
+.eaz-post-actions button{border:0;background:transparent;color:#617086;font-weight:750;padding:8px 12px;border-radius:8px;cursor:pointer;flex:1}
+.eaz-post-actions button:hover{background:#f0f5ff;color:#075be8}
+.eaz-social-right{display:grid;gap:14px;position:sticky;top:92px}
+.eaz-social-right .card{padding:17px;border-radius:14px;box-shadow:none}
+.eaz-social-right h3{margin:0 0 7px;font-size:14px}.eaz-social-right p{font-size:12px;color:#748196;line-height:1.55;margin:0 0 11px}.eaz-social-right a{font-size:12px;color:#0866ff;font-weight:800}
+.eaz-social-empty{text-align:center;padding:42px 22px}.eaz-social-empty>div{font-size:32px;color:#0866ff}.eaz-social-empty h2{margin:8px 0;font-size:20px}.eaz-social-empty p{color:#748196;font-size:13px}
+.eaz-social-error,.eaz-social-notice{background:#fff2e8;color:#9a4b12;border-radius:10px;padding:11px 14px;font-size:13px}
+.eaz-social-loading{padding:60px 20px;text-align:center;color:#63748b}
+.eaz-account-page{min-height:75vh;padding:36px 16px;background:#f0f2f5}
+.eaz-account-card{max-width:900px;margin:0 auto;padding:28px}
+.eaz-account-heading{display:flex;align-items:center;gap:15px;padding:28px 0 20px;border-bottom:1px solid #e9edf2}
+.eaz-account-avatar{width:68px;height:68px;font-size:26px}
+.eaz-account-heading h1{font-size:25px;margin:0}.eaz-account-heading p{font-size:13px;color:#667085;margin:4px 0}.eaz-account-heading small{color:#0866ff;font-weight:750}
+.eaz-account-card>h2{font-size:17px;margin:23px 0 12px}
+.eaz-account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.eaz-account-grid a{border:1px solid #e5eaf1;border-radius:13px;padding:16px;background:#fff;display:grid;gap:5px}
+.eaz-account-grid a:hover{border-color:#9cc2ff;background:#f8fbff}
+.eaz-account-grid strong{font-size:14px;color:#20334e}.eaz-account-grid span{font-size:12px;color:#748196;line-height:1.5}
+.eaz-social-subpage{min-height:80vh;background:#f0f2f5;padding-bottom:50px}
+.eaz-social-subnav{height:68px;background:white;border-bottom:1px solid #e4e6eb;display:flex;align-items:center;justify-content:space-between;padding:0 max(20px,calc((100vw - 1100px)/2))}
+.eaz-social-subnav>a:last-child{font-size:13px;color:#0866ff;font-weight:750}
+.eaz-social-subcontent{max-width:760px;margin:32px auto;padding:0 18px}
+.eaz-social-subcontent>h1{font-size:30px;letter-spacing:-.04em;margin:0 0 4px}.eaz-subtitle{color:#748196;margin:0 0 22px}
+.eaz-friend-search{display:flex;gap:10px;padding:13px;border-radius:14px}
+.eaz-friend-search input{flex:1;min-width:0;border:1px solid #dce3ec;border-radius:10px;padding:12px;font:inherit}
+.eaz-friend-section{margin-top:26px}.eaz-friend-section h2{font-size:17px;display:flex;gap:9px;align-items:center}.eaz-friend-section h2 span{font-size:11px;background:#e5efff;color:#0866ff;padding:4px 8px;border-radius:12px}
+.eaz-person-row{display:flex;align-items:center;gap:12px;padding:13px 15px;margin-top:9px;border-radius:13px;box-shadow:none}
+.eaz-person-row>div{flex:1;min-width:0}.eaz-person-row strong,.eaz-person-row small{display:block}.eaz-person-row small{color:#7b8797;font-size:11px}.eaz-person-row p{font-size:12px;color:#718096;margin:4px 0 0}.eaz-person-row .btn{padding:9px 13px;font-size:12px;min-height:38px}
+.eaz-friend-status{font-size:12px;color:#16804b;font-weight:800}
+.eaz-muted{color:#8792a2;font-size:13px}
+.eaz-profile-form{display:grid;gap:16px;padding:20px;border-radius:16px}
+.eaz-profile-cover{height:130px;border-radius:13px;background:linear-gradient(120deg,#cfe4ff,#e9f4ff 55%,#c7dfff);position:relative;margin-bottom:22px}
+.eaz-profile-avatar{width:76px;height:76px;border:4px solid white;position:absolute;bottom:-25px;left:18px;font-size:26px}
+.eaz-profile-form label{display:grid;gap:7px;font-size:13px;font-weight:750;color:#344054}
+.eaz-profile-form input,.eaz-profile-form textarea{border:1px solid #dce3ec;border-radius:10px;padding:12px;font:inherit;font-weight:400}
+.eaz-profile-form small{font-size:11px;color:#8994a4}
+@media(max-width:1100px){.eaz-social-layout{grid-template-columns:205px minmax(0,660px);max-width:940px}.eaz-social-right{display:none}}
+@media(max-width:760px){.mobile-platform-actions{display:flex}.eaz-social-layout{display:block;padding:14px 10px}.eaz-social-sidebar{display:none}.eaz-social-topbar{padding:0 12px;gap:10px;height:60px}.eaz-social-topbar .brand{font-size:18px}.eaz-social-search{max-width:none}.eaz-social-top-actions{gap:5px}.eaz-social-top-actions a{width:32px;height:32px;font-size:18px}.eaz-social-top-actions button{font-size:11px;padding:8px}.eaz-social-welcome h1{font-size:23px}.eaz-social-post,.eaz-social-composer{padding:14px}.eaz-account-grid{grid-template-columns:1fr}.eaz-account-card{padding:20px}.eaz-person-row{flex-wrap:wrap}.eaz-person-row .btn{flex:1}.eaz-friend-search{flex-direction:column}.eaz-social-subnav{padding:0 15px}}
+@media(max-width:420px){.eaz-social-top-actions a:nth-child(3){display:none}.eaz-social-top-actions button{padding:7px 9px}.eaz-social-welcome{align-items:flex-start}.eaz-feed-live{font-size:10px}.eaz-post-actions button{font-size:11px;padding:8px 3px}.eaz-social-hero .hero h1{font-size:42px}}
