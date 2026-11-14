@@ -19,7 +19,7 @@ export default function PublicProfilePage() {
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [isFriend, setIsFriend] = useState(false);
+  const [isFriend, setIsFriend] = useState(false);\n  const [blocked, setBlocked] = useState(false);
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +32,7 @@ export default function PublicProfilePage() {
       const { data: profile } = await supabase.from("user_profiles").select("id,username,display_name,bio,avatar_url,cover_url,avatar_path,cover_path,is_private").eq("username", params.username.toLowerCase()).maybeSingle();
       if (!profile) { if (active) { setNotice("This profile could not be found."); setLoading(false); } return; }
       if (!active) return;
-      setPerson(profile as Person);
+      setPerson(profile as Person);\n      if (current) { const { data: blockRow } = await supabase.from("social_user_blocks").select("blocked_id").eq("blocker_id",current).eq("blocked_id",profile.id).maybeSingle(); setBlocked(Boolean(blockRow)); }
       if (profile.avatar_path) { const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(profile.avatar_path, 3600); setAvatarUrl(signed?.signedUrl || ""); }
       if (profile.cover_path) { const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(profile.cover_path, 3600); setCoverUrl(signed?.signedUrl || ""); }
       const [{ count: followerCount }, { count: followingCount }, { data: followRow }, { data: friendship }] = await Promise.all([
@@ -68,7 +68,7 @@ export default function PublicProfilePage() {
     }
   }
 
-  async function addFriend() {
+  async function blockUser() {\n    if (!person || !me) { router.push("/account/login"); return; }\n    const { error } = await supabase.from("social_user_blocks").insert({ blocker_id:me, blocked_id:person.id });\n    if (error) setNotice(error.code === "23505" ? "This account is already blocked." : error.message);\n    else { setBlocked(true); setPosts([]); setNotice("This account is now blocked. Its posts are hidden from this view."); }\n  }\n\n  async function addFriend() {
     if (!person) return;
     if (!me) { router.push("/account/login"); return; }
     const { error } = await supabase.from("friendships").insert({requester_id:me,addressee_id:person.id,status:"pending"});
@@ -86,11 +86,11 @@ export default function PublicProfilePage() {
     <div className="eaz-public-profile">
       <div className="eaz-public-cover" style={coverUrl?{backgroundImage:`url(${coverUrl})`}:undefined}>{avatarUrl?<img className="eaz-public-avatar-img" src={avatarUrl} alt="Profile photo"/>:<span className="eaz-public-avatar">{person.display_name?.[0]||"E"}</span>}</div>
       <section className="card eaz-public-profile-info"><div><h1>{person.display_name}</h1><p>@{person.username}</p><p>{person.bio}</p><div className="eaz-public-counts"><span><strong>{followers}</strong> followers</span><span><strong>{following}</strong> following</span><span><strong>{posts.length}</strong> posts</span></div></div>
-        {me && me!==person.id && <div className="eaz-public-actions"><button className="btn primary" onClick={follow} disabled={isFollowing}>{isFollowing?"Following":"Follow"}</button><button className="btn secondary" onClick={addFriend} disabled={isFriend}> {isFriend?"Friends":"Add friend"}</button><button className="btn secondary" onClick={()=>router.push("/messages")}>Message</button></div>}
+        {me && me!==person.id && <div className="eaz-public-actions"><button className="btn primary" onClick={follow} disabled={isFollowing}>{isFollowing?"Following":"Follow"}</button><button className="btn secondary" onClick={addFriend} disabled={isFriend}> {isFriend?"Friends":"Add friend"}</button><button className="btn secondary" onClick={()=>router.push("/messages")} disabled={blocked}>Message</button><button className="btn secondary" onClick={blockUser} disabled={blocked}> {blocked?"Blocked":"Block"} </button></div>}
       </section>
       {notice&&<p className="eaz-social-notice">{notice}</p>}
-      <h2 className="eaz-public-post-title">Posts</h2>
-      {posts.length===0?<p className="eaz-muted">No public posts yet.</p>:posts.map(post=><article className="card eaz-social-post" key={post.id}><p className="eaz-post-body">{post.body}</p>{post.media_url&&(post.media_type==="video"?<video className="eaz-post-media" src={post.media_url} controls playsInline/>:<img className="eaz-post-media" src={post.media_url} alt="Post attachment"/>)}<small className="eaz-muted">{new Date(post.created_at).toLocaleString()}</small></article>)}
+      <h2 className="eaz-public-post-title">Posts</h2>{blocked?<p className="eaz-muted">You blocked this account. Posts are hidden.</p>:null}
+      {blocked?null:posts.length===0?<p className="eaz-muted">No public posts yet.</p>:posts.map(post=><article className="card eaz-social-post" key={post.id}><p className="eaz-post-body">{post.body}</p>{post.media_url&&(post.media_type==="video"?<video className="eaz-post-media" src={post.media_url} controls playsInline/>:<img className="eaz-post-media" src={post.media_url} alt="Post attachment"/>)}<small className="eaz-muted">{new Date(post.created_at).toLocaleString()}</small></article>)}
     </div>
   </main>;
 }
