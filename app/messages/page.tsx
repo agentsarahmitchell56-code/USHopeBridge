@@ -77,10 +77,20 @@ export default function MessagesPage() {
     if (term.length < 2) return;
     const { data, error } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url").or(`username.ilike.%${term.replace(/ /g,"")}%,display_name.ilike.%${term}%`).neq("id",me).limit(12);
     if (error) setNotice(error.message);
-    else setResults((data || []) as Person[]);
+    else {
+      const candidates = (data || []) as Person[];
+      const { data: blocks } = await supabase.from("social_user_blocks").select("blocker_id,blocked_id")
+        .or(`blocker_id.eq.${me},blocked_id.eq.${me}`);
+      const blockedIds = new Set((blocks || []).map(row => row.blocker_id === me ? row.blocked_id : row.blocker_id));
+      setResults(candidates.filter(person => !blockedIds.has(person.id)));
+    }
   }
 
   async function openConversation(person: Person) {
+    if (await isBlockedWith(person.id)) {
+      setNotice("Messaging is unavailable because one of these accounts has blocked the other.");
+      return;
+    }
     setBusy(true); setNotice("");
     const first = me < person.id ? me : person.id;
     const second = me < person.id ? person.id : me;
