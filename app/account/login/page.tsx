@@ -69,9 +69,9 @@ export default function CustomerLoginPage() {
     finally { setBusy(false); }
   }
 
-  return <main style={{ minHeight: "75vh", display: "grid", placeItems: "center", padding: 20, background: "#f3f7fc" }}>
-    <section className="card" style={{ width: "100%", maxWidth: 460, padding: 28 }}>
-      <Link href="/" className="brand">HOPEBRIDGE<span>CUSTOMER ACCOUNT</span></Link>
+  return <main className="auth-page">
+    <section className="card auth-card">
+      <Link href="/" className="brand">EAZREAL<span>PERSONAL ACCOUNT</span></Link>
       <h1 style={{ marginTop: 26, marginBottom: 8 }}>{step === "login" ? "Customer sign in" : "Confirm your email"}</h1>
       <p style={{ color: "#627d98", lineHeight: 1.6 }}>{step === "login" ? "Sign in to your customer account. Staff members should use the separate staff portal." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
       {step === "login" ? <form onSubmit={submit} style={formStyle}>
@@ -89,7 +89,7 @@ export default function CustomerLoginPage() {
         <button type="button" className="btn secondary" disabled={busy} onClick={resend}>Resend confirmation code</button>
         <button type="button" onClick={() => { setStep("login"); setCode(""); setError(""); setNotice(""); }} style={textButton}>Back to sign in</button>
       </form>}
-      <p style={{ marginTop: 18, color: "#627d98" }}>New to HOPEBRIDGE? <Link href="/account/signup" style={link}>Create an account</Link></p>
+      <p style={{ marginTop: 18, color: "#627d98" }}>New to EAZREAL? <Link href="/account/signup" style={link}>Create an account</Link></p>
       <Link href="/chat" style={link}>Chat with support without an account</Link>
     </section>
   </main>;
