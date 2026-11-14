@@ -65,6 +65,12 @@ export default function MessagesPage() {
     return () => { void supabase.removeChannel(channel); };
   }, [selected?.id, me]);
 
+  async function isBlockedWith(personId: string) {
+    const { data } = await supabase.from("social_user_blocks").select("blocker_id,blocked_id")
+      .or(`and(blocker_id.eq.${me},blocked_id.eq.${personId}),and(blocker_id.eq.${personId},blocked_id.eq.${me})`);
+    return Boolean(data?.length);
+  }
+
   async function findPeople(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const term = search.trim().replace(/[^a-zA-Z0-9_ ]/g,"");
