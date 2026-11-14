@@ -20,6 +20,8 @@ export default function PostPage() {
   const [commentProfiles, setCommentProfiles] = useState<Record<string, { display_name: string; username: string }>>({});
   const [body, setBody] = useState("");
   const [error, setError] = useState("");
+  const [reportReason, setReportReason] = useState("spam");
+  const [reporting, setReporting] = useState(false);
 
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser();
@@ -59,6 +61,14 @@ export default function PostPage() {
       if (post.author_id !== userId) await supabase.from("social_notifications").insert({ recipient_id: post.author_id, actor_id: userId, kind: "comment", post_id: params.id, body: "commented on your post" });
       setBody(""); await load();
     }
+  }
+
+  async function reportPost() {
+    if (!post || !userId) { router.push("/account/login"); return; }
+    setReporting(true);
+    const { error: reportError } = await supabase.from("social_reports").insert({ reporter_id:userId, content_type:"post", content_id:post.id, reason:reportReason });
+    setError(reportError ? reportError.message : "Thank you. Your report has been submitted for review.");
+    setReporting(false);
   }
 
   return <main className="eaz-social-subpage"><header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>POST</span></Link><Link href="/social">Back to News Feed</Link></header><div className="eaz-social-subcontent">
