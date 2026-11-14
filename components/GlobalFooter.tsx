@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 export default function GlobalFooter() {
   const pathname = usePathname();
   const isHopebridge = [
-    "/apply", "/status", "/chat", "/account", "/admin", "/posts", "/privacy", "/terms",
+    "/apply", "/status", "/chat", "/admin", "/posts", "/privacy", "/terms",
   ].some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
   const privacyHref = isHopebridge ? "/privacy" : "/platform/privacy";
   const termsHref = isHopebridge ? "/terms" : "/platform/terms";
