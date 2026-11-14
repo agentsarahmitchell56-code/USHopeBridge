@@ -46,6 +46,7 @@ export default function AccountPage() {
       <div className="eaz-account-grid">
         <Link href="/social"><strong>⌂ News Feed</strong><span>See updates from people you follow.</span></Link>
         <Link href="/friends"><strong>♧ Friends & People</strong><span>Find people, send requests and connect.</span></Link>
+        <Link href="/messages"><strong>✉ Messages</strong><span>Send private messages to other members.</span></Link>
         <Link href="/profile"><strong>◉ Your Profile</strong><span>Edit your name, username and bio.</span></Link>
         <Link href="/notifications"><strong>♧ Notifications</strong><span>See activity and friend requests.</span></Link>
         <Link href="/business/workspace"><strong>▣ Business Pages</strong><span>Manage your public business presence.</span></Link>
