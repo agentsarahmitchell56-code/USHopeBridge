@@ -5,13 +5,15 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
-type Comment = { id: string; author_id: string; body: string; created_at: string };\ntype SocialPost = { id: string; author_id: string; body: string; created_at: string; media_path: string | null; media_type: string | null };
+type Comment = { id: string; author_id: string; body: string; created_at: string };
+type SocialPost = { id: string; author_id: string; body: string; created_at: string; media_path: string | null; media_type: string | null };
 export default function PostPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [userId, setUserId] = useState("");
   const [post, setPost] = useState<SocialPost | null>(null);
-  const [mediaUrl, setMediaUrl] = useState("");\n  const [author, setAuthor] = useState<{ display_name: string; username: string; avatar_url: string | null } | null>(null);
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [author, setAuthor] = useState<{ display_name: string; username: string; avatar_url: string | null } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentProfiles, setCommentProfiles] = useState<Record<string, any>>({});
   const [body, setBody] = useState("");
