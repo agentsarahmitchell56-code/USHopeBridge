@@ -86,6 +86,12 @@ export default function CustomerSignupPage() {
         },
       });
       if (signupError) throw signupError;
+      // Supabase may return a generic success for an already-registered email.
+      // An empty identities array means no new identity was created.
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        setError("This email address already has an EAZREAL account. Please sign in instead, or use Forgot password if you cannot access it.");
+        return;
+      }
       if (data.session && data.user) {
         if (photo) {
           try { await saveOptionalPhoto(data.user.id); }
