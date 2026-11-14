@@ -29,19 +29,25 @@ export default function SocialFeedPage() {
     const { data: postData, error: postError } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,visibility,created_at").order("created_at", { ascending: false }).limit(40);
     if (postError) throw postError;
     const rows = (postData || []) as RawPost[];
-    const ids = [...new Set(rows.map(p => p.author_id))];
-    const [{ data: profiles }, { data: likes }] = await Promise.all([
-      ids.length ? supabase.from("user_profiles").select("id,username,display_name,avatar_url").in("id", ids) : Promise.resolve({ data: [] as any[] }),
-      rows.length ? supabase.from("social_post_likes").select("post_id,user_id").in("post_id", rows.map((p: any) => p.id)) : Promise.resolve({ data: [] as any[] }),
+    const ids = [...new Set(rows.map(post => post.author_id))];
+    const [profileResult, likeResult] = await Promise.all([
+      ids.length ? supabase.from("user_profiles").select("id,username,display_name,avatar_url").in("id", ids) : Promise.resolve({ data: [] as Profile[] }),
+      rows.length ? supabase.from("social_post_likes").select("post_id,user_id").in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as LikeRow[] }),
     ]);
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
-    const likeRows = likes || [];
-    setPosts(rows.map((p: any) => ({
-      ...p,
-      profile: profileMap.get(p.author_id),
-      likes: likeRows.filter(l => l.post_id === p.id).length,
-      liked: likeRows.some(l => l.post_id === p.id && l.user_id === currentUser.id),
-    })));
+    const profileRows = (profileResult.data || []) as Profile[];
+    const likeRows = (likeResult.data || []) as LikeRow[];
+    const profileMap = new Map<string, Profile>(profileRows.map(item => [item.id, item]));
+    const mapped = await Promise.all(rows.map(async post => {
+      const signed = post.media_path ? await supabase.storage.from("social-media").createSignedUrl(post.media_path, 3600) : null;
+      return {
+        ...post,
+        profile: profileMap.get(post.author_id),
+        likes: likeRows.filter(item => item.post_id === post.id).length,
+        liked: likeRows.some(item => item.post_id === post.id && item.user_id === currentUser.id),
+        media_url: signed?.data?.signedUrl,
+      };
+    }));
+    setPosts(mapped);
   }, []);
 
   useEffect(() => {
@@ -61,18 +67,39 @@ export default function SocialFeedPage() {
     event.preventDefault();
     if (!user || (!draft.trim() && !mediaFile) || publishing) return;
     setPublishing(true); setError("");
+    let mediaPath: string | null = null;
+    let mediaType: "image" | "video" | null = null;
+    if (mediaFile) {
+      const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm"];
+      if (!allowed.includes(mediaFile.type) || mediaFile.size > 25 * 1024 * 1024) {
+        setError("Choose a JPG, PNG, WebP, GIF, MP4 or WebM file up to 25 MB.");
+        setPublishing(false);
+        return;
+      }
+      const ext = mediaFile.name.split(".").pop()?.toLowerCase() || (mediaFile.type.startsWith("video/") ? "mp4" : "jpg");
+      mediaType = mediaFile.type.startsWith("video/") ? "video" : "image";
+      mediaPath = `posts/${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("social-media").upload(mediaPath, mediaFile, { contentType: mediaFile.type, upsert: false });
+      if (uploadError) { setError(uploadError.message); setPublishing(false); return; }
+    }
     const { error: insertError } = await supabase.from("social_posts").insert({
-      author_id: user.id, body: draft.trim(), visibility,
+      author_id: user.id, body: draft.trim(), visibility, media_path: mediaPath, media_type: mediaType,
     });
-    if (insertError) setError(insertError.message);
-    else { setDraft(""); await loadFeed(user); }
+    if (insertError) {
+      if (mediaPath) await supabase.storage.from("social-media").remove([mediaPath]);
+      setError(insertError.message);
+    } else {
+      setDraft("");
+      setMediaFile(null);
+      await loadFeed(user);
+    }
     setPublishing(false);
   }
 
   async function toggleLike(post: FeedPost) {
     if (!user) return;
     const wasLiked = post.liked;
-    setPosts(current => current.map(p => p.id === post.id ? { ...p, liked: !wasLiked, likes: p.likes + (wasLiked ? -1 : 1) } : p));
+    setPosts(current => current.map(item => item.id === post.id ? { ...item, liked: !wasLiked, likes: item.likes + (wasLiked ? -1 : 1) } : item));
     const result = wasLiked
       ? await supabase.from("social_post_likes").delete().eq("post_id", post.id).eq("user_id", user.id)
       : await supabase.from("social_post_likes").insert({ post_id: post.id, user_id: user.id });
@@ -93,7 +120,7 @@ export default function SocialFeedPage() {
   return <main className="eaz-social-app">
     <header className="eaz-social-topbar">
       <Link href="/social" className="brand">EAZREAL<span>SOCIAL</span></Link>
-      <form className="eaz-social-search" onSubmit={e => { e.preventDefault(); router.push("/friends"); }}><span>⌕</span><input aria-label="Search people" placeholder="Search people and friends" /></form>
+      <form className="eaz-social-search" onSubmit={event => { event.preventDefault(); router.push("/friends"); }}><span>⌕</span><input aria-label="Search people" placeholder="Search people and friends" /></form>
       <nav className="eaz-social-top-actions">
         <Link href="/social" aria-label="Home">⌂</Link><Link href="/friends" aria-label="Friends">♧</Link><Link href="/messages" aria-label="Messages">✉</Link><Link href="/notifications" aria-label="Notifications">♧</Link><button onClick={signOut}>Sign out</button>
       </nav>
@@ -109,18 +136,26 @@ export default function SocialFeedPage() {
         <Link href="/apply">♡ <span>HOPEBRIDGE Assistance</span></Link>
         <div className="eaz-social-side-divider" />
         <small className="eaz-social-side-label">YOUR ACCOUNT</small>
+        <Link href="/notifications">♧ <span>Notifications</span></Link>
         <Link href="/account">⚙ <span>Account settings</span></Link>
       </aside>
       <section className="eaz-social-feed">
         <div className="eaz-social-welcome"><div><span className="eyebrow">YOUR COMMUNITY</span><h1>News Feed</h1><p>See what your people are sharing.</p></div><span className="eaz-feed-live">● Your feed</span></div>
         <form className="eaz-social-composer card" onSubmit={publish}>
-          <div className="eaz-composer-top"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><textarea value={draft} onChange={e => setDraft(e.target.value)} placeholder="What's on your mind?" maxLength={5000} rows={3} /></div>
-          <div className="eaz-composer-bottom"><label className="eaz-media-picker">＋ Photo / video<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={e => setMediaFile(e.target.files?.[0] || null)} /></label><label>Post audience <select value={visibility} onChange={e => setVisibility(e.target.value)}><option value="public">Public</option><option value="friends">Friends</option><option value="private">Only me</option></select></label><button className="btn primary" disabled={(!draft.trim() && !mediaFile) || publishing}>{publishing ? "Posting…" : "Publish post"}</button></div>{mediaFile && <small className="eaz-media-selected">{mediaFile.name}</small>}
+          <div className="eaz-composer-top"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><textarea value={draft} onChange={event => setDraft(event.target.value)} placeholder="What's on your mind?" maxLength={5000} rows={3} /></div>
+          <div className="eaz-composer-bottom">
+            <label className="eaz-media-picker">＋ Photo / video<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={event => setMediaFile(event.target.files?.[0] || null)} /></label>
+            <label>Post audience <select value={visibility} onChange={event => setVisibility(event.target.value)}><option value="public">Public</option><option value="friends">Friends</option><option value="private">Only me</option></select></label>
+            <button className="btn primary" disabled={(!draft.trim() && !mediaFile) || publishing}>{publishing ? "Posting…" : "Publish post"}</button>
+          </div>
+          {mediaFile && <small className="eaz-media-selected">{mediaFile.name}</small>}
+          <small className="eaz-media-selected">Photos and videos up to 25 MB.</small>
         </form>
         {error && <p className="eaz-social-error" role="alert">{error}</p>}
         {posts.length === 0 ? <div className="card eaz-social-empty"><div>✦</div><h2>Your feed starts here</h2><p>Share your first update or find people to connect with.</p><Link className="btn primary" href="/friends">Find people</Link></div> : posts.map(post => <article className="card eaz-social-post" key={post.id}>
           <div className="eaz-post-author"><span className="eaz-social-avatar">{post.profile?.display_name?.[0] || "E"}</span><div><strong>{post.profile?.display_name || "EAZREAL member"}</strong><small>@{post.profile?.username || "member"} · {new Date(post.created_at).toLocaleString()} · {post.visibility}</small></div></div>
-          <p className="eaz-post-body">{post.body}</p>
+          {post.body && <p className="eaz-post-body">{post.body}</p>}
+          {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
           <div className="eaz-post-stats"><span>{post.likes} likes</span></div>
           <div className="eaz-post-actions"><button onClick={() => toggleLike(post)} aria-pressed={post.liked}>{post.liked ? "♥ Liked" : "♡ Like"}</button><button onClick={() => router.push(`/post/${post.id}`)}>◯ Comment</button><button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/post/${post.id}`)}>↗ Copy link</button></div>
         </article>)}
