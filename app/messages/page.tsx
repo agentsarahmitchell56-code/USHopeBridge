@@ -85,7 +85,7 @@ export default function MessagesPage() {
   const activeFriend = friends.find(f => f.user_id === activeFriendId);
   const visibleFriends = useMemo(() => friends.filter(f => [f.display_name, f.handle, f.member_id].some(v => v.toLowerCase().includes(search.toLowerCase()))), [friends, search]);
 
-  async function openFriend(friend: Member) {
+  const openFriend = useCallback(async (friend: Member) => {
     if (!user) return;
     setError(""); setNotice("");
     try {
@@ -107,7 +107,7 @@ export default function MessagesPage() {
       setSelected(conversation.id);
       await loadMessages(conversation.id);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not open this conversation."); }
-  }
+  }, [user, conversations, loadConversations, loadMessages]);
 
   useEffect(() => {
     if (!requestedFriendId || !user || !friends.length || busy || openedTarget.current === requestedFriendId) return;
@@ -115,7 +115,7 @@ export default function MessagesPage() {
     if (!friend) return;
     openedTarget.current = requestedFriendId;
     void openFriend(friend);
-  }, [requestedFriendId, user, friends, busy, conversations]);
+  }, [requestedFriendId, user, friends, busy, conversations, openFriend]);
 
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
