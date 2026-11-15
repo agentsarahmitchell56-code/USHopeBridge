@@ -22,6 +22,7 @@ export default function SocialFeedPage() {
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const loadFeed = useCallback(async (currentUser: User) => {
     const { data: profileData } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url,bio").eq("id", currentUser.id).maybeSingle();
@@ -153,7 +154,7 @@ export default function SocialFeedPage() {
   return <main className="eaz-social-app">
     <header className="eaz-social-topbar">
       <Link href="/social" className="brand">EAZREAL<span>SOCIAL</span></Link>
-      <form className="eaz-social-search" onSubmit={event => { event.preventDefault(); router.push("/friends"); }}><span>⌕</span><input aria-label="Search people" placeholder="Search people and friends" /></form>
+      <form className="eaz-social-search" onSubmit={event => { event.preventDefault(); if (searchTerm.trim()) router.push(`/search?q=${encodeURIComponent(searchTerm.trim())}`); }}><span>⌕</span><input aria-label="Search EAZREAL" value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="Search EAZREAL" /></form>
       <nav className="eaz-social-top-actions">
         <Link href="/social" aria-label="Home">⌂</Link><Link href="/friends" aria-label="Friends">♧</Link><Link href="/messages" aria-label="Chats">✉</Link><Link href="/notifications" aria-label="Notifications">♧</Link><button onClick={signOut}>Sign out</button>
       </nav>
