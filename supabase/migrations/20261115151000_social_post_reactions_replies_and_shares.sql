@@ -60,7 +60,7 @@ alter table public.social_post_comments
   on delete cascade;
 
 create index if not exists social_post_comments_parent_idx
-  on public.social_post_comments(parent_comment_id, created_at);
+  on public.social_post_comments(parent_comment_id, post_id, created_at);
 
 create table if not exists public.social_post_shares (
   id uuid primary key default gen_random_uuid(),
