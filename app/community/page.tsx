@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
@@ -20,7 +20,6 @@ const field: React.CSSProperties = { width: "100%", boxSizing: "border-box", bor
 
 export default function CommunityPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [me, setMe] = useState<Member | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -32,7 +31,7 @@ export default function CommunityPage() {
   const [likes, setLikes] = useState<string[]>([]);
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [tab, setTab] = useState<Tab>("feed");
-  useEffect(() => { const requested = searchParams.get("tab"); if (requested === "friends" || requested === "discover" || requested === "profile" || requested === "feed") setTab(requested); }, [searchParams]);
+  useEffect(() => { const requested = new URLSearchParams(window.location.search).get("tab"); if (requested === "friends" || requested === "discover" || requested === "profile" || requested === "feed") setTab(requested); }, []);
   const [search, setSearch] = useState("");
   const [postBody, setPostBody] = useState("");
   const [postMedia, setPostMedia] = useState<File | null>(null);
