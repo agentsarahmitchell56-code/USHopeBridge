@@ -98,9 +98,9 @@ export default function ProfilePage() {
 
   if (loading) return <main className="eaz-social-loading">Loading your profile…</main>;
   return <main className="eaz-social-subpage">
-    <header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>YOUR PROFILE</span></Link><Link href="/social">Back to News Feed</Link></header>
+    <header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>PROFILE</span></Link><Link href="/social">Home</Link></header>
     <div className="eaz-social-subcontent">
-      <h1>Your profile</h1><p className="eaz-subtitle">Choose how people see you on EAZREAL.</p>
+      <h1>Profile</h1><p className="eaz-subtitle">Choose how people see you on EAZREAL.</p>
       <form className="card eaz-profile-form" onSubmit={save}>
         <div className="eaz-profile-cover" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined}>
           {avatarUrl ? <img className="eaz-profile-avatar-img" src={avatarUrl} alt="Profile photo" /> : <span className="eaz-social-avatar eaz-profile-avatar">{name[0] || "E"}</span>}
@@ -112,7 +112,7 @@ export default function ProfilePage() {
         <label>Website or portfolio<input type="url" value={website} onChange={event => setWebsite(event.target.value)} maxLength={300} placeholder="https://example.com" /><small>Add a public website or portfolio link (optional).</small></label>\n        <label className="eaz-private-toggle"><input type="checkbox" checked={isPrivate} onChange={event => setIsPrivate(event.target.checked)} /> Private account (new followers need approval)</label>
         <label>Bio<textarea value={bio} onChange={event => setBio(event.target.value)} rows={4} maxLength={500} placeholder="Tell people a little about yourself" /><small>{bio.length}/500 characters · Share your interests, work or what you would like people to know.</small></label>
         {notice && <p className="eaz-social-notice">{notice}</p>}
-        <div className="eaz-profile-form-actions"><Link href={`/u/${username}`} className="btn secondary">Preview public profile</Link><button className="btn primary" disabled={saving}>{saving ? "Saving…" : "Save changes"}</button></div>
+        <div className="eaz-profile-form-actions"><Link href={`/u/${username}`} className="btn secondary">View profile</Link><button className="btn primary" disabled={saving}>{saving ? "Saving…" : "Save changes"}</button></div>
       </form>
     </div>
   </main>;

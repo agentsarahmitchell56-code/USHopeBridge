@@ -146,7 +146,7 @@ export default function CustomerSignupPage() {
     <section className="card auth-card">
       <Link href="/" className="brand">EAZREAL<span>PERSONAL ACCOUNT</span></Link>
       <h1 style={{ marginTop: 26, marginBottom: 8 }}>{step === "register" ? "Create your account" : "Confirm your email"}</h1>
-      <p style={{ color: "#627d98", lineHeight: 1.6 }}>{step === "register" ? "Join EAZREAL to connect with people, discover businesses and share updates." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
+      <p style={{ color: "#627d98", lineHeight: 1.6 }}>{step === "register" ? "Create your profile, find friends and share what’s happening." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
       {step === "register" ? <form onSubmit={submit} style={{ display: "grid", gap: 14, marginTop: 22 }}>
         <label style={fieldLabel}>Profile photo (optional)
           <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setPhoto(e.target.files?.[0] || null)} style={fileStyle} />

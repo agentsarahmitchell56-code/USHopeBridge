@@ -187,10 +187,10 @@ export default function MessagesPage() {
   const other = otherId ? contacts[otherId] : null;
 
   return <main className={`eaz-social-subpage ${styles.chatPage} ${selected ? styles.hasSelected : ""}`}>
-    <header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>MESSAGES</span></Link><Link href="/social">Back to News Feed</Link></header>
+    <header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>CHATS</span></Link><Link href="/social">Home</Link></header>
     <div className="eaz-messages-layout">
       <section className="card eaz-conversation-list">
-        <h1>Messages</h1>
+        <h1>Chats</h1>
         <form className="eaz-message-search" onSubmit={findPeople}><input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Find someone to message"/><button aria-label="Search">⌕</button></form>
         {results.map(person=><button className="eaz-conversation-item" key={person.id} onClick={()=>openConversation(person)}><span className="eaz-social-avatar">{person.display_name?.[0]||"E"}</span><span><strong>{person.display_name}</strong><small>@{person.username}</small></span></button>)}
         <h2>Recent conversations</h2>

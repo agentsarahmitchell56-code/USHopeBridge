@@ -50,8 +50,8 @@ export default function NotificationsPage() {
   }
 
   return <main className="eaz-social-subpage">
-    <header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>NOTIFICATIONS</span></Link><Link href="/social">Back to News Feed</Link></header>
-    <div className="eaz-social-subcontent"><h1>Notifications</h1><p className="eaz-subtitle">Stay up to date with activity on your account.</p>
+    <header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>NOTIFICATIONS</span></Link><Link href="/social">Home</Link></header>
+    <div className="eaz-social-subcontent"><h1>Notifications</h1><p className="eaz-subtitle">See what’s happening with your friends and posts.</p>
       {loading ? <p className="eaz-muted">Loading notifications…</p> : items.length === 0 ? <section className="card eaz-social-empty"><div>♧</div><h2>You’re all caught up</h2><p>New friend requests and post activity will appear here.</p></section> : items.map(item => {
         const actor = item.actor_id ? actors[item.actor_id] : null;
         return <button key={item.id} className={`card eaz-notification-row ${item.read_at ? "" : "unread"}`} onClick={() => { markRead(item); if (item.post_id) router.push(`/post/${item.post_id}`); }}>
