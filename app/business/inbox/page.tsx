@@ -5,14 +5,17 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
+type BusinessPage = { id: string; name: string; slug: string };
 type Conversation = { id: string; customer_name: string; customer_email: string; updated_at: string; lastMessage: string; unreadCount: number };
-type Message = { id: string; senderType: "customer" | "business"; body: string; attachmentType: string | null; attachmentUrl: string | null; createdAt: string };
+type Message = { id: string; senderType: "customer" | "business"; body: string; attachmentType: string | null; attachmentUrl: string | null; attachmentError?: string | null; createdAt: string };
 
 export default function BusinessInboxPage() {
   const router = useRouter();
-  const [page, setPage] = useState<{ id: string; name: string; slug: string } | null>(null);
+  const [pages, setPages] = useState<BusinessPage[]>([]);
+  const [page, setPage] = useState<BusinessPage | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selected, setSelected] = useState("");
+  const [showThread, setShowThread] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -51,9 +54,12 @@ export default function BusinessInboxPage() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) { router.replace("/business/login"); return; }
       setEmail(auth.user.email || "");
-      const { data, error: pageError } = await supabase.from("business_pages").select("id,name,slug").eq("owner_id", auth.user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
-      if (pageError || !data) { if (active) { setError("Your business profile is not available. Save your business profile first."); setBusy(false); } return; }
-      if (active) setPage(data);
+      const { data, error: pageError } = await supabase.from("business_pages").select("id,name,slug").eq("owner_id", auth.user.id).order("created_at", { ascending: true });
+      if (pageError || !data?.length) {
+        if (active) { setError("Your business profile is not available. Save your business profile first."); setBusy(false); }
+        return;
+      }
+      if (active) { setPages(data); setPage(data[0]); }
     }
     void init().catch(e => { if (active) setError(e instanceof Error ? e.message : "Inbox could not be loaded."); }).finally(() => { if (active) setBusy(false); });
     return () => { active = false; };
@@ -62,12 +68,15 @@ export default function BusinessInboxPage() {
   useEffect(() => {
     if (!page) return;
     void loadInbox().catch(e => setError(e instanceof Error ? e.message : "Inbox could not be loaded."));
-    const timer = window.setInterval(() => { void loadInbox().catch(() => undefined); if (selected) void loadMessages(selected).catch(() => undefined); }, 8000);
+    const timer = window.setInterval(() => {
+      void loadInbox().catch(() => undefined);
+      if (selected && showThread) void loadMessages(selected).catch(() => undefined);
+    }, 8000);
     return () => window.clearInterval(timer);
-  }, [page, loadInbox, loadMessages, selected]);
+  }, [page, loadInbox, loadMessages, selected, showThread]);
 
   async function choose(id: string) {
-    setSelected(id); setError("");
+    setSelected(id); setMessages([]); setShowThread(true); setError("");
     try { await loadMessages(id); } catch (e) { setError(e instanceof Error ? e.message : "Messages could not be loaded."); }
   }
 
@@ -82,20 +91,17 @@ export default function BusinessInboxPage() {
       let attachmentType: string | null = null;
       if (file) {
         const uploadResponse = await fetch("/api/business-chat/upload", {
-          method: "POST",
-          headers: { ...auth, "Content-Type": "application/json" },
+          method: "POST", headers: { ...auth, "Content-Type": "application/json" },
           body: JSON.stringify({ pageId: page.id, conversationId: selected, fileType: file.type, fileSize: file.size }),
         });
         const uploadResult = await uploadResponse.json();
         if (!uploadResponse.ok || !uploadResult.path || !uploadResult.token) throw new Error(uploadResult.error || "A secure upload could not be prepared.");
         const { error: uploadError } = await supabase.storage.from("business-private-media").uploadToSignedUrl(uploadResult.path, uploadResult.token, file, { contentType: file.type, upsert: false });
-        if (uploadError) throw new Error("The attachment could not be uploaded. Please try again.");
-        attachmentPath = uploadResult.path;
-        attachmentType = file.type;
+        if (uploadError) throw new Error(uploadError.message || "The attachment could not be uploaded. Please try again.");
+        attachmentPath = uploadResult.path; attachmentType = file.type;
       }
       const response = await fetch("/api/business-chat", {
-        method: "POST",
-        headers: { ...auth, "Content-Type": "application/json" },
+        method: "POST", headers: { ...auth, "Content-Type": "application/json" },
         body: JSON.stringify({ pageId: page.id, conversationId: selected, message: draft.trim(), attachmentPath, attachmentType }),
       });
       const result = await response.json();
@@ -112,9 +118,14 @@ export default function BusinessInboxPage() {
         <div><Link href="/business/workspace" style={{ color: "#15395f", fontWeight: 900, textDecoration: "none" }}>← BUSINESS WORKSPACE</Link><h1 style={{ margin: "8px 0 2px", color: "#15395f" }}>Messages</h1><p style={{ margin: 0, color: "#718297", fontSize: 13 }}>{page?.name || "Business inbox"} · {email}</p></div>
         {page && <Link href={`/b/${page.slug}`} target="_blank" style={{ color: "#1768dc", fontSize: 13 }}>View public profile ↗</Link>}
       </header>
+      {pages.length > 1 && <label style={{ display: "grid", gap: 6, maxWidth: 420, color: "#31516f", fontSize: 13, fontWeight: 750 }}>Business profile
+        <select value={page?.id || ""} onChange={e => { const next = pages.find(item => item.id === e.target.value) || null; setPage(next); setSelected(""); setMessages([]); setShowThread(false); setError(""); }} style={{ width: "100%", padding: 11, border: "1px solid #cbd5e1", borderRadius: 9, background: "white", font: "inherit" }}>
+          {pages.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+        </select>
+      </label>}
       {error && <p role="alert" style={{ margin: 0, padding: 11, borderRadius: 9, background: "#fff1f2", color: "#9f1d20" }}>{error}</p>}
-      <section style={{ display: "grid", gridTemplateColumns: "minmax(245px, .85fr) minmax(0, 1.5fr)", gap: 12, minHeight: 560 }}>
-        <aside style={{ background: "white", border: "1px solid #dce6f1", borderRadius: 14, overflow: "hidden" }}>
+      <section className="business-inbox-layout" style={{ display: "grid", gridTemplateColumns: "minmax(245px, .85fr) minmax(0, 1.5fr)", gap: 12, minHeight: 560 }}>
+        <aside className={showThread ? "conversation-list mobile-hidden" : "conversation-list"} style={{ background: "white", border: "1px solid #dce6f1", borderRadius: 14, overflow: "hidden" }}>
           <div style={{ padding: 15, borderBottom: "1px solid #e6edf5", color: "#173b62", fontWeight: 850 }}>Customer conversations <span style={{ color: "#8292a5", fontWeight: 500 }}>({conversations.length})</span></div>
           {conversations.length ? conversations.map(item => <button key={item.id} type="button" onClick={() => void choose(item.id)} style={{ display: "grid", width: "100%", gap: 4, textAlign: "left", padding: 13, border: 0, borderBottom: "1px solid #eef2f7", background: selected === item.id ? "#edf5ff" : "white", cursor: "pointer" }}>
             <span style={{ display: "flex", justifyContent: "space-between", gap: 8, color: "#173b62", fontWeight: 800, fontSize: 13 }}>{item.customer_name}{item.unreadCount > 0 && <b style={{ borderRadius: 20, background: "#1768dc", color: "white", padding: "2px 7px", fontSize: 10 }}>{item.unreadCount}</b>}</span>
@@ -122,14 +133,18 @@ export default function BusinessInboxPage() {
             <span style={{ color: "#536d86", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.lastMessage || "No messages yet"}</span>
           </button>) : <p style={{ padding: 16, color: "#718297", fontSize: 13 }}>No customer messages yet. When someone messages your public profile, the conversation will appear here.</p>}
         </aside>
-        <section style={{ display: "flex", flexDirection: "column", background: "white", border: "1px solid #dce6f1", borderRadius: 14, overflow: "hidden", minWidth: 0 }}>
+        <section className={showThread ? "conversation-thread" : "conversation-thread mobile-hidden"} style={{ display: "flex", flexDirection: "column", background: "white", border: "1px solid #dce6f1", borderRadius: 14, overflow: "hidden", minWidth: 0 }}>
           {selected ? <>
-            <div style={{ padding: 14, borderBottom: "1px solid #e6edf5", color: "#173b62", fontWeight: 850 }}>{conversations.find(c => c.id === selected)?.customer_name || "Conversation"}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 14, borderBottom: "1px solid #e6edf5", color: "#173b62", fontWeight: 850 }}>
+              <button type="button" className="mobile-back" onClick={() => setShowThread(false)} aria-label="Back to conversations">←</button>
+              {conversations.find(c => c.id === selected)?.customer_name || "Conversation"}
+            </div>
             <div aria-live="polite" style={{ flex: 1, minHeight: 350, maxHeight: 520, overflowY: "auto", display: "grid", alignContent: "start", gap: 10, padding: 14, background: "#f8fafc" }}>
               {messages.map(item => <div key={item.id} style={{ justifySelf: item.senderType === "business" ? "end" : "start", maxWidth: "88%", padding: 11, borderRadius: 12, background: item.senderType === "business" ? "#e1efff" : "white", color: "#29445f", fontSize: 14 }}>
                 {item.body && <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{item.body}</p>}
-                {item.attachmentUrl && item.attachmentType?.startsWith("image/") && <img src={item.attachmentUrl} alt="Customer attachment" style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 8 }} />}
-                {item.attachmentUrl && item.attachmentType?.startsWith("video/") && <video src={item.attachmentUrl} controls playsInline style={{ maxWidth: "100%", maxHeight: 240 }} />}
+                {item.attachmentUrl && item.attachmentType?.startsWith("image/") && <a href={item.attachmentUrl} target="_blank" rel="noreferrer"><img src={item.attachmentUrl} alt="Customer attachment" style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 8, display: "block" }} /></a>}
+                {item.attachmentUrl && item.attachmentType?.startsWith("video/") && <video src={item.attachmentUrl} controls playsInline preload="metadata" style={{ width: "min(100%, 420px)", maxHeight: 260, borderRadius: 8 }} />}
+                {item.attachmentError && <p role="alert" style={{ margin: "6px 0 0", color: "#9f1d20", fontSize: 12 }}>{item.attachmentError}</p>}
                 <small style={{ display: "block", marginTop: 5, color: "#8292a5" }}>{item.senderType === "business" ? "Your business" : "Customer"} · {new Date(item.createdAt).toLocaleString()}</small>
               </div>)}
               {!messages.length && <p style={{ color: "#718297", fontSize: 13 }}>No messages in this conversation yet.</p>}
@@ -137,11 +152,12 @@ export default function BusinessInboxPage() {
             <form onSubmit={send} style={{ display: "grid", gap: 8, padding: 12, borderTop: "1px solid #e6edf5" }}>
               <textarea value={draft} onChange={e => setDraft(e.target.value)} maxLength={4000} rows={2} placeholder="Reply to customer…" style={{ width: "100%", boxSizing: "border-box", padding: 11, border: "1px solid #cbd5e1", borderRadius: 9, font: "inherit" }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label style={{ color: "#476581", fontSize: 12 }}>Photo or video<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={e => setFile(e.target.files?.[0] || null)} style={{ display: "block", maxWidth: 210, marginTop: 4, fontSize: 11 }} /></label><button disabled={sending || (!draft.trim() && !file)} style={{ border: 0, borderRadius: 8, padding: "10px 18px", background: "#1768dc", color: "white", fontWeight: 800 }}>{sending ? "Sending…" : "Send reply"}</button></div>
+              {file && <small style={{ color: "#627d98" }}>Selected: {file.name}</small>}
             </form>
           </> : <div style={{ display: "grid", placeItems: "center", flex: 1, padding: 30, textAlign: "center", color: "#718297" }}><div><strong style={{ display: "block", color: "#173b62", marginBottom: 6 }}>Your business inbox</strong>Select a conversation to read and reply to a customer.</div></div>}
         </section>
       </section>
-      <style jsx>{`@media(max-width:680px){section[style*="grid-template-columns"]{grid-template-columns:1fr!important}section[style*="grid-template-columns"] aside{max-height:280px;overflow-y:auto}}`}</style>
+      <style jsx>{`.mobile-back{display:none;border:0;border-radius:8px;padding:7px 10px;background:#edf5ff;color:#173b62;font-size:18px}@media(max-width:680px){.business-inbox-layout{grid-template-columns:minmax(0,1fr)!important;min-height:65vh!important}.business-inbox-layout .mobile-hidden{display:none!important}.business-inbox-layout aside{max-height:none;overflow-y:auto}.mobile-back{display:inline-flex;align-items:center;justify-content:center}}`}</style>
     </div>
   </main>;
 }

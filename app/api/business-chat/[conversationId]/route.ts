@@ -34,10 +34,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const messages = await Promise.all((rows || []).map(async (message: { id: string; sender_type: string; body: string; attachment_path: string | null; attachment_type: string | null; created_at: string }) => {
       let attachmentUrl: string | null = null;
       if (message.attachment_path) {
-        const { data } = await db.storage.from(BUSINESS_CHAT_BUCKET).createSignedUrl(message.attachment_path, 900);
+        const { data, error: signingError } = await db.storage.from(BUSINESS_CHAT_BUCKET).createSignedUrl(message.attachment_path, 900);
         attachmentUrl = data?.signedUrl || null;
+        if (signingError || !attachmentUrl) console.error("Customer business chat attachment signing failed:", signingError);
       }
-      return { id: message.id, senderType: message.sender_type, body: message.body, attachmentType: message.attachment_type, attachmentUrl, createdAt: message.created_at };
+      return { id: message.id, senderType: message.sender_type, body: message.body, attachmentType: message.attachment_type, attachmentUrl, attachmentError: message.attachment_path && !attachmentUrl ? "This attachment is temporarily unavailable. Please ask the business to resend it." : null, createdAt: message.created_at };
     }));
     return NextResponse.json({ conversation: { id: conversation.id, customerName: conversation.customer_name }, messages }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
