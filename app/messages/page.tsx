@@ -195,7 +195,8 @@ export default function MessagesPage() {
     let mediaType: "image" | "video" | "audio" | null = null;
     if (mediaFile) {
       const allowed = ["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","audio/webm","audio/ogg","audio/mp4","audio/mpeg","audio/wav"];
-      if (!allowed.includes(mediaFile.type) || mediaFile.size > 25 * 1024 * 1024) {
+      const supportedType = allowed.includes(mediaFile.type) || mediaFile.type.startsWith("audio/webm;") || mediaFile.type.startsWith("audio/ogg;");
+      if (!supportedType || mediaFile.size > 25 * 1024 * 1024) {
         setNotice("Choose an image, MP4/WebM video or supported audio file up to 25 MB."); setBusy(false); return;
       }
       const ext = mediaFile.name.split(".").pop()?.toLowerCase() || "jpg";
