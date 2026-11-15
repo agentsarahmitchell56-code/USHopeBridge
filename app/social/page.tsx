@@ -8,8 +8,8 @@ import { supabase } from "../../lib/supabase";
 
 type Profile = { id: string; username: string; display_name: string; avatar_url: string | null; bio?: string };
 type RawPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string };
-type LikeRow = { post_id: string; user_id: string };
-type FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean; saved: boolean; media_url?: string };
+type ReactionRow = { post_id: string; user_id: string; reaction: string };
+type FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean; saved: boolean; myReaction: string | null; shares: number; media_url?: string };
 
 export default function SocialFeedPage() {
   const router = useRouter();
@@ -30,22 +30,26 @@ export default function SocialFeedPage() {
     if (postError) throw postError;
     const rows = (postData || []) as RawPost[];
     const ids = [...new Set(rows.map(post => post.author_id))];
-    const [profileResult, likeResult, savedResult] = await Promise.all([
+    const [profileResult, reactionResult, savedResult, shareResult] = await Promise.all([
       ids.length ? supabase.from("user_profiles").select("id,username,display_name,avatar_url").in("id", ids) : Promise.resolve({ data: [] as Profile[] }),
-      rows.length ? supabase.from("social_post_likes").select("post_id,user_id").in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as LikeRow[] }),
+      rows.length ? supabase.from("social_post_reactions").select("post_id,user_id,reaction").in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as ReactionRow[] }),
       rows.length ? supabase.from("social_saved_posts").select("post_id").eq("user_id", currentUser.id).in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as Array<{post_id:string}> }),
+      rows.length ? supabase.from("social_post_shares").select("post_id").in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as Array<{post_id:string}> }),
     ]);
     const profileRows = (profileResult.data || []) as Profile[];
-    const likeRows = (likeResult.data || []) as LikeRow[];
+    const reactionRows = (reactionResult.data || []) as ReactionRow[];
     const savedIds = new Set((savedResult.data || []).map(item => item.post_id));
+    const shareRows = shareResult.data || [];
     const profileMap = new Map<string, Profile>(profileRows.map(item => [item.id, item]));
     const mapped = await Promise.all(rows.map(async post => {
       const signed = post.media_path ? await supabase.storage.from("social-media").createSignedUrl(post.media_path, 3600) : null;
       return {
         ...post,
         profile: profileMap.get(post.author_id),
-        likes: likeRows.filter(item => item.post_id === post.id).length,
-        liked: likeRows.some(item => item.post_id === post.id && item.user_id === currentUser.id),
+        likes: reactionRows.filter(item => item.post_id === post.id).length,
+        liked: reactionRows.some(item => item.post_id === post.id && item.user_id === currentUser.id && item.reaction === "like"),
+        myReaction: reactionRows.find(item => item.post_id === post.id && item.user_id === currentUser.id)?.reaction || null,
+        shares: shareRows.filter(item => item.post_id === post.id).length,
         saved: savedIds.has(post.id),
         media_url: signed?.data?.signedUrl,
       };
@@ -109,17 +113,33 @@ export default function SocialFeedPage() {
     if (result.error) { setError(result.error.message); await loadFeed(user); }
   }
 
-  async function toggleLike(post: FeedPost) {
+  async function setReaction(post: FeedPost, reaction: string) {
     if (!user) return;
-    const wasLiked = post.liked;
-    setPosts(current => current.map(item => item.id === post.id ? { ...item, liked: !wasLiked, likes: item.likes + (wasLiked ? -1 : 1) } : item));
-    const result = wasLiked
-      ? await supabase.from("social_post_likes").delete().eq("post_id", post.id).eq("user_id", user.id)
-      : await supabase.from("social_post_likes").insert({ post_id: post.id, user_id: user.id });
-    if (result.error) { setError(result.error.message); await loadFeed(user); }
-    else if (!wasLiked && post.author_id !== user.id) {
+    setError("");
+    const result = post.myReaction === reaction
+      ? await supabase.from("social_post_reactions").delete().eq("post_id", post.id).eq("user_id", user.id)
+      : await supabase.from("social_post_reactions").upsert(
+          { post_id: post.id, user_id: user.id, reaction, updated_at: new Date().toISOString() },
+          { onConflict: "post_id,user_id" }
+        );
+    if (result.error) setError(result.error.message);
+    else if (reaction !== "like" && post.author_id !== user.id && post.myReaction !== reaction) {
+      await supabase.from("social_notifications").insert({ recipient_id: post.author_id, actor_id: user.id, kind: "reaction", post_id: post.id, body: `reacted to your post with ${reaction}` });
+    } else if (post.author_id !== user.id && !post.myReaction) {
       await supabase.from("social_notifications").insert({ recipient_id: post.author_id, actor_id: user.id, kind: "like", post_id: post.id, body: "liked your post" });
     }
+    await loadFeed(user);
+  }
+
+  async function sharePost(post: FeedPost) {
+    if (!user) return;
+    setError("");
+    const { error: shareError } = await supabase.from("social_post_shares").insert({ post_id: post.id, sharer_id: user.id });
+    if (shareError) { setError(shareError.message); return; }
+    if (post.author_id !== user.id) {
+      await supabase.from("social_notifications").insert({ recipient_id: post.author_id, actor_id: user.id, kind: "share", post_id: post.id, body: "shared your post" });
+    }
+    await loadFeed(user);
   }
 
   async function signOut() {
@@ -173,8 +193,19 @@ export default function SocialFeedPage() {
           <Link href={post.profile?.username ? `/u/${encodeURIComponent(post.profile.username)}` : "#"} className="eaz-post-author" aria-label={`View ${post.profile?.display_name || "member"} profile`}><span className="eaz-social-avatar">{post.profile?.display_name?.[0] || "E"}</span><div><strong>{post.profile?.display_name || "EAZREAL member"}</strong><small>@{post.profile?.username || "member"} · {new Date(post.created_at).toLocaleString()} · {post.visibility}</small></div></Link>
           {post.body && <p className="eaz-post-body">{post.body}</p>}
           {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
-          <div className="eaz-post-stats"><span>{post.likes} likes</span></div>
-          <div className="eaz-post-actions"><button onClick={() => toggleLike(post)} aria-pressed={post.liked}>{post.liked ? "♥ Liked" : "♡ Like"}</button><button onClick={() => router.push(`/post/${post.id}`)}>◯ Comment</button><button onClick={() => toggleSave(post)}>{post.saved ? "▣ Saved" : "▢ Save"}</button><button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/post/${post.id}`)}>↗ Copy link</button></div>
+          <div className="eaz-post-stats"><span>{post.likes} reactions</span><span>{post.shares} shares</span></div>
+          <div className="eaz-post-actions">
+            <label className="eaz-reaction-picker" aria-label="Choose a reaction">
+              <span>{post.myReaction ? ({like:"👍",love:"❤️",care:"🤗",haha:"😂",wow:"😮",sad:"😢",angry:"😡"} as Record<string,string>)[post.myReaction] : "♡"} React</span>
+              <select aria-label="React to post" value={post.myReaction || "none"} onChange={event => { if (event.target.value !== "none") void setReaction(post, event.target.value); }}>
+                <option value="none">Choose reaction</option><option value="like">Like 👍</option><option value="love">Love ❤️</option><option value="care">Care 🤗</option><option value="haha">Haha 😂</option><option value="wow">Wow 😮</option><option value="sad">Sad 😢</option><option value="angry">Angry 😡</option>
+              </select>
+            </label>
+            <button onClick={() => router.push(`/post/${post.id}`)}>◯ Comment</button>
+            <button onClick={() => sharePost(post)}>↗ Share</button>
+            <button onClick={() => toggleSave(post)}>{post.saved ? "▣ Saved" : "▢ Save"}</button>
+            <button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/post/${post.id}`)}>Copy link</button>
+          </div>
         </article>)}
       </section>
       <aside className="eaz-social-right">
