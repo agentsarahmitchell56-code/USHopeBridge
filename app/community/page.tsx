@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
@@ -20,6 +20,7 @@ const field: React.CSSProperties = { width: "100%", boxSizing: "border-box", bor
 
 export default function CommunityPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [me, setMe] = useState<Member | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -31,6 +32,7 @@ export default function CommunityPage() {
   const [likes, setLikes] = useState<string[]>([]);
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [tab, setTab] = useState<Tab>("feed");
+  useEffect(() => { const requested = searchParams.get("tab"); if (requested === "friends" || requested === "discover" || requested === "profile" || requested === "feed") setTab(requested); }, [searchParams]);
   const [search, setSearch] = useState("");
   const [postBody, setPostBody] = useState("");
   const [postMedia, setPostMedia] = useState<File | null>(null);
@@ -266,7 +268,7 @@ export default function CommunityPage() {
           </div>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             {me.avatar_url ? <img src={me.avatar_url} alt="" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover" }} /> : <div style={{ width: 52, height: 52, borderRadius: "50%", display: "grid", placeItems: "center", background: "#dbeafe", color: "#0753c6", fontWeight: 900, fontSize: 20 }}>{me.display_name.slice(0,1).toUpperCase()}</div>}
-            <div><strong>{me.display_name}</strong><div style={{ color: "#718096", fontSize: 13 }}>@{me.handle}</div></div>
+            <div><Link href={`/u/${encodeURIComponent(me.handle)}`} style={{ color: "#182b45", textDecoration: "none" }}><strong>{me.display_name}</strong></Link><div style={{ color: "#718096", fontSize: 13 }}>@{me.handle}</div></div>
           </div>
           <p style={{ color: "#718096", fontSize: 12, marginBottom: 6 }}>YOUR EAZREAL ID</p><strong style={{ color: "#1264eb", letterSpacing: ".05em" }}>{me.member_id}</strong>
           <div style={{ display: "flex", gap: 18, marginTop: 16, fontSize: 13 }}><span><b>{followers}</b> followers</span><span><b>{following.size}</b> following</span><span><b>{friends.length}</b> friends</span></div>
@@ -301,7 +303,7 @@ export default function CommunityPage() {
           {posts.map(post => { const author = memberMap.get(post.author_id); return <article key={post.id} style={panel}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {author?.avatar_url ? <img src={author.avatar_url} alt="" style={{ width: 42, height: 42, borderRadius: "50%", objectFit: "cover" }} /> : <div style={{ width: 42, height: 42, borderRadius: "50%", display: "grid", placeItems: "center", background: "#e4efff", color: "#0753c6", fontWeight: 900 }}>{author?.display_name.slice(0,1).toUpperCase() || "E"}</div>}
-              <div><strong>{author?.display_name || "EAZREAL member"}</strong><div style={{ color: "#718096", fontSize: 12 }}>@{author?.handle || "member"} · {new Date(post.created_at).toLocaleString()}</div></div>
+              <div><Link href={author?.handle ? `/u/${encodeURIComponent(author.handle)}` : "#"} style={{ color: "#182b45", textDecoration: "none" }}><strong>{author?.display_name || "EAZREAL member"}</strong></Link><div style={{ color: "#718096", fontSize: 12 }}>@{author?.handle || "member"} · {new Date(post.created_at).toLocaleString()}</div></div>
             </div>
             {post.body && <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.65, overflowWrap: "anywhere" }}>{post.body}</p>}
             {post.media_url && post.media_type === "image" && <img src={post.media_url} alt="Post attachment" loading="lazy" style={{ display: "block", width: "100%", maxHeight: 560, objectFit: "contain", borderRadius: 12, background: "#f3f6fb" }} />}
@@ -317,7 +319,7 @@ export default function CommunityPage() {
         {tab === "discover" && <>
           <section style={panel}><h1 style={{ margin: "0 0 8px", fontSize: 24 }}>Find your people</h1><p style={{ color: "#718096", marginTop: 0 }}>Search members by name, username or EAZREAL ID.</p><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, @username or EZ-12345678" style={field} /></section>
           {peopleList.map(member => <article key={member.user_id} style={{ ...panel, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div><strong>{member.display_name}</strong><div style={{ color: "#718096", fontSize: 13 }}>@{member.handle} · {member.member_id}</div><p style={{ margin: "5px 0 0", color: "#52657c", fontSize: 13 }}>{member.bio || "EAZREAL community member"}</p></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}><Link href={`/u/${encodeURIComponent(member.handle)}`} aria-label={`Open ${member.display_name} profile`} style={{ flex: "0 0 auto" }}>{member.avatar_url ? <img src={member.avatar_url} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ width: 48, height: 48, borderRadius: "50%", display: "grid", placeItems: "center", background: "#dbeafe", color: "#0753c6", fontWeight: 900 }}>{member.display_name.slice(0,1).toUpperCase()}</span>}</Link><div style={{ minWidth: 0 }}><Link href={`/u/${encodeURIComponent(member.handle)}`} style={{ color: "#182b45", textDecoration: "none" }}><strong>{member.display_name}</strong></Link><div style={{ color: "#718096", fontSize: 13 }}>@{member.handle} · {member.member_id}</div><p style={{ margin: "5px 0 0", color: "#52657c", fontSize: 13 }}>{member.bio || "EAZREAL community member"}</p></div></div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button disabled={busy} onClick={() => follow(member)} style={following.has(member.user_id) ? lightButton : button}>{following.has(member.user_id) ? "Following" : "Follow"}</button><button disabled={busy} onClick={() => sendFriendRequest(member)} style={lightButton}>Add friend</button></div>
           </article>)}
           {peopleList.length === 0 && <p style={{ ...panel, color: "#718096" }}>No members match that search yet.</p>}
@@ -326,9 +328,9 @@ export default function CommunityPage() {
         {tab === "friends" && <>
           <section style={panel}><h1 style={{ margin: 0, fontSize: 24 }}>Friends</h1><p style={{ color: "#718096" }}>Accepted connections and friend requests.</p><strong>Incoming requests ({incoming.length})</strong>
             {incoming.length === 0 && <p style={{ color: "#718096", fontSize: 13 }}>No new friend requests.</p>}
-            {incoming.map(r => { const person = memberMap.get(r.requester_id); return <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "12px 0", borderBottom: "1px solid #edf1f6" }}><span><b>{person?.display_name || "EAZREAL member"}</b><small style={{ display: "block", color: "#718096" }}>@{person?.handle}</small></span><span style={{ display: "flex", gap: 6 }}><button disabled={busy} onClick={() => respondToRequest(r, "accepted")} style={button}>Accept</button><button disabled={busy} onClick={() => respondToRequest(r, "declined")} style={lightButton}>Decline</button></span></div>; })}
+            {incoming.map(r => { const person = memberMap.get(r.requester_id); return <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "12px 0", borderBottom: "1px solid #edf1f6" }}><span><Link href={person?.handle ? `/u/${encodeURIComponent(person.handle)}` : "#"} style={{ color: "#182b45", textDecoration: "none" }}><b>{person?.display_name || "EAZREAL member"}</b><small style={{ display: "block", color: "#718096" }}>@{person?.handle}</small></Link></span><span style={{ display: "flex", gap: 6 }}><button disabled={busy} onClick={() => respondToRequest(r, "accepted")} style={button}>Accept</button><button disabled={busy} onClick={() => respondToRequest(r, "declined")} style={lightButton}>Decline</button></span></div>; })}
           </section>
-          <section style={panel}><strong>Your friends ({friends.length})</strong>{friends.map(id => { const person = memberMap.get(id); return <div key={id} style={{ padding: "12px 0", borderBottom: "1px solid #edf1f6" }}><b>{person?.display_name || "EAZREAL member"}</b><small style={{ display: "block", color: "#718096" }}>@{person?.handle} · {person?.member_id}</small></div>; })}{friends.length === 0 && <p style={{ color: "#718096" }}>Your accepted friends will appear here.</p>}</section>
+          <section style={panel}><strong>Your friends ({friends.length})</strong>{friends.map(id => { const person = memberMap.get(id); return <div key={id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "12px 0", borderBottom: "1px solid #edf1f6" }}><Link href={person?.handle ? `/u/${encodeURIComponent(person.handle)}` : "#"} style={{ display: "flex", alignItems: "center", gap: 10, color: "#182b45", textDecoration: "none", minWidth: 0 }}>{person?.avatar_url ? <img src={person.avatar_url} alt="" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ width: 44, height: 44, borderRadius: "50%", display: "grid", placeItems: "center", background: "#dbeafe", color: "#0753c6", fontWeight: 900 }}>{person?.display_name.slice(0,1).toUpperCase() || "E"}</span>}<span><b>{person?.display_name || "EAZREAL member"}</b><small style={{ display: "block", color: "#718096" }}>@{person?.handle} · {person?.member_id}</small></span></Link><Link href={person ? `/messages?to=${encodeURIComponent(person.user_id)}` : "/messages"} style={{ ...lightButton, textDecoration: "none", whiteSpace: "nowrap" }}>Message</Link></div>; })}{friends.length === 0 && <p style={{ color: "#718096" }}>Your accepted friends will appear here.</p>}</section>
           <section style={panel}><strong>Requests you sent ({outgoing.length})</strong>{outgoing.map(r => <p key={r.id} style={{ color: "#718096" }}>Waiting for {memberMap.get(r.recipient_id)?.display_name || "a member"} to respond.</p>)}</section>
         </>}
 
