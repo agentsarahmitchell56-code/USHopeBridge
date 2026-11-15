@@ -77,7 +77,16 @@ export default function MessagesPage() {
     const channel = supabase.channel(`social-messages-${selected.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "social_messages", filter: `conversation_id=eq.${selected.id}` }, () => { void loadMessages(selected); })
       .subscribe();
-    return () => { void supabase.removeChannel(channel); };
+    // Polling is a fallback for browsers or projects where realtime delivery
+    // is delayed, disconnected, or unavailable.
+    const pollId = window.setInterval(() => {
+      void loadMessages(selected);
+      if (me) void loadConversations(me);
+    }, 5000);
+    return () => {
+      window.clearInterval(pollId);
+      void supabase.removeChannel(channel);
+    };
   }, [selected, me, loadMessages]);
 
   const isBlockedWith = useCallback(async (personId: string) => {
