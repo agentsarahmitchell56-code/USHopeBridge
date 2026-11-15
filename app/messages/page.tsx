@@ -8,7 +8,7 @@ import styles from "./messages.module.css";
 
 type Person = { id: string; username: string; display_name: string; avatar_url: string | null };
 type Conversation = { id: string; user_one: string; user_two: string; updated_at: string };
-type Message = { id: string; conversation_id: string; sender_id: string; body: string; created_at: string; media_path: string | null; media_type: string | null; media_url?: string };
+type Message = { id: string; conversation_id: string; sender_id: string; body: string; created_at: string; read_at: string | null; media_path: string | null; media_type: string | null; media_url?: string };
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -27,6 +27,10 @@ export default function MessagesPage() {
   const [notice, setNotice] = useState("");
   const messageRequestId = useRef(0);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const voiceChunksRef = useRef<Blob[]>([]);
+  const [recording, setRecording] = useState(false);
 
   async function loadConversations(userId: string) {
     const { data, error } = await supabase.from("social_conversations").select("id,user_one,user_two,updated_at").or(`user_one.eq.${userId},user_two.eq.${userId}`).order("updated_at", { ascending: false });
@@ -42,8 +46,10 @@ export default function MessagesPage() {
 
   const loadMessages = useCallback(async (conversation: Conversation) => {
     const requestId = ++messageRequestId.current;
+    const { error: readError } = await supabase.rpc("mark_social_messages_read", { p_conversation_id: conversation.id });
+    if (readError && !readError.message.toLowerCase().includes("function")) setNotice(readError.message);
     const { data, error } = await supabase.from("social_messages")
-      .select("id,conversation_id,sender_id,body,created_at,media_path,media_type")
+      .select("id,conversation_id,sender_id,body,created_at,read_at,media_path,media_type")
       .eq("conversation_id", conversation.id)
       .order("created_at", { ascending: true })
       .order("id", { ascending: true })
@@ -76,7 +82,7 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!selected) return;
     const channel = supabase.channel(`social-messages-${selected.id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "social_messages", filter: `conversation_id=eq.${selected.id}` }, () => { void loadMessages(selected); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "social_messages", filter: `conversation_id=eq.${selected.id}` }, () => { void loadMessages(selected); })
       .subscribe();
     // Polling is a fallback for browsers or projects where realtime delivery
     // is delayed, disconnected, or unavailable.
@@ -147,19 +153,53 @@ export default function MessagesPage() {
     return () => { active = false; };
   }, [me, requestedUsername, openConversation]);
 
+  async function toggleVoiceRecording() {
+    if (recording) {
+      recorderRef.current?.stop();
+      setRecording(false);
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setNotice("Voice recording is not supported by this browser. You can attach an audio file instead.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      voiceChunksRef.current = [];
+      const preferred = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
+      const recorder = new MediaRecorder(stream, MediaRecorder.isTypeSupported(preferred) ? { mimeType: preferred } : undefined);
+      recorderRef.current = recorder;
+      recorder.ondataavailable = event => { if (event.data.size) voiceChunksRef.current.push(event.data); };
+      recorder.onstop = () => {
+        const mime = recorder.mimeType || "audio/webm";
+        const extension = mime.includes("mp4") ? "m4a" : mime.includes("ogg") ? "ogg" : "webm";
+        const voice = new File(voiceChunksRef.current, `voice-message.${extension}`, { type: mime });
+        if (voice.size) setMediaFile(voice);
+        mediaStreamRef.current?.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      };
+      recorder.start();
+      setRecording(true);
+      setNotice("Recording voice message… Tap the microphone again to stop.");
+    } catch {
+      setNotice("Microphone access was unavailable. Check your browser permission and try again.");
+    }
+  }
+
   async function sendMessage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected || (!draft.trim() && !mediaFile) || busy) return;
     setBusy(true); setNotice("");
     let mediaPath: string | null = null;
-    let mediaType: "image" | "video" | null = null;
+    let mediaType: "image" | "video" | "audio" | null = null;
     if (mediaFile) {
-      const allowed = ["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm"];
+      const allowed = ["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","audio/webm","audio/ogg","audio/mp4","audio/mpeg","audio/wav"];
       if (!allowed.includes(mediaFile.type) || mediaFile.size > 25 * 1024 * 1024) {
-        setNotice("Choose a JPG, PNG, WebP, GIF, MP4 or WebM file up to 25 MB."); setBusy(false); return;
+        setNotice("Choose an image, MP4/WebM video or supported audio file up to 25 MB."); setBusy(false); return;
       }
       const ext = mediaFile.name.split(".").pop()?.toLowerCase() || "jpg";
-      mediaType = mediaFile.type.startsWith("video/") ? "video" : "image";
+      mediaType = mediaFile.type.startsWith("video/") ? "video" : mediaFile.type.startsWith("audio/") ? "audio" : "image";
       mediaPath = `messages/${selected.id}/${me}/${crypto.randomUUID()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("social-media").upload(mediaPath,mediaFile,{contentType:mediaFile.type,upsert:false});
       if (uploadError) { setNotice(uploadError.message); setBusy(false); return; }
@@ -200,9 +240,9 @@ export default function MessagesPage() {
       <section className="card eaz-message-window">
         {selected ? <>
           <header className="eaz-message-heading"><button type="button" className="eaz-chat-back" onClick={() => setSelected(null)} aria-label="Back to conversations">‹</button>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-profile-link" aria-label={`View ${other.display_name} profile`}><span className="eaz-social-avatar">{other.display_name?.[0]||"E"}</span></Link> : <span className="eaz-social-avatar">{other?.display_name?.[0]||"E"}</span>}<div>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-name"><strong>{other.display_name}</strong></Link> : <strong>{other?.display_name||"EAZREAL member"}</strong>}<small>@{other?.username||"member"}</small></div></header>
-          <div className="eaz-message-list">{messages.map(message=><div className={`eaz-dm-bubble ${message.sender_id===me?"mine":""}`} key={message.id}>{message.body&&<p>{message.body}</p>}{message.media_url&&(message.media_type==="video"?<video className="eaz-dm-media" src={message.media_url} controls playsInline/>:<img className="eaz-dm-media" src={message.media_url} alt="Message attachment"/>)}<small>{new Date(message.created_at).toLocaleString()}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}<div ref={messageEndRef} /></div>
-          <form className="eaz-dm-composer" onSubmit={sendMessage}><label className="eaz-dm-attach">＋<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={event=>setMediaFile(event.target.files?.[0]||null)}/></label><input value={draft} onChange={event=>setDraft(event.target.value)} placeholder="Write a message…" maxLength={5000}/><button className="btn primary" disabled={(!draft.trim()&&!mediaFile)||busy}>Send</button></form>
-          {mediaFile&&<small className="eaz-media-selected">{mediaFile.name}</small>}
+          <div className="eaz-message-list">{messages.map(message=><div className={`eaz-dm-bubble ${message.sender_id===me?"mine":""}`} key={message.id}>{message.body&&<p>{message.body}</p>}{message.media_url&&(message.media_type==="video"?<video className="eaz-dm-media" src={message.media_url} controls playsInline/>:message.media_type==="audio"?<audio className="eaz-dm-audio" src={message.media_url} controls preload="metadata"/>:<img className="eaz-dm-media" src={message.media_url} alt="Message attachment"/>)}<small>{new Date(message.created_at).toLocaleString()}{message.sender_id===me&&<span className="eaz-message-read-state"> · {message.read_at?"Seen":"Sent"}</span>}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}<div ref={messageEndRef} /></div>
+          <form className="eaz-dm-composer" onSubmit={sendMessage}><button type="button" className={`eaz-dm-voice ${recording?"recording":""}`} onClick={toggleVoiceRecording} aria-label={recording?"Stop voice recording":"Record voice message"} title={recording?"Stop recording":"Record voice message"}>{recording?"■":"🎙"}</button><label className="eaz-dm-attach">＋<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,audio/webm,audio/ogg,audio/mp4,audio/mpeg,audio/wav" onChange={event=>setMediaFile(event.target.files?.[0]||null)}/></label><input value={draft} onChange={event=>setDraft(event.target.value)} placeholder="Write a message…" maxLength={5000}/><button className="btn primary" disabled={(!draft.trim()&&!mediaFile)||busy}>Send</button></form>
+          {mediaFile&&<small className="eaz-media-selected">{mediaFile.name} <button type="button" onClick={()=>setMediaFile(null)}>Remove</button></small>}
         </> : <div className="eaz-message-empty"><span>✉</span><h2>Your messages</h2><p>Choose a conversation or search for a person to start chatting privately.</p></div>}
         {notice&&<p className="eaz-social-notice">{notice}</p>}
       </section>
