@@ -187,23 +187,23 @@ export default function MessagesPage() {
   const other = otherId ? contacts[otherId] : null;
 
   return <main className={`eaz-social-subpage ${styles.chatPage} ${selected ? styles.hasSelected : ""}`}>
-    <header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>MESSAGES</span></Link><Link href="/social">Back to News Feed</Link></header>
+    <header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>CHATS</span></Link><Link href="/social">News Feed</Link></header>
     <div className="eaz-messages-layout">
       <section className="card eaz-conversation-list">
-        <h1>Messages</h1>
-        <form className="eaz-message-search" onSubmit={findPeople}><input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Find someone to message"/><button aria-label="Search">⌕</button></form>
+        <h1>Chats</h1>
+        <form className="eaz-message-search" onSubmit={findPeople}><input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Search people"/><button aria-label="Search">⌕</button></form>
         {results.map(person=><button className="eaz-conversation-item" key={person.id} onClick={()=>openConversation(person)}><span className="eaz-social-avatar">{person.display_name?.[0]||"E"}</span><span><strong>{person.display_name}</strong><small>@{person.username}</small></span></button>)}
-        <h2>Recent conversations</h2>
+        <h2>Chats</h2>
         {conversations.map(conversation=>{const id=conversation.user_one===me?conversation.user_two:conversation.user_one;const person=contacts[id];return <button className={`eaz-conversation-item ${selected?.id===conversation.id?"active":""}`} key={conversation.id} onClick={async()=>{setSelected(conversation);await loadMessages(conversation);}}><span className="eaz-social-avatar">{person?.display_name?.[0]||"E"}</span><span><strong>{person?.display_name||"EAZREAL member"}</strong><small>@{person?.username||"member"}</small></span></button>;})}
-        {conversations.length===0&&results.length===0&&<p className="eaz-muted">Search for a person to start a private conversation.</p>}
+        {conversations.length===0&&results.length===0&&<p className="eaz-muted">Search for a friend to start a chat.</p>}
       </section>
       <section className="card eaz-message-window">
         {selected ? <>
           <header className="eaz-message-heading"><button type="button" className="eaz-chat-back" onClick={() => setSelected(null)} aria-label="Back to conversations">‹</button>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-profile-link" aria-label={`View ${other.display_name} profile`}><span className="eaz-social-avatar">{other.display_name?.[0]||"E"}</span></Link> : <span className="eaz-social-avatar">{other?.display_name?.[0]||"E"}</span>}<div>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-name"><strong>{other.display_name}</strong></Link> : <strong>{other?.display_name||"EAZREAL member"}</strong>}<small>@{other?.username||"member"}</small></div></header>
-          <div className="eaz-message-list">{messages.map(message=><div className={`eaz-dm-bubble ${message.sender_id===me?"mine":""}`} key={message.id}>{message.body&&<p>{message.body}</p>}{message.media_url&&(message.media_type==="video"?<video className="eaz-dm-media" src={message.media_url} controls playsInline/>:<img className="eaz-dm-media" src={message.media_url} alt="Message attachment"/>)}<small>{new Date(message.created_at).toLocaleString()}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}<div ref={messageEndRef} /></div>
-          <form className="eaz-dm-composer" onSubmit={sendMessage}><label className="eaz-dm-attach">＋<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={event=>setMediaFile(event.target.files?.[0]||null)}/></label><input value={draft} onChange={event=>setDraft(event.target.value)} placeholder="Write a message…" maxLength={5000}/><button className="btn primary" disabled={(!draft.trim()&&!mediaFile)||busy}>Send</button></form>
+          <div className="eaz-message-list">{messages.map(message=><div className={`eaz-dm-bubble ${message.sender_id===me?"mine":""}`} key={message.id}>{message.body&&<p>{message.body}</p>}{message.media_url&&(message.media_type==="video"?<video className="eaz-dm-media" src={message.media_url} controls playsInline/>:<img className="eaz-dm-media" src={message.media_url} alt="Message attachment"/>)}<small>{new Date(message.created_at).toLocaleString()}</small></div>)}{messages.length===0&&<p className="eaz-muted">Send a message to start chatting.</p>}<div ref={messageEndRef} /></div>
+          <form className="eaz-dm-composer" onSubmit={sendMessage}><label className="eaz-dm-attach">＋<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={event=>setMediaFile(event.target.files?.[0]||null)}/></label><input value={draft} onChange={event=>setDraft(event.target.value)} placeholder="Message…" maxLength={5000}/><button className="btn primary" disabled={(!draft.trim()&&!mediaFile)||busy}>Send</button></form>
           {mediaFile&&<small className="eaz-media-selected">{mediaFile.name}</small>}
-        </> : <div className="eaz-message-empty"><span>✉</span><h2>Your messages</h2><p>Choose a conversation or search for a person to start chatting privately.</p></div>}
+        </> : <div className="eaz-message-empty"><span>✉</span><h2>Your chats</h2><p>Choose a chat or search for a friend to send a message.</p></div>}
         {notice&&<p className="eaz-social-notice">{notice}</p>}
       </section>
     </div>
