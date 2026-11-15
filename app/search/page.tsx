@@ -82,7 +82,7 @@ export default function SearchPage() {
           {posts.length ? posts.map(post => <Link className="card eaz-search-post" href={`/post/${post.id}`} key={post.id}><p>{post.body || "Media post"}</p><small>{new Date(post.created_at).toLocaleString()}</small></Link>) : <p className="eaz-muted">No matching posts found.</p>}
         </section>
         <section className="eaz-friend-section"><h2>Groups <span>{groups.length}</span></h2>
-          {groups.length ? groups.map(group => <article className="card eaz-search-post" key={group.id}><strong>{group.name}</strong><small>{group.privacy === "private" ? "Private group" : "Public group"}</small><p>{group.description}</p><Link href="/communities" className="text-link">Explore communities</Link></article>) : <p className="eaz-muted">No matching groups found.</p>}
+          {groups.length ? groups.map(group => <article className="card eaz-search-post" key={group.id}><strong>{group.name}</strong><small>{group.privacy === "private" ? "Private group" : "Public group"}</small><p>{group.description}</p><Link href={`/groups/${encodeURIComponent(group.slug)}`} className="text-link">View community</Link></article>) : <p className="eaz-muted">No matching groups found.</p>}
         </section>
         <section className="eaz-friend-section"><h2>Public pages <span>{pages.length}</span></h2>
           {pages.length ? pages.map(page => <article className="card eaz-search-post" key={page.id}><strong>{page.name}</strong><small>{page.category}</small><p>{page.description}</p><Link href={`/b/${encodeURIComponent(page.slug)}`} className="text-link">View page</Link></article>) : <p className="eaz-muted">No matching public pages found.</p>}
