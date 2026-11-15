@@ -67,7 +67,7 @@ export default function MessagesPage() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "social_messages", filter: `conversation_id=eq.${selected.id}` }, () => { void loadMessages(selected); })
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [selected?.id, me, loadMessages]);
+  }, [selected, me, loadMessages]);
 
   const isBlockedWith = useCallback(async (personId: string) => {
     const { data } = await supabase.from("social_user_blocks").select("blocker_id,blocked_id")
