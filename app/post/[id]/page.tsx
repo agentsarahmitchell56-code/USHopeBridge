@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
-type Comment = { id: string; author_id: string; body: string; created_at: string };
+type Comment = { id: string; author_id: string; body: string; created_at: string; parent_comment_id: string | null };
 type SocialPost = { id: string; author_id: string; body: string; created_at: string; media_path: string | null; media_type: string | null };
 type Author = { display_name: string; username: string; avatar_url: string | null };
 
@@ -19,6 +19,7 @@ export default function PostPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentProfiles, setCommentProfiles] = useState<Record<string, { display_name: string; username: string }>>({});
   const [body, setBody] = useState("");
+  const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [error, setError] = useState("");
   const [reportReason, setReportReason] = useState("spam");
   const [reporting, setReporting] = useState(false);
@@ -36,7 +37,7 @@ export default function PostPage() {
     }
     const [{ data: profile }, { data: commentRows }] = await Promise.all([
       supabase.from("user_profiles").select("display_name,username,avatar_url").eq("id", currentPost.author_id).maybeSingle(),
-      supabase.from("social_post_comments").select("id,author_id,body,created_at").eq("post_id", params.id).order("created_at", { ascending: true }),
+      supabase.from("social_post_comments").select("id,author_id,body,created_at,parent_comment_id").eq("post_id", params.id).order("created_at", { ascending: true }),
     ]);
     setAuthor(profile as Author | null);
     const rows = (commentRows || []) as Comment[];
@@ -55,12 +56,26 @@ export default function PostPage() {
     event.preventDefault();
     if (!userId) { router.push("/account/login"); return; }
     if (!body.trim() || !post) return;
-    const { error: insertError } = await supabase.from("social_post_comments").insert({ post_id: params.id, author_id: userId, body: body.trim() });
+    const { error: insertError } = await supabase.from("social_post_comments").insert({ post_id: params.id, author_id: userId, body: body.trim(), parent_comment_id: replyTo?.id || null });
     if (insertError) setError(insertError.message);
     else {
-      if (post.author_id !== userId) await supabase.from("social_notifications").insert({ recipient_id: post.author_id, actor_id: userId, kind: "comment", post_id: params.id, body: "commented on your post" });
-      setBody(""); await load();
+      const recipientId = replyTo?.author_id || post.author_id;
+      if (recipientId !== userId) await supabase.from("social_notifications").insert({ recipient_id: recipientId, actor_id: userId, kind: replyTo ? "comment_reply" : "comment", post_id: params.id, body: replyTo ? "replied to your comment" : "commented on your post" });
+      setBody(""); setReplyTo(null); await load();
     }
+  }
+
+  function renderComment(comment: Comment, depth = 0): React.ReactNode {
+    const replies = comments.filter(item => item.parent_comment_id === comment.id);
+    return <div key={comment.id} className="eaz-comment-thread" style={{ marginLeft: depth ? 20 : 0 }}>
+      <article className="card eaz-comment-row">
+        <strong>{commentProfiles[comment.author_id]?.display_name || "EAZREAL member"} <small>@{commentProfiles[comment.author_id]?.username || "member"}</small></strong>
+        <p>{comment.body}</p>
+        <time>{new Date(comment.created_at).toLocaleString()}</time>
+        {userId && <button type="button" className="text-link" onClick={() => { setReplyTo(comment); document.querySelector(".eaz-comment-form textarea")?.scrollIntoView({ behavior: "smooth", block: "center" }); }}>Reply</button>}
+      </article>
+      {replies.map(reply => renderComment(reply, depth + 1))}
+    </div>;
   }
 
   async function reportPost() {
@@ -74,8 +89,10 @@ export default function PostPage() {
   return <main className="eaz-social-subpage"><header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>POST</span></Link><Link href="/social">Home</Link></header><div className="eaz-social-subcontent">
     <h1>Post conversation</h1>{error && <p className="eaz-social-error">{error}</p>}
     {post && <article className="card eaz-social-post"><div className="eaz-post-author"><span className="eaz-social-avatar">{author?.display_name?.[0] || "E"}</span><div><Link href={author?.username ? `/u/${author.username}` : "/social"}><strong>{author?.display_name || "EAZREAL member"}</strong></Link><small>@{author?.username || "member"} · {new Date(post.created_at).toLocaleString()}</small></div></div>{post.body&&<p className="eaz-post-body">{post.body}</p>}{mediaUrl&&(post.media_type==="video"?<video className="eaz-post-media" src={mediaUrl} controls playsInline/>:<img className="eaz-post-media" src={mediaUrl} alt="Post attachment"/>)}</article>}
-    <section className="eaz-friend-section"><h2>Comments</h2><form className="card eaz-comment-form" onSubmit={submit}><textarea value={body} onChange={event => setBody(event.target.value)} placeholder="Write a comment…" rows={3} maxLength={2000}/><button className="btn primary" disabled={!body.trim()}>Comment</button></form>
-      {comments.map(comment => <article className="card eaz-comment-row" key={comment.id}><strong>{commentProfiles[comment.author_id]?.display_name || "EAZREAL member"} <small>@{commentProfiles[comment.author_id]?.username || "member"}</small></strong><p>{comment.body}</p><time>{new Date(comment.created_at).toLocaleString()}</time></article>)}
+    <section className="eaz-friend-section"><h2>Comments</h2><form className="card eaz-comment-form" onSubmit={submit}><textarea value={body} onChange={event => setBody(event.target.value)} placeholder={replyTo ? `Reply to ${commentProfiles[replyTo.author_id]?.display_name || "this comment"}…` : "Write a comment…"} rows={3} maxLength={2000}/><button className="btn primary" disabled={!body.trim()}>{replyTo ? "Reply" : "Comment"}</button></form>
+      {replyTo && <p className="eaz-social-notice">Replying to {commentProfiles[replyTo.author_id]?.display_name || "this member"} <button type="button" onClick={() => setReplyTo(null)}>Cancel</button></p>}
+      {comments.filter(comment => !comment.parent_comment_id).map(comment => renderComment(comment))}
+
       {comments.length===0 && <p className="eaz-muted">Be the first to comment.</p>}
     </section>
   </div></main>;
