@@ -2340,3 +2340,33 @@ body { color:var(--hb-ink); background:var(--hb-page); }
  .eaz-profile-form-actions{display:grid;grid-template-columns:1fr}
  .eaz-profile-form-actions .btn{width:100%;text-align:center}
 }
+
+
+/* Cross-device app shell: iOS safe areas, Android gesture area and compact navigation */
+html { min-height: 100%; -webkit-text-size-adjust: 100%; }
+body { min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
+button, a, input, textarea, select { touch-action: manipulation; }
+img, video { max-width: 100%; }
+.eaz-mobile-bottom-nav { display: none; }
+@media (max-width: 760px) {
+  .eaz-social-app { min-height: 100dvh; padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .eaz-mobile-bottom-nav {
+    position: fixed; z-index: 100; left: 0; right: 0; bottom: 0;
+    display: grid; grid-template-columns: repeat(6,minmax(0,1fr));
+    min-height: 62px; padding: 7px 5px calc(7px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.97); border-top: 1px solid #e5eaf1;
+    box-shadow: 0 -5px 22px rgba(16,42,67,.08);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  }
+  .eaz-mobile-bottom-nav a {
+    display: flex; min-width: 0; flex-direction: column; align-items: center;
+    justify-content: center; gap: 2px; color: #65748b; border-radius: 10px;
+  }
+  .eaz-mobile-bottom-nav a[aria-current="page"] { color: #0866ff; }
+  .eaz-mobile-bottom-nav a>span { font-size: 22px; line-height: 1.1; }
+  .eaz-mobile-bottom-nav small { font-size: 9px; line-height: 1.2; font-weight: 750; }
+  .eaz-social-layout { padding-bottom: 12px; }
+}
+@media (display-mode: standalone) {
+  body { padding-top: env(safe-area-inset-top); }
+}
