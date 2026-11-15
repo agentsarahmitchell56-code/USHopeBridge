@@ -37,24 +37,24 @@ export default function AccountPage() {
 
   return <main className="eaz-account-page">
     <section className="card eaz-account-card">
-      <Link href="/social" className="brand">EAZREAL<span>YOUR PERSONAL ACCOUNT</span></Link>
+      <Link href="/social" className="brand">EAZREAL<span>MENU</span></Link>
       <div className="eaz-account-heading">
         <span className="eaz-social-avatar eaz-account-avatar">{profile?.display_name?.[0] || "E"}</span>
         <div><h1>Welcome{profile?.display_name ? `, ${profile.display_name}` : ""}</h1><p>{user?.email}</p><small>@{profile?.username || "member"}</small></div>
       </div>
-      <h2>Your EAZREAL</h2>
+      <h2>Menu</h2>
       <div className="eaz-account-grid">
-        <Link href="/social"><strong>⌂ News Feed</strong><span>See updates from people you follow.</span></Link>
-        <Link href="/friends"><strong>♧ Friends & People</strong><span>Find people, send requests and connect.</span></Link>
-        <Link href="/messages"><strong>✉ Messages</strong><span>Send private messages to other members.</span></Link>
-        <Link href="/profile"><strong>◉ Your Profile</strong><span>Edit your name, username and bio.</span></Link>
+        <Link href="/social"><strong>⌂ Home</strong><span>See updates from people you follow.</span></Link>
+        <Link href="/friends"><strong>♧ Friends</strong><span>Find people, send requests and connect.</span></Link>
+        <Link href="/messages"><strong>✉ Chats</strong><span>Chat with friends and people on EAZREAL.</span></Link>
+        <Link href="/profile"><strong>◉ Profile</strong><span>Edit your name, username and bio.</span></Link>
         <Link href="/notifications"><strong>♧ Notifications</strong><span>See activity and friend requests.</span></Link>
         <Link href="/business/workspace"><strong>▣ Business Pages</strong><span>Manage your public business presence.</span></Link>
         <Link href="/apply"><strong>♡ HOPEBRIDGE Assistance</strong><span>Access the existing assistance service.</span></Link>
         <Link href="/status"><strong>▤ Track an application</strong><span>Check an existing application status.</span></Link>
         <Link href="/chat"><strong>✉ Contact support</strong><span>Open the private HOPEBRIDGE support chat.</span></Link>
       </div>
-      <button className="btn secondary" onClick={signOut} disabled={signingOut}>{signingOut ? "Signing out…" : "Sign out"}</button>
+      <button className="btn secondary" onClick={signOut} disabled={signingOut}>{signingOut ? "Signing out…" : "Log out"}</button>
     </section>
   </main>;
 }
