@@ -18,8 +18,8 @@ export const metadata = {
   },
   twitter: {
     card: "summary",
-    title: "EAZREAL | Business Workspace",
-    description: "Connect. Create. Grow. Manage your business presence and customer conversations in one workspace.",
+    title: "EAZREAL | Social Community",
+    description: "Connect. Create. Grow. Find friends, follow people, share posts and build your community.",
   },
   robots: {
     index: true,

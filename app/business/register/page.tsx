@@ -25,7 +25,7 @@ export default function BusinessRegisterPage() {
       const { data, error: signupError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
-        options: { data: { full_name: cleanName, business_name: cleanName } },
+        options: { data: { full_name: cleanName, business_name: cleanName }, emailRedirectTo: `${window.location.origin}/business/workspace` },
       });
       if (signupError) throw signupError;
       if (data.session) {
@@ -49,7 +49,7 @@ export default function BusinessRegisterPage() {
       const { error: verifyError } = await supabase.auth.verifyOtp({
         email: email.trim().toLowerCase(),
         token: code.trim(),
-        type: "email",
+        type: "signup",
       });
       if (verifyError) throw verifyError;
       router.replace("/business/workspace");
