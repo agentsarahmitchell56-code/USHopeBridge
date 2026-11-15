@@ -135,29 +135,29 @@ export default function SocialFeedPage() {
       <Link href="/social" className="brand">EAZREAL<span>SOCIAL</span></Link>
       <form className="eaz-social-search" onSubmit={event => { event.preventDefault(); router.push("/friends"); }}><span>⌕</span><input aria-label="Search people" placeholder="Search people and friends" /></form>
       <nav className="eaz-social-top-actions">
-        <Link href="/social" aria-label="Home">⌂</Link><Link href="/friends" aria-label="Friends">♧</Link><Link href="/messages" aria-label="Messages">✉</Link><Link href="/notifications" aria-label="Notifications">♧</Link><button onClick={signOut}>Sign out</button>
+        <Link href="/social" aria-label="Home">⌂</Link><Link href="/friends" aria-label="Friends">♧</Link><Link href="/messages" aria-label="Chats">✉</Link><Link href="/notifications" aria-label="Notifications">♧</Link><button onClick={signOut}>Sign out</button>
       </nav>
     </header>
     <div className="eaz-social-layout">
       <aside className="eaz-social-sidebar">
         <div className="eaz-social-me"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><div><strong>{profile?.display_name || user?.email}</strong><small>@{profile?.username || "member"}</small></div></div>
-        <Link className="eaz-social-side-active" href="/social">⌂ <span>News Feed</span></Link>
+        <Link className="eaz-social-side-active" href="/social">⌂ <span>Home</span></Link>
         <Link href="/friends">♧ <span>Friends</span></Link>
-        <Link href="/messages">✉ <span>Messages</span></Link>
+        <Link href="/messages">✉ <span>Chats</span></Link>
         <Link href="/reels">▶ <span>Reels</span></Link>
         <Link href="/saved">▣ <span>Saved posts</span></Link>
         <Link href="/stories">◉ <span>Stories</span></Link>
         <Link href="/communities">♧ <span>Communities</span></Link>
-        <Link href="/profile">◉ <span>My Profile</span></Link>
+        <Link href="/profile">◉ <span>Profile</span></Link>
         <Link href="/business/workspace">▣ <span>Business Pages</span></Link>
         <Link href="/apply">♡ <span>HOPEBRIDGE Assistance</span></Link>
         <div className="eaz-social-side-divider" />
         <small className="eaz-social-side-label">YOUR ACCOUNT</small>
         <Link href="/notifications">♧ <span>Notifications</span></Link>
-        <Link href="/account">⚙ <span>Account settings</span></Link>
+        <Link href="/account">⚙ <span>Settings</span></Link>
       </aside>
       <section className="eaz-social-feed">
-        <div className="eaz-social-welcome"><div><span className="eyebrow">YOUR COMMUNITY</span><h1>News Feed</h1><p>See what your people are sharing.</p></div><span className="eaz-feed-live">● Your feed</span></div>
+        <div className="eaz-social-welcome"><div><span className="eyebrow">YOUR COMMUNITY</span><h1>Home</h1><p>See what your people are sharing.</p></div><span className="eaz-feed-live">● Latest posts</span></div>
         <form className="eaz-social-composer card" onSubmit={publish}>
           <div className="eaz-composer-top"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><textarea value={draft} onChange={event => setDraft(event.target.value)} placeholder="What's on your mind?" maxLength={5000} rows={3} /></div>
           <div className="eaz-composer-bottom">
@@ -188,7 +188,7 @@ export default function SocialFeedPage() {
       <Link href="/friends"><span aria-hidden="true">♧</span><small>Friends</small></Link>
       <Link href="/reels"><span aria-hidden="true">▶</span><small>Reels</small></Link>
       <Link href="/messages"><span aria-hidden="true">✉</span><small>Messages</small></Link>
-      <Link href="/notifications"><span aria-hidden="true">♧</span><small>Alerts</small></Link>
+      <Link href="/notifications"><span aria-hidden="true">♧</span><small>Notifications</small></Link>
       <Link href="/profile"><span aria-hidden="true">◉</span><small>Profile</small></Link>
     </nav>
   </main>;
