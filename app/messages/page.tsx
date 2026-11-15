@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
@@ -17,9 +17,9 @@ const primary: React.CSSProperties = { border: 0, borderRadius: 999, padding: "1
 
 export default function MessagesPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const requestedFriendId = searchParams.get("to") || "";
+  const [requestedFriendId, setRequestedFriendId] = useState("");
   const openedTarget = useRef("");
+  useEffect(() => { setRequestedFriendId(new URLSearchParams(window.location.search).get("to") || ""); }, []);
   const [user, setUser] = useState<User | null>(null);
   const [friends, setFriends] = useState<Member[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
