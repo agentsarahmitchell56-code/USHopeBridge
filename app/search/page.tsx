@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
@@ -21,7 +21,7 @@ export default function SearchPage() {
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState("");
 
-  async function search(value: string) {
+  const search = useCallback(async (value: string) => {
     const query = value.trim().slice(0, 80);
     if (!query) { setPeople([]); setPosts([]); setGroups([]); setPages([]); setSearched(false); return; }
     const safe = query.replace(/[,()%]/g, " ").replace(/\s+/g, " ").trim();
@@ -45,12 +45,12 @@ export default function SearchPage() {
     setGroups((groupResult.data || []) as Group[]);
     setPages((pageResult.data || []) as Page[]);
     setLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     const initial = new URLSearchParams(window.location.search).get("q") || "";
     if (initial) { setTerm(initial); void search(initial); }
-  }, []);
+  }, [search]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
