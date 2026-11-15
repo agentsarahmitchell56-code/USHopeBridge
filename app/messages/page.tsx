@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
@@ -17,6 +17,9 @@ const primary: React.CSSProperties = { border: 0, borderRadius: 999, padding: "1
 
 export default function MessagesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedFriendId = searchParams.get("to") || "";
+  const openedTarget = useRef("");
   const [user, setUser] = useState<User | null>(null);
   const [friends, setFriends] = useState<Member[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -61,7 +64,7 @@ export default function MessagesPage() {
           .select("user_id,member_id,handle,display_name,avatar_url").in("user_id", friendIds).order("display_name");
         if (peopleError) throw peopleError;
         if (active) setFriends((people || []) as Member[]);
-      }
+      } else if (active) setFriends([]);
       await loadConversations(auth.user.id);
     }
     void init().catch(e => { if (active) setError(e instanceof Error ? e.message : "Messages could not be loaded."); })
@@ -106,6 +109,14 @@ export default function MessagesPage() {
     } catch (e) { setError(e instanceof Error ? e.message : "Could not open this conversation."); }
   }
 
+  useEffect(() => {
+    if (!requestedFriendId || !user || !friends.length || busy || openedTarget.current === requestedFriendId) return;
+    const friend = friends.find(person => person.user_id === requestedFriendId);
+    if (!friend) return;
+    openedTarget.current = requestedFriendId;
+    void openFriend(friend);
+  }, [requestedFriendId, user, friends, busy, conversations]);
+
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!user || !selected || !draft.trim() || sending) return;
@@ -135,14 +146,14 @@ export default function MessagesPage() {
         <h2 style={{ fontSize: 13, color: "#718096", margin: "18px 0 8px" }}>FRIENDS</h2>
         {visibleFriends.length === 0 && <p style={{ color: "#718096", fontSize: 13 }}>{friends.length ? "No friends match your search." : "Add friends first to start private chats."}</p>}
         {visibleFriends.map(friend => <button key={friend.user_id} onClick={() => void openFriend(friend)} style={{ width: "100%", border: 0, borderRadius: 12, background: activeFriendId === friend.user_id ? "#e8f1ff" : "transparent", padding: 11, display: "flex", gap: 10, alignItems: "center", textAlign: "left", cursor: "pointer", color: "#24364b" }}>
-          <span style={avatar}>{friend.display_name.slice(0,1).toUpperCase()}</span><span><strong>{friend.display_name}</strong><small style={{ display: "block", color: "#718096" }}>@{friend.handle}</small></span>
+          {friend.avatar_url ? <img src={friend.avatar_url} alt="" style={{ ...avatar, objectFit: "cover" }} /> : <span style={avatar}>{friend.display_name.slice(0,1).toUpperCase()}</span>}<span><strong>{friend.display_name}</strong><small style={{ display: "block", color: "#718096" }}>@{friend.handle}</small></span>
         </button>)}
       </aside>
       <section style={{ ...panel, minHeight: 560, display: "flex", flexDirection: "column" }}>
         {error && <p role="alert" style={{ color: "#a61b1b", background: "#fff3f3", padding: 10, borderRadius: 10 }}>{error}</p>}
         {notice && <p role="status">{notice}</p>}
         {activeFriend ? <>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 14, borderBottom: "1px solid #edf0f4" }}><span style={avatar}>{activeFriend.display_name.slice(0,1).toUpperCase()}</span><div><strong>{activeFriend.display_name}</strong><small style={{ display: "block", color: "#718096" }}>@{activeFriend.handle}</small></div></div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 14, borderBottom: "1px solid #edf0f4" }}>{activeFriend.avatar_url ? <img src={activeFriend.avatar_url} alt="" style={{ ...avatar, objectFit: "cover" }} /> : <span style={avatar}>{activeFriend.display_name.slice(0,1).toUpperCase()}</span>}<Link href={`/u/${encodeURIComponent(activeFriend.handle)}`} style={{ color: "#24364b", textDecoration: "none" }}><strong>{activeFriend.display_name}</strong><small style={{ display: "block", color: "#718096" }}>@{activeFriend.handle} · View profile</small></Link></div>
           <div style={{ flex: 1, minHeight: 350, maxHeight: "60vh", overflowY: "auto", padding: "14px 2px", display: "flex", flexDirection: "column", gap: 9 }}>
             {messages.map(m => <div key={m.id} style={{ alignSelf: m.sender_id === user?.id ? "flex-end" : "flex-start", maxWidth: "78%", background: m.sender_id === user?.id ? "#1768e8" : "#edf1f6", color: m.sender_id === user?.id ? "#fff" : "#24364b", padding: "10px 13px", borderRadius: 16, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{m.body}<small style={{ display: "block", opacity: .7, fontSize: 10, marginTop: 5 }}>{new Date(m.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</small></div>)}
             {messages.length === 0 && <p style={{ color: "#718096", textAlign: "center", margin: "auto" }}>Say hello and start your conversation.</p>}
