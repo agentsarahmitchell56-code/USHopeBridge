@@ -24,6 +24,7 @@ export default function MessagesPage() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const messageRequestId = useRef(0);
 
   async function loadConversations(userId: string) {
     const { data, error } = await supabase.from("social_conversations").select("id,user_one,user_two,updated_at").or(`user_one.eq.${userId},user_two.eq.${userId}`).order("updated_at", { ascending: false });
@@ -38,14 +39,23 @@ export default function MessagesPage() {
   }
 
   const loadMessages = useCallback(async (conversation: Conversation) => {
-    const { data, error } = await supabase.from("social_messages").select("id,conversation_id,sender_id,body,created_at,media_path,media_type").eq("conversation_id", conversation.id).order("created_at", { ascending: true }).limit(100);
+    const requestId = ++messageRequestId.current;
+    const { data, error } = await supabase.from("social_messages")
+      .select("id,conversation_id,sender_id,body,created_at,media_path,media_type")
+      .eq("conversation_id", conversation.id)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .limit(100);
+    if (requestId !== messageRequestId.current) return;
     if (error) { setNotice(error.message); return; }
-    const rows = (data || []) as Message[];
-    const mapped = await Promise.all(rows.map(async message => {
-      const signed = message.media_path ? await supabase.storage.from("social-media").createSignedUrl(message.media_path,3600) : null;
+    // Realtime INSERT events and the post-send refresh can arrive together.
+    // Database IDs ensure each message is rendered only once.
+    const uniqueRows = [...new Map(((data || []) as Message[]).map(message => [message.id, message])).values()];
+    const mapped = await Promise.all(uniqueRows.map(async message => {
+      const signed = message.media_path ? await supabase.storage.from("social-media").createSignedUrl(message.media_path, 3600) : null;
       return { ...message, media_url: signed?.data?.signedUrl };
     }));
-    setMessages(mapped);
+    if (requestId === messageRequestId.current) setMessages(mapped);
   }, []);
 
   useEffect(() => { setRequestedUsername(new URLSearchParams(window.location.search).get("user") || ""); }, []);
