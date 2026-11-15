@@ -24,6 +24,8 @@ export default function MessagesPage() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const messageRequestId = useRef(0);
+  const messageEndRef = useRef<HTMLDivElement | null>(null);
 
   async function loadConversations(userId: string) {
     const { data, error } = await supabase.from("social_conversations").select("id,user_one,user_two,updated_at").or(`user_one.eq.${userId},user_two.eq.${userId}`).order("updated_at", { ascending: false });
@@ -38,14 +40,23 @@ export default function MessagesPage() {
   }
 
   const loadMessages = useCallback(async (conversation: Conversation) => {
-    const { data, error } = await supabase.from("social_messages").select("id,conversation_id,sender_id,body,created_at,media_path,media_type").eq("conversation_id", conversation.id).order("created_at", { ascending: true }).limit(100);
+    const requestId = ++messageRequestId.current;
+    const { data, error } = await supabase.from("social_messages")
+      .select("id,conversation_id,sender_id,body,created_at,media_path,media_type")
+      .eq("conversation_id", conversation.id)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .limit(100);
+    if (requestId !== messageRequestId.current) return;
     if (error) { setNotice(error.message); return; }
-    const rows = (data || []) as Message[];
-    const mapped = await Promise.all(rows.map(async message => {
-      const signed = message.media_path ? await supabase.storage.from("social-media").createSignedUrl(message.media_path,3600) : null;
+    // Realtime INSERT events and the post-send refresh can arrive together.
+    // Database IDs ensure each message is rendered only once.
+    const uniqueRows = [...new Map(((data || []) as Message[]).map(message => [message.id, message])).values()];
+    const mapped = await Promise.all(uniqueRows.map(async message => {
+      const signed = message.media_path ? await supabase.storage.from("social-media").createSignedUrl(message.media_path, 3600) : null;
       return { ...message, media_url: signed?.data?.signedUrl };
     }));
-    setMessages(mapped);
+    if (requestId === messageRequestId.current) setMessages(mapped);
   }, []);
 
   useEffect(() => { setRequestedUsername(new URLSearchParams(window.location.search).get("user") || ""); }, []);
@@ -66,7 +77,16 @@ export default function MessagesPage() {
     const channel = supabase.channel(`social-messages-${selected.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "social_messages", filter: `conversation_id=eq.${selected.id}` }, () => { void loadMessages(selected); })
       .subscribe();
-    return () => { void supabase.removeChannel(channel); };
+    // Polling is a fallback for browsers or projects where realtime delivery
+    // is delayed, disconnected, or unavailable.
+    const pollId = window.setInterval(() => {
+      void loadMessages(selected);
+      if (me) void loadConversations(me);
+    }, 5000);
+    return () => {
+      window.clearInterval(pollId);
+      void supabase.removeChannel(channel);
+    };
   }, [selected, me, loadMessages]);
 
   const isBlockedWith = useCallback(async (personId: string) => {
@@ -158,6 +178,10 @@ export default function MessagesPage() {
     setBusy(false);
   }
 
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages]);
+
   const otherId = selected ? (selected.user_one === me ? selected.user_two : selected.user_one) : "";
   const other = otherId ? contacts[otherId] : null;
 
@@ -175,7 +199,7 @@ export default function MessagesPage() {
       <section className="card eaz-message-window">
         {selected ? <>
           <header className="eaz-message-heading">{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-profile-link" aria-label={`View ${other.display_name} profile`}><span className="eaz-social-avatar">{other.display_name?.[0]||"E"}</span></Link> : <span className="eaz-social-avatar">{other?.display_name?.[0]||"E"}</span>}<div>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-name"><strong>{other.display_name}</strong></Link> : <strong>{other?.display_name||"EAZREAL member"}</strong>}<small>@{other?.username||"member"}</small></div></header>
-          <div className="eaz-message-list">{messages.map(message=><div className={`eaz-dm-bubble ${message.sender_id===me?"mine":""}`} key={message.id}>{message.body&&<p>{message.body}</p>}{message.media_url&&(message.media_type==="video"?<video className="eaz-dm-media" src={message.media_url} controls playsInline/>:<img className="eaz-dm-media" src={message.media_url} alt="Message attachment"/>)}<small>{new Date(message.created_at).toLocaleString()}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}</div>
+          <div className="eaz-message-list">{messages.map(message=><div className={`eaz-dm-bubble ${message.sender_id===me?"mine":""}`} key={message.id}>{message.body&&<p>{message.body}</p>}{message.media_url&&(message.media_type==="video"?<video className="eaz-dm-media" src={message.media_url} controls playsInline/>:<img className="eaz-dm-media" src={message.media_url} alt="Message attachment"/>)}<small>{new Date(message.created_at).toLocaleString()}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}<div ref={messageEndRef} /></div>
           <form className="eaz-dm-composer" onSubmit={sendMessage}><label className="eaz-dm-attach">＋<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={event=>setMediaFile(event.target.files?.[0]||null)}/></label><input value={draft} onChange={event=>setDraft(event.target.value)} placeholder="Write a message…" maxLength={5000}/><button className="btn primary" disabled={(!draft.trim()&&!mediaFile)||busy}>Send</button></form>
           {mediaFile&&<small className="eaz-media-selected">{mediaFile.name}</small>}
         </> : <div className="eaz-message-empty"><span>✉</span><h2>Your messages</h2><p>Choose a conversation or search for a person to start chatting privately.</p></div>}
