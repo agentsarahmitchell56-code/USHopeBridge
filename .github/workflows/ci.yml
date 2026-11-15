@@ -85,6 +85,11 @@ jobs:
           /apply
           /status
           /chat
+          /social
+          /friends
+          /messages
+          /messages?user=ci-smoke-test
+          /u/ci-smoke-test
           /admin/login
           /admin
           ROUTES

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
@@ -12,6 +12,8 @@ type Message = { id: string; conversation_id: string; sender_id: string; body: s
 export default function MessagesPage() {
   const router = useRouter();
   const [me, setMe] = useState("");
+  const [requestedUsername, setRequestedUsername] = useState("");
+  const openedUsername = useRef("");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [contacts, setContacts] = useState<Record<string, Person>>({});
   const [selected, setSelected] = useState<Conversation | null>(null);
@@ -35,7 +37,7 @@ export default function MessagesPage() {
     }
   }
 
-  async function loadMessages(conversation: Conversation) {
+  const loadMessages = useCallback(async (conversation: Conversation) => {
     const { data, error } = await supabase.from("social_messages").select("id,conversation_id,sender_id,body,created_at,media_path,media_type").eq("conversation_id", conversation.id).order("created_at", { ascending: true }).limit(100);
     if (error) { setNotice(error.message); return; }
     const rows = (data || []) as Message[];
@@ -44,7 +46,9 @@ export default function MessagesPage() {
       return { ...message, media_url: signed?.data?.signedUrl };
     }));
     setMessages(mapped);
-  }
+  }, []);
+
+  useEffect(() => { setRequestedUsername(new URLSearchParams(window.location.search).get("user") || ""); }, []);
 
   useEffect(() => {
     let active = true;
@@ -63,13 +67,13 @@ export default function MessagesPage() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "social_messages", filter: `conversation_id=eq.${selected.id}` }, () => { void loadMessages(selected); })
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [selected?.id, me]);
+  }, [selected, me, loadMessages]);
 
-  async function isBlockedWith(personId: string) {
+  const isBlockedWith = useCallback(async (personId: string) => {
     const { data } = await supabase.from("social_user_blocks").select("blocker_id,blocked_id")
       .or(`and(blocker_id.eq.${me},blocked_id.eq.${personId}),and(blocker_id.eq.${personId},blocked_id.eq.${me})`);
     return Boolean(data?.length);
-  }
+  }, [me]);
 
   async function findPeople(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,7 +90,7 @@ export default function MessagesPage() {
     }
   }
 
-  async function openConversation(person: Person) {
+  const openConversation = useCallback(async (person: Person) => {
     if (await isBlockedWith(person.id)) {
       setNotice("Messaging is unavailable because one of these accounts has blocked the other.");
       return;
@@ -106,7 +110,21 @@ export default function MessagesPage() {
     await loadMessages(conversation);
     setResults([]);
     setBusy(false);
-  }
+  }, [me, isBlockedWith, loadMessages]);
+
+  useEffect(() => {
+    if (!me || !requestedUsername || openedUsername.current === requestedUsername) return;
+    let active = true;
+    void (async () => {
+      const { data, error } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url").eq("username", requestedUsername.toLowerCase()).maybeSingle();
+      if (!active) return;
+      if (error || !data) { setNotice(error?.message || "That member could not be found."); openedUsername.current = requestedUsername; return; }
+      if (data.id === me) { setNotice("This is your own account."); openedUsername.current = requestedUsername; return; }
+      openedUsername.current = requestedUsername;
+      await openConversation(data as Person);
+    })();
+    return () => { active = false; };
+  }, [me, requestedUsername, openConversation]);
 
   async function sendMessage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -156,7 +174,7 @@ export default function MessagesPage() {
       </section>
       <section className="card eaz-message-window">
         {selected ? <>
-          <header className="eaz-message-heading"><span className="eaz-social-avatar">{other?.display_name?.[0]||"E"}</span><div><strong>{other?.display_name||"EAZREAL member"}</strong><small>@{other?.username||"member"}</small></div></header>
+          <header className="eaz-message-heading">{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-profile-link" aria-label={`View ${other.display_name} profile`}><span className="eaz-social-avatar">{other.display_name?.[0]||"E"}</span></Link> : <span className="eaz-social-avatar">{other?.display_name?.[0]||"E"}</span>}<div>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-name"><strong>{other.display_name}</strong></Link> : <strong>{other?.display_name||"EAZREAL member"}</strong>}<small>@{other?.username||"member"}</small></div></header>
           <div className="eaz-message-list">{messages.map(message=><div className={`eaz-dm-bubble ${message.sender_id===me?"mine":""}`} key={message.id}>{message.body&&<p>{message.body}</p>}{message.media_url&&(message.media_type==="video"?<video className="eaz-dm-media" src={message.media_url} controls playsInline/>:<img className="eaz-dm-media" src={message.media_url} alt="Message attachment"/>)}<small>{new Date(message.created_at).toLocaleString()}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}</div>
           <form className="eaz-dm-composer" onSubmit={sendMessage}><label className="eaz-dm-attach">＋<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={event=>setMediaFile(event.target.files?.[0]||null)}/></label><input value={draft} onChange={event=>setDraft(event.target.value)} placeholder="Write a message…" maxLength={5000}/><button className="btn primary" disabled={(!draft.trim()&&!mediaFile)||busy}>Send</button></form>
           {mediaFile&&<small className="eaz-media-selected">{mediaFile.name}</small>}
