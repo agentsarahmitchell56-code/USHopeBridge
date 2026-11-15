@@ -1,10 +1,10 @@
 {
-  "id": "/",
+  "id": "/social",
   "name": "EAZREAL Social Platform",
   "short_name": "EAZREAL",
   "description": "Connect with friends, share photos and videos, message people and discover communities on EAZREAL.",
   "lang": "en-US",
-  "start_url": "/",
+  "start_url": "/social",
   "scope": "/",
   "display": "standalone",
   "display_override": [
