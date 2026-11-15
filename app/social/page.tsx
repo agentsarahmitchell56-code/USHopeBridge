@@ -201,6 +201,7 @@ export default function SocialFeedPage() {
                 <option value="none">Choose reaction</option><option value="like">Like 👍</option><option value="love">Love ❤️</option><option value="care">Care 🤗</option><option value="haha">Haha 😂</option><option value="wow">Wow 😮</option><option value="sad">Sad 😢</option><option value="angry">Angry 😡</option>
               </select>
             </label>
+            <button onClick={() => setReaction(post, post.myReaction || "like")} disabled={!post.myReaction} title="Remove your reaction">Remove reaction</button>
             <button onClick={() => router.push(`/post/${post.id}`)}>◯ Comment</button>
             <button onClick={() => sharePost(post)}>↗ Share</button>
             <button onClick={() => toggleSave(post)}>{post.saved ? "▣ Saved" : "▢ Save"}</button>
