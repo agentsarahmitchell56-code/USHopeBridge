@@ -71,7 +71,7 @@ export default function PostPage() {
     setReporting(false);
   }
 
-  return <main className="eaz-social-subpage"><header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>POST</span></Link><Link href="/social">Back to News Feed</Link></header><div className="eaz-social-subcontent">
+  return <main className="eaz-social-subpage"><header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>POST</span></Link><Link href="/social">Home</Link></header><div className="eaz-social-subcontent">
     <h1>Post conversation</h1>{error && <p className="eaz-social-error">{error}</p>}
     {post && <article className="card eaz-social-post"><div className="eaz-post-author"><span className="eaz-social-avatar">{author?.display_name?.[0] || "E"}</span><div><Link href={author?.username ? `/u/${author.username}` : "/social"}><strong>{author?.display_name || "EAZREAL member"}</strong></Link><small>@{author?.username || "member"} · {new Date(post.created_at).toLocaleString()}</small></div></div>{post.body&&<p className="eaz-post-body">{post.body}</p>}{mediaUrl&&(post.media_type==="video"?<video className="eaz-post-media" src={mediaUrl} controls playsInline/>:<img className="eaz-post-media" src={mediaUrl} alt="Post attachment"/>)}</article>}
     <section className="eaz-friend-section"><h2>Comments</h2><form className="card eaz-comment-form" onSubmit={submit}><textarea value={body} onChange={event => setBody(event.target.value)} placeholder="Write a comment…" rows={3} maxLength={2000}/><button className="btn primary" disabled={!body.trim()}>Comment</button></form>
