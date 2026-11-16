@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import SocialAvatar from "../../components/social-avatar";
 
-type Person = { id: string; username: string; display_name: string; bio?: string; avatar_url?: string | null; is_private?: boolean };
+type Person = { id: string; username: string; display_name: string; bio?: string; avatar_url?: string | null; avatar_path?: string | null; is_private?: boolean };
 type Friendship = { id: string; requester_id: string; addressee_id: string; status: string; created_at?: string };
 
 export default function FriendsPage() {
@@ -39,7 +40,7 @@ export default function FriendsPage() {
     }
     const { data: profiles, error: profilesError } = await supabase
       .from("user_profiles")
-      .select("id,username,display_name,bio,avatar_url,is_private")
+      .select("id,username,display_name,bio,avatar_url,avatar_path,is_private")
       .in("id", ids);
     if (profilesError) throw profilesError;
     setPeople(Object.fromEntries(((profiles || []) as Person[]).map(person => [person.id, person])));
@@ -319,7 +320,7 @@ export default function FriendsPage() {
           const isFriend = relationship?.status === "accepted";
           return <article className="card eaz-person-row" key={person.id}>
             <Link href={`/u/${encodeURIComponent(person.username)}`} className="eaz-person-profile-link" aria-label={`Open ${person.display_name} profile`}>
-              {person.avatar_url ? <img className="eaz-social-avatar" src={person.avatar_url} alt="" /> : <span className="eaz-social-avatar">{person.display_name?.[0] || "E"}</span>}
+              <SocialAvatar name={person.display_name} avatarPath={person.avatar_path} avatarUrl={person.avatar_url} />
             </Link>
             <div>
               <Link href={`/u/${encodeURIComponent(person.username)}`} className="eaz-person-name"><strong>{person.display_name}</strong></Link>
@@ -343,7 +344,7 @@ export default function FriendsPage() {
           const person = people[request.requester_id];
           return <article className="card eaz-person-row" key={request.id}>
             <Link href={person?.username ? `/u/${encodeURIComponent(person.username)}` : "/friends"} className="eaz-person-profile-link">
-              {person?.avatar_url ? <img className="eaz-social-avatar" src={person.avatar_url} alt="" /> : <span className="eaz-social-avatar">{person?.display_name?.[0] || "E"}</span>}
+              <SocialAvatar name={person?.display_name} avatarPath={person?.avatar_path} avatarUrl={person?.avatar_url} />
             </Link>
             <div><Link href={person?.username ? `/u/${encodeURIComponent(person.username)}` : "/friends"} className="eaz-person-name"><strong>{person?.display_name || "EAZREAL member"}</strong></Link><small>@{person?.username || "member"}</small></div>
             <button className="btn primary" onClick={() => void respond(request, "accepted")} disabled={Boolean(actionId)}>Accept</button>
