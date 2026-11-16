@@ -195,14 +195,29 @@ export default function FriendsPage() {
     setActionId(request.id);
     setMessage("");
     try {
-      const { error } = await supabase.from("friendships")
+      const { data: updated, error } = await supabase.from("friendships")
         .update({ status, updated_at: new Date().toISOString() })
         .eq("id", request.id)
         .eq("addressee_id", userId)
-        .eq("status", "pending");
+        .eq("status", "pending")
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!updated) throw new Error("This request is no longer pending. Refresh your connections and try again.");
       await loadConnections(userId);
-      setMessage(status === "accepted" ? "Friend request accepted. You are now friends." : "Friend request declined.");
+      if (status === "accepted") {
+        const { error: notificationError } = await supabase.from("social_notifications").insert({
+          recipient_id: request.requester_id,
+          actor_id: userId,
+          kind: "friend_accepted",
+          body: "accepted your friend request",
+        });
+        setMessage(notificationError
+          ? "Friend request accepted, but the notification could not be delivered."
+          : "Friend request accepted. You are now friends.");
+      } else {
+        setMessage("Friend request declined.");
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "That request could not be updated.");
     } finally {
