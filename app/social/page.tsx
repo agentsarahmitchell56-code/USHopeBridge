@@ -216,12 +216,6 @@ export default function SocialFeedPage() {
         <section className="card"><h3>Community guidelines</h3><p>Be respectful. Share responsibly. Keep your account secure.</p></section>
       </aside>
     </div>
-    <nav className="eaz-mobile-bottom-nav" aria-label="Main navigation">
-      <Link href="/social" aria-current="page"><span aria-hidden="true">⌂</span><small>Home</small></Link>
-      <Link href="/friends"><span aria-hidden="true">♧</span><small>Friends</small></Link>
-      <Link href="/reels"><span aria-hidden="true">▶</span><small>Watch</small></Link>
-      <Link href="/notifications"><span aria-hidden="true">♧</span><small>Notifications</small></Link>
-      <Link href="/account"><span aria-hidden="true">☰</span><small>Menu</small></Link>
-    </nav>
+
   </main>;
 }
