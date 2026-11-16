@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import SocialAvatar from "../../components/social-avatar";
 import styles from "./messages.module.css";
 
-type Person = { id: string; username: string; display_name: string; avatar_url: string | null };
+type Person = { id: string; username: string; display_name: string; avatar_url: string | null; avatar_path?: string | null };
 type Conversation = { id: string; user_one: string; user_two: string; updated_at: string };
 type Message = { id: string; conversation_id: string; sender_id: string; body: string; created_at: string; read_at: string | null; media_path: string | null; media_type: string | null; media_url?: string };
 
@@ -42,7 +43,7 @@ export default function MessagesPage() {
     setConversations(rows);
     const ids = [...new Set(rows.map(c => c.user_one === userId ? c.user_two : c.user_one))];
     if (ids.length) {
-      const { data: profiles } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url").in("id", ids);
+      const { data: profiles } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url,avatar_path").in("id", ids);
       if (profiles) setContacts(Object.fromEntries((profiles as Person[]).map(p => [p.id,p])));
     }
     setLoadingConversations(false);
@@ -265,16 +266,16 @@ export default function MessagesPage() {
       <section className="card eaz-conversation-list">
         <h1>Chats</h1>
         <form className="eaz-message-search" onSubmit={findPeople}><input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Find someone to message"/><button aria-label="Search">⌕</button></form>
-        {results.map(person=><button className="eaz-conversation-item" key={person.id} onClick={()=>openConversation(person)}><span className="eaz-social-avatar">{person.display_name?.[0]||"E"}</span><span><strong>{person.display_name}</strong><small>@{person.username}</small></span></button>)}
+        {results.map(person=><button className="eaz-conversation-item" key={person.id} onClick={()=>openConversation(person)}><SocialAvatar name={person.display_name} avatarPath={person.avatar_path} avatarUrl={person.avatar_url} /><span><strong>{person.display_name}</strong><small>@{person.username}</small></span></button>)}
         <h2>Recent conversations</h2>
-        {conversations.map(conversation=>{const id=conversation.user_one===me?conversation.user_two:conversation.user_one;const person=contacts[id];return <button className={`eaz-conversation-item ${selected?.id===conversation.id?"active":""}`} key={conversation.id} onClick={async()=>{setSelected(conversation);await loadMessages(conversation);}}><span className="eaz-social-avatar">{person?.display_name?.[0]||"E"}</span><span><strong>{person?.display_name||"EAZREAL member"}</strong><small>@{person?.username||"member"}</small></span></button>;})}
+        {conversations.map(conversation=>{const id=conversation.user_one===me?conversation.user_two:conversation.user_one;const person=contacts[id];return <button className={`eaz-conversation-item ${selected?.id===conversation.id?"active":""}`} key={conversation.id} onClick={async()=>{setSelected(conversation);await loadMessages(conversation);}}><SocialAvatar name={person?.display_name} avatarPath={person?.avatar_path} avatarUrl={person?.avatar_url} /><span><strong>{person?.display_name||"EAZREAL member"}</strong><small>@{person?.username||"member"}</small></span></button>;})}
         {loadingConversations&&<p className="eaz-muted">Loading your chats…</p>}
         {conversationError&&<p className="eaz-social-notice" role="alert">{conversationError} <button type="button" onClick={()=>{setLoadingConversations(true);void loadConversations(me);}}>Try again</button></p>}
         {!loadingConversations&&!conversationError&&conversations.length===0&&results.length===0&&<p className="eaz-muted">No conversations yet. Search for a person to start a private chat.</p>}
       </section>
       <section className="card eaz-message-window">
         {selected ? <>
-          <header className="eaz-message-heading"><button type="button" className="eaz-chat-back" onClick={() => setSelected(null)} aria-label="Back to conversations">‹</button>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-profile-link" aria-label={`View ${other.display_name} profile`}><span className="eaz-social-avatar">{other.display_name?.[0]||"E"}</span></Link> : <span className="eaz-social-avatar">{other?.display_name?.[0]||"E"}</span>}<div>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-name"><strong>{other.display_name}</strong></Link> : <strong>{other?.display_name||"EAZREAL member"}</strong>}<small>@{other?.username||"member"}</small></div></header>
+          <header className="eaz-message-heading"><button type="button" className="eaz-chat-back" onClick={() => setSelected(null)} aria-label="Back to conversations">‹</button>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-profile-link" aria-label={`View ${other.display_name} profile`}><SocialAvatar name={other.display_name} avatarPath={other.avatar_path} avatarUrl={other.avatar_url} /></Link> : <SocialAvatar name={other?.display_name} avatarPath={other?.avatar_path} avatarUrl={other?.avatar_url} />}<div>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-name"><strong>{other.display_name}</strong></Link> : <strong>{other?.display_name||"EAZREAL member"}</strong>}<small>@{other?.username||"member"}</small></div></header>
           <div className="eaz-message-list">{messages.map(message=><div className={`eaz-dm-bubble ${message.sender_id===me?"mine":""}`} key={message.id}>{message.body&&<p>{message.body}</p>}{message.media_url&&(message.media_type==="video"?<video className="eaz-dm-media" src={message.media_url} controls playsInline autoPlay={false} preload="none"/>:message.media_type==="audio"?<audio className="eaz-dm-audio" src={message.media_url} controls preload="metadata"/>:<img className="eaz-dm-media" src={message.media_url} alt="Message attachment"/>)}<small>{new Date(message.created_at).toLocaleString()}{message.sender_id===me&&<span className="eaz-message-read-state"> · {message.read_at?"Seen":"Sent"}</span>}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}<div ref={messageEndRef} /></div>
           <form className="eaz-dm-composer" onSubmit={sendMessage}><button type="button" className={`eaz-dm-voice ${recording?"recording":""}`} onClick={toggleVoiceRecording} aria-label={recording?"Stop voice recording":"Record voice message"} title={recording?"Stop recording":"Record voice message"}>{recording?"■":"🎙"}</button><label className="eaz-dm-attach">＋<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,audio/webm,audio/ogg,audio/mp4,audio/mpeg,audio/wav" onChange={event=>setMediaFile(event.target.files?.[0]||null)}/></label><input value={draft} onChange={event=>setDraft(event.target.value)} placeholder="Write a message…" maxLength={5000}/><button className="btn primary" disabled={(!draft.trim()&&!mediaFile)||busy}>Send</button></form>
           {mediaFile&&<small className="eaz-media-selected">{mediaFile.name} <button type="button" onClick={()=>setMediaFile(null)}>Remove</button></small>}
