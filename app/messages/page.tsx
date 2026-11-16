@@ -25,6 +25,8 @@ export default function MessagesPage() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [conversationError, setConversationError] = useState("");
+  const [loadingConversations, setLoadingConversations] = useState(true);
   const messageRequestId = useRef(0);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -34,14 +36,16 @@ export default function MessagesPage() {
 
   async function loadConversations(userId: string) {
     const { data, error } = await supabase.from("social_conversations").select("id,user_one,user_two,updated_at").or(`user_one.eq.${userId},user_two.eq.${userId}`).order("updated_at", { ascending: false });
-    if (error) { setNotice(error.message); return; }
+    if (error) { setConversationError(error.message); setLoadingConversations(false); return; }
+    setConversationError("");
     const rows = (data || []) as Conversation[];
     setConversations(rows);
     const ids = [...new Set(rows.map(c => c.user_one === userId ? c.user_two : c.user_one))];
     if (ids.length) {
       const { data: profiles } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url").in("id", ids);
-      setContacts(Object.fromEntries(((profiles || []) as Person[]).map(p => [p.id,p])));
+      if (profiles) setContacts(Object.fromEntries((profiles as Person[]).map(p => [p.id,p])));
     }
+    setLoadingConversations(false);
   }
 
   const loadMessages = useCallback(async (conversation: Conversation) => {
@@ -51,14 +55,14 @@ export default function MessagesPage() {
     const { data, error } = await supabase.from("social_messages")
       .select("id,conversation_id,sender_id,body,created_at,read_at,media_path,media_type")
       .eq("conversation_id", conversation.id)
-      .order("created_at", { ascending: true })
-      .order("id", { ascending: true })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .limit(100);
     if (requestId !== messageRequestId.current) return;
     if (error) { setNotice(error.message); return; }
     // Realtime INSERT events and the post-send refresh can arrive together.
     // Database IDs ensure each message is rendered only once.
-    const uniqueRows = [...new Map(((data || []) as Message[]).map(message => [message.id, message])).values()];
+    const uniqueRows = [...new Map(((data || []) as Message[]).map(message => [message.id, message])).values()].reverse();
     const mapped = await Promise.all(uniqueRows.map(async message => {
       const signed = message.media_path ? await supabase.storage.from("social-media").createSignedUrl(message.media_path, 3600) : null;
       return { ...message, media_url: signed?.data?.signedUrl };
@@ -70,14 +74,23 @@ export default function MessagesPage() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getUser().then(async ({ data }) => {
+    supabase.auth.getUser().then(async ({ data, error }) => {
+      if (error) { setConversationError(error.message); setLoadingConversations(false); return; }
       if (!data.user) { router.replace("/account/login?next=/messages"); return; }
       if (!active) return;
       setMe(data.user.id);
       await loadConversations(data.user.id);
-    });
+    }).catch(error => { if (active) { setConversationError(error instanceof Error ? error.message : "Chats could not be loaded. Please try again."); setLoadingConversations(false); } });
     return () => { active = false; };
   }, [router]);
+
+  useEffect(() => {
+    if (!me) return;
+    const refresh = () => { if (document.visibilityState === "visible") void loadConversations(me); };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [me]);
 
   useEffect(() => {
     if (!selected) return;
@@ -255,12 +268,14 @@ export default function MessagesPage() {
         {results.map(person=><button className="eaz-conversation-item" key={person.id} onClick={()=>openConversation(person)}><span className="eaz-social-avatar">{person.display_name?.[0]||"E"}</span><span><strong>{person.display_name}</strong><small>@{person.username}</small></span></button>)}
         <h2>Recent conversations</h2>
         {conversations.map(conversation=>{const id=conversation.user_one===me?conversation.user_two:conversation.user_one;const person=contacts[id];return <button className={`eaz-conversation-item ${selected?.id===conversation.id?"active":""}`} key={conversation.id} onClick={async()=>{setSelected(conversation);await loadMessages(conversation);}}><span className="eaz-social-avatar">{person?.display_name?.[0]||"E"}</span><span><strong>{person?.display_name||"EAZREAL member"}</strong><small>@{person?.username||"member"}</small></span></button>;})}
-        {conversations.length===0&&results.length===0&&<p className="eaz-muted">Search for a person to start a private conversation.</p>}
+        {loadingConversations&&<p className="eaz-muted">Loading your chats…</p>}
+        {conversationError&&<p className="eaz-social-notice" role="alert">{conversationError} <button type="button" onClick={()=>{setLoadingConversations(true);void loadConversations(me);}}>Try again</button></p>}
+        {!loadingConversations&&!conversationError&&conversations.length===0&&results.length===0&&<p className="eaz-muted">No conversations yet. Search for a person to start a private chat.</p>}
       </section>
       <section className="card eaz-message-window">
         {selected ? <>
           <header className="eaz-message-heading"><button type="button" className="eaz-chat-back" onClick={() => setSelected(null)} aria-label="Back to conversations">‹</button>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-profile-link" aria-label={`View ${other.display_name} profile`}><span className="eaz-social-avatar">{other.display_name?.[0]||"E"}</span></Link> : <span className="eaz-social-avatar">{other?.display_name?.[0]||"E"}</span>}<div>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-name"><strong>{other.display_name}</strong></Link> : <strong>{other?.display_name||"EAZREAL member"}</strong>}<small>@{other?.username||"member"}</small></div></header>
-          <div className="eaz-message-list">{messages.map(message=><div className={`eaz-dm-bubble ${message.sender_id===me?"mine":""}`} key={message.id}>{message.body&&<p>{message.body}</p>}{message.media_url&&(message.media_type==="video"?<video className="eaz-dm-media" src={message.media_url} controls playsInline/>:message.media_type==="audio"?<audio className="eaz-dm-audio" src={message.media_url} controls preload="metadata"/>:<img className="eaz-dm-media" src={message.media_url} alt="Message attachment"/>)}<small>{new Date(message.created_at).toLocaleString()}{message.sender_id===me&&<span className="eaz-message-read-state"> · {message.read_at?"Seen":"Sent"}</span>}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}<div ref={messageEndRef} /></div>
+          <div className="eaz-message-list">{messages.map(message=><div className={`eaz-dm-bubble ${message.sender_id===me?"mine":""}`} key={message.id}>{message.body&&<p>{message.body}</p>}{message.media_url&&(message.media_type==="video"?<video className="eaz-dm-media" src={message.media_url} controls playsInline autoPlay={false} preload="none"/>:message.media_type==="audio"?<audio className="eaz-dm-audio" src={message.media_url} controls preload="metadata"/>:<img className="eaz-dm-media" src={message.media_url} alt="Message attachment"/>)}<small>{new Date(message.created_at).toLocaleString()}{message.sender_id===me&&<span className="eaz-message-read-state"> · {message.read_at?"Seen":"Sent"}</span>}</small></div>)}{messages.length===0&&<p className="eaz-muted">Say hello and start the conversation.</p>}<div ref={messageEndRef} /></div>
           <form className="eaz-dm-composer" onSubmit={sendMessage}><button type="button" className={`eaz-dm-voice ${recording?"recording":""}`} onClick={toggleVoiceRecording} aria-label={recording?"Stop voice recording":"Record voice message"} title={recording?"Stop recording":"Record voice message"}>{recording?"■":"🎙"}</button><label className="eaz-dm-attach">＋<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,audio/webm,audio/ogg,audio/mp4,audio/mpeg,audio/wav" onChange={event=>setMediaFile(event.target.files?.[0]||null)}/></label><input value={draft} onChange={event=>setDraft(event.target.value)} placeholder="Write a message…" maxLength={5000}/><button className="btn primary" disabled={(!draft.trim()&&!mediaFile)||busy}>Send</button></form>
           {mediaFile&&<small className="eaz-media-selected">{mediaFile.name} <button type="button" onClick={()=>setMediaFile(null)}>Remove</button></small>}
         </> : <div className="eaz-message-empty"><span>✉</span><h2>Your messages</h2><p>Choose a conversation or search for a person to start chatting privately.</p></div>}
