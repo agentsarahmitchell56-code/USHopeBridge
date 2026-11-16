@@ -2465,3 +2465,64 @@ img, video { max-width: 100%; }
   .auth-page { padding-left: 10px !important; padding-right: 10px !important; }
   .auth-card { padding: 17px !important; }
 }
+
+
+/* EAZREAL feed reliability and mobile-first finish */
+.eaz-media-unavailable{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:150px;margin:12px 0;padding:24px 18px;border:1px dashed #cbd6e5;border-radius:12px;background:#f7f9fc;text-align:center;color:#52647c}
+.eaz-media-unavailable>span{font-size:28px;color:#0866ff}
+.eaz-media-unavailable strong{font-size:13px;color:#26364a}
+.eaz-media-unavailable small{max-width:300px;font-size:11px;line-height:1.5;color:#7b8797}
+.eaz-post-media{max-height:min(68vh,620px);object-fit:contain;content-visibility:auto}
+.eaz-post-stats{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.eaz-post-actions{align-items:stretch;flex-wrap:wrap}
+.eaz-post-actions button,.eaz-post-actions .eaz-reaction-picker{min-height:40px;display:flex;align-items:center;justify-content:center;gap:5px;border:0;border-radius:8px;background:transparent;color:#53647a;font:inherit;font-size:12px;font-weight:750;padding:8px 10px;cursor:pointer}
+.eaz-post-actions button:focus-visible,.eaz-post-actions select:focus-visible,.eaz-media-picker:focus-within{outline:2px solid #0866ff;outline-offset:2px}
+.eaz-post-actions button:disabled{opacity:.45;cursor:not-allowed}
+.eaz-reaction-picker{position:relative;flex:1;min-width:82px}
+.eaz-reaction-picker select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.eaz-media-picker{min-height:38px;padding:8px 12px;border-radius:9px;background:#eff6ff;color:#075be8}
+.eaz-media-picker input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.eaz-composer-top .social-avatar,.eaz-composer-top>[class*=avatar]{flex:0 0 auto}
+@media(max-width:760px){
+  .eaz-social-app{background:#f0f2f5}
+  .eaz-social-topbar{height:58px;gap:12px;padding:0 12px}
+  .eaz-social-topbar .brand{font-size:20px;line-height:1}
+  .eaz-social-topbar .brand span{font-size:8px;letter-spacing:.13em}
+  .eaz-social-search{height:38px;max-width:none;min-width:0;padding:0 11px}
+  .eaz-social-search input{font-size:13px}
+  .eaz-social-top-actions{display:none}
+  .eaz-social-layout{display:block;max-width:660px;padding:12px 10px 18px}
+  .eaz-social-sidebar,.eaz-social-right{display:none}
+  .eaz-social-feed{gap:11px}
+  .eaz-social-welcome{padding:3px 3px 5px}
+  .eaz-social-welcome h1{font-size:22px}
+  .eaz-social-welcome p{font-size:12px}
+  .eaz-feed-live{font-size:10px;padding:6px 8px}
+  .eaz-social-composer,.eaz-social-post{padding:13px;border-radius:13px;box-shadow:0 1px 3px rgba(16,42,67,.07)}
+  .eaz-composer-top{gap:9px}
+  .eaz-composer-top textarea{min-height:66px;max-height:160px;padding:11px;font-size:14px}
+  .eaz-composer-bottom{justify-content:flex-start;flex-wrap:wrap;gap:8px;padding-top:10px}
+  .eaz-composer-bottom label{min-height:36px}
+  .eaz-composer-bottom label:nth-child(2){margin-left:auto}
+  .eaz-composer-bottom .btn{width:100%;min-height:42px}
+  .eaz-media-selected{margin-left:0;overflow-wrap:anywhere}
+  .eaz-post-author{gap:9px}
+  .eaz-post-author strong{font-size:13px}
+  .eaz-post-author small{font-size:10px;line-height:1.4}
+  .eaz-post-body{font-size:14px;line-height:1.55;margin:12px 0}
+  .eaz-post-media{max-height:62vh;margin:10px 0;border-radius:9px}
+  .eaz-post-stats{gap:10px;font-size:10px;padding-bottom:9px}
+  .eaz-post-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding-top:7px}
+  .eaz-post-actions button,.eaz-post-actions .eaz-reaction-picker{min-width:0;min-height:38px;padding:7px 3px;font-size:11px;white-space:nowrap}
+  .eaz-post-actions button:hover{background:#f0f5ff}
+  .eaz-social-error{font-size:12px;margin:0}
+  .eaz-mobile-bottom-nav{min-height:62px}
+}
+@media(max-width:380px){
+  .eaz-social-topbar{gap:8px;padding:0 9px}
+  .eaz-social-topbar .brand{font-size:18px}
+  .eaz-social-layout{padding-left:7px;padding-right:7px}
+  .eaz-social-composer,.eaz-social-post{padding:11px}
+  .eaz-composer-bottom label:nth-child(2){margin-left:0}
+  .eaz-post-actions button,.eaz-post-actions .eaz-reaction-picker{font-size:10px}
+}
