@@ -8,10 +8,9 @@ type SocialAvatarProps = {
   avatarPath?: string | null;
   avatarUrl?: string | null;
   className?: string;
-  imageClassName?: string;
 };
 
-export default function SocialAvatar({ name, avatarPath, avatarUrl, className = "eaz-social-avatar", imageClassName }: SocialAvatarProps) {
+export default function SocialAvatar({ name, avatarPath, avatarUrl, className = "eaz-social-avatar" }: SocialAvatarProps) {
   const [src, setSrc] = useState(avatarUrl || "");
   const [failed, setFailed] = useState(false);
 
@@ -34,7 +33,6 @@ export default function SocialAvatar({ name, avatarPath, avatarUrl, className = 
     <span className={className} aria-label={name ? `${name}'s profile photo` : "Profile photo"}>
       {src && !failed ? (
         <img
-          className={imageClassName}
           src={src}
           alt={name ? `${name}'s profile photo` : "Profile photo"}
           onError={() => {
