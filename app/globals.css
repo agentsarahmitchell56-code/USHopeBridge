@@ -1611,7 +1611,7 @@ body { color:var(--hb-ink); background:var(--hb-page); }
 .hb-suite-quiet-button{color:#fff;font-size:11px;font-weight:800}
 .hb-suite-welcome-mark{position:relative;display:grid;place-items:center;flex:0 0 150px;width:150px;height:150px;border:1px solid rgba(255,255,255,.24);border-radius:42px;background:rgba(255,255,255,.09);color:#fff;font-size:48px;font-weight:900;transform:rotate(8deg)}
 .hb-suite-welcome-mark span{position:absolute;right:20px;top:15px;color:#b9d6ff;font-size:23px}
-.hb-suite-section-heading{display:flex;align-items:end;justify-content:space-between;margin:29px 0 13px}
+.hb-suite-section-heading{display:flex;align-items:flex-end;justify-content:space-between;margin:29px 0 13px}
 .hb-suite-section-heading h2,.hb-suite-panel-heading h2{margin:5px 0 0;color:#193d64;font-size:18px;letter-spacing:-.025em}
 .hb-suite-action-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .hb-suite-action-card,.hb-suite-panel{min-width:0;border:1px solid #e0e8f2;border-radius:14px;background:#fff;box-shadow:0 4px 15px rgba(24,55,91,.035)}
@@ -1665,7 +1665,7 @@ body { color:var(--hb-ink); background:var(--hb-page); }
 .hb-admin-heading p{margin:6px 0 0;color:#6c8097;font-size:13px;line-height:1.6}
 .hb-admin-page .card{border:1px solid #e1e9f2;border-radius:14px;background:#fff}
 .hb-admin-page .hb-support-inbox{padding:clamp(14px,2vw,22px);margin-top:22px}
-.hb-inbox-toolbar{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:18px 0 12px}
+.hb-inbox-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:18px 0 12px}
 .hb-inbox-search-wrap{display:grid;gap:6px;flex:1;max-width:520px;color:#627990;font-size:11px;font-weight:800}
 .hb-inbox-search-wrap input{width:100%;min-height:42px;box-sizing:border-box;padding:10px 12px;border:1px solid #dce5ef;border-radius:9px;background:#fbfdff;color:#203c5c;font:inherit;font-weight:500}
 .hb-inbox-search-wrap input:focus{outline:3px solid rgba(23,104,220,.14);border-color:#1768dc}
