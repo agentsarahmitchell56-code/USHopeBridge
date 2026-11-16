@@ -104,7 +104,7 @@ export default function ProfilePage() {
       <h1>Profile</h1><p className="eaz-subtitle">Choose how people see you on EAZREAL.</p>
       <form className="card eaz-profile-form" onSubmit={save}>
         <div className="eaz-profile-cover" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined}>
-          <SocialAvatar name={name} avatarPath={avatarPath} avatarUrl={avatarUrl} className="eaz-social-avatar eaz-profile-avatar" imageClassName="eaz-profile-avatar-img" />
+          <SocialAvatar name={name} avatarPath={avatarPath} avatarUrl={avatarUrl} className="eaz-social-avatar eaz-profile-avatar" />
         </div>
         <label>Profile photo<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setAvatarFile(event.target.files?.[0] || null)} /><small>JPG, PNG or WebP · Maximum 5 MB</small></label>
         <label>Cover photo<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setCoverFile(event.target.files?.[0] || null)} /><small>JPG, PNG or WebP · Maximum 5 MB</small></label>
