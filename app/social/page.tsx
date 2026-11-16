@@ -10,7 +10,14 @@ import SocialAvatar from "../../components/social-avatar";
 type Profile = { id: string; username: string; display_name: string; avatar_url: string | null; avatar_path?: string | null; bio?: string };
 type RawPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string };
 type ReactionRow = { post_id: string; user_id: string; reaction: string };
-type FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean; saved: boolean; myReaction: string | null; shares: number; media_url?: string };
+type FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean; saved: boolean; myReaction: string | null; shares: number; comments: number; media_url?: string; media_error?: string };
+
+function PostMedia({ url, type, error }: { url?: string; type: string | null; error?: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!url || failed) return <div className="eaz-media-unavailable" role="status"><span aria-hidden="true">▧</span><strong>Media unavailable</strong><small>{error ? "This attachment could not be loaded. The post is still available." : "This attachment may have been removed or is temporarily unavailable."}</small></div>;
+  if (type === "video") return <video className="eaz-post-media" src={url} controls playsInline preload="metadata" autoPlay={false} onError={() => setFailed(true)} />;
+  return <img className="eaz-post-media" src={url} alt="Photo shared in this post" loading="lazy" decoding="async" onError={() => setFailed(true)} />;
+}
 
 export default function SocialFeedPage() {
   const router = useRouter();
@@ -30,18 +37,20 @@ export default function SocialFeedPage() {
     setProfile(profileData as Profile | null);
     const { data: postData, error: postError } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,visibility,created_at").order("created_at", { ascending: false }).limit(40);
     if (postError) throw postError;
-    const rows = (postData || []) as RawPost[];
+    const rows = ((postData || []) as RawPost[]).filter(post => Boolean(post.body?.trim() || post.media_path));
     const ids = [...new Set(rows.map(post => post.author_id))];
-    const [profileResult, reactionResult, savedResult, shareResult] = await Promise.all([
+    const [profileResult, reactionResult, savedResult, shareResult, commentResult] = await Promise.all([
       ids.length ? supabase.from("user_profiles").select("id,username,display_name,avatar_url,avatar_path").in("id", ids) : Promise.resolve({ data: [] as Profile[] }),
       rows.length ? supabase.from("social_post_reactions").select("post_id,user_id,reaction").in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as ReactionRow[] }),
       rows.length ? supabase.from("social_saved_posts").select("post_id").eq("user_id", currentUser.id).in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as Array<{post_id:string}> }),
       rows.length ? supabase.from("social_post_shares").select("post_id").in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as Array<{post_id:string}> }),
+      rows.length ? supabase.from("social_post_comments").select("post_id").in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as Array<{post_id:string}> }),
     ]);
     const profileRows = (profileResult.data || []) as Profile[];
     const reactionRows = (reactionResult.data || []) as ReactionRow[];
     const savedIds = new Set((savedResult.data || []).map(item => item.post_id));
     const shareRows = shareResult.data || [];
+    const commentRows = commentResult.data || [];
     const profileMap = new Map<string, Profile>(profileRows.map(item => [item.id, item]));
     const mapped = await Promise.all(rows.map(async post => {
       const signed = post.media_path ? await supabase.storage.from("social-media").createSignedUrl(post.media_path, 3600) : null;
@@ -54,6 +63,8 @@ export default function SocialFeedPage() {
         shares: shareRows.filter(item => item.post_id === post.id).length,
         saved: savedIds.has(post.id),
         media_url: signed?.data?.signedUrl,
+        media_error: signed?.error?.message,
+        comments: commentRows.filter(item => item.post_id === post.id).length,
       };
     }));
     setPosts(mapped);
@@ -181,7 +192,7 @@ export default function SocialFeedPage() {
       <section className="eaz-social-feed">
         <div className="eaz-social-welcome"><div><span className="eyebrow">YOUR COMMUNITY</span><h1>Home</h1><p>See what your people are sharing.</p></div><span className="eaz-feed-live">● Latest posts</span></div>
         <form className="eaz-social-composer card" onSubmit={publish}>
-          <div className="eaz-composer-top"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><textarea value={draft} onChange={event => setDraft(event.target.value)} placeholder="What's on your mind?" maxLength={5000} rows={3} /></div>
+          <div className="eaz-composer-top"><SocialAvatar name={profile?.display_name} avatarPath={profile?.avatar_path} avatarUrl={profile?.avatar_url} /><textarea value={draft} onChange={event => setDraft(event.target.value)} placeholder="What's on your mind?" maxLength={5000} rows={3} /></div>
           <div className="eaz-composer-bottom">
             <label className="eaz-media-picker">＋ Photo / video<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={event => setMediaFile(event.target.files?.[0] || null)} /></label>
             <label>Post audience <select value={visibility} onChange={event => setVisibility(event.target.value)}><option value="public">Public</option><option value="friends">Friends</option><option value="private">Only me</option></select></label>
@@ -194,8 +205,8 @@ export default function SocialFeedPage() {
         {posts.length === 0 ? <div className="card eaz-social-empty"><div>✦</div><h2>Your feed starts here</h2><p>Share your first update or find people to connect with.</p><Link className="btn primary" href="/friends">Find people</Link></div> : posts.map(post => <article className="card eaz-social-post" key={post.id}>
           <Link href={post.profile?.username ? `/u/${encodeURIComponent(post.profile.username)}` : "#"} className="eaz-post-author" aria-label={`View ${post.profile?.display_name || "member"} profile`}><SocialAvatar name={post.profile?.display_name} avatarPath={post.profile?.avatar_path} avatarUrl={post.profile?.avatar_url} /><div><strong>{post.profile?.display_name || "EAZREAL member"}</strong><small>@{post.profile?.username || "member"} · {new Date(post.created_at).toLocaleString()} · {post.visibility}</small></div></Link>
           {post.body && <p className="eaz-post-body">{post.body}</p>}
-          {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
-          <div className="eaz-post-stats"><span>{post.likes} reactions</span><span>{post.shares} shares</span></div>
+          {post.media_path && <PostMedia url={post.media_url} type={post.media_type} error={post.media_error} />}
+          <div className="eaz-post-stats"><span>{post.likes} {post.likes === 1 ? "reaction" : "reactions"}</span><span>{post.comments} {post.comments === 1 ? "comment" : "comments"}</span><span>{post.shares} {post.shares === 1 ? "share" : "shares"}</span></div>
           <div className="eaz-post-actions">
             <label className="eaz-reaction-picker" aria-label="Choose a reaction">
               <span>{post.myReaction ? ({like:"👍",love:"❤️",care:"🤗",haha:"😂",wow:"😮",sad:"😢",angry:"😡"} as Record<string,string>)[post.myReaction] : "♡"} React</span>
