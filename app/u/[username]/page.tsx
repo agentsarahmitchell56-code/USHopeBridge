@@ -118,6 +118,7 @@ export default function PublicProfilePage() {
       } else setNotice(error.message);
     } else {
       setFriendship(data as Friendship);
+      setFriendship(data as Friendship);
       setNotice("Friend request sent.");
       const { error: notificationError } = await supabase.from("social_notifications").insert({recipient_id:person.id,actor_id:me,kind:"friend_request",body:"sent you a friend request"});
       if (notificationError) setNotice("Friend request sent, but its notification could not be delivered.");
