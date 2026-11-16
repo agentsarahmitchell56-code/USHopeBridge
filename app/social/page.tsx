@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
+import PostOptionsSheet from "./components/PostOptionsSheet";
 
 type Profile = { id: string; username: string; display_name: string; avatar_url: string | null; bio?: string };
 type RawPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string };
@@ -23,6 +24,7 @@ export default function SocialFeedPage() {
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [menuPost, setMenuPost] = useState<FeedPost | null>(null);
 
   const loadFeed = useCallback(async (currentUser: User) => {
     const { data: profileData } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url,bio").eq("id", currentUser.id).maybeSingle();
@@ -152,14 +154,14 @@ export default function SocialFeedPage() {
   if (loading) return <main className="eaz-social-loading">Loading your EAZREAL feed…</main>;
 
   return <main className="eaz-social-app">
-    <header className="eaz-social-topbar">
+    <header className="eaz-social-topbar eaz-lite-topbar">
       <Link href="/social" className="brand">EAZREAL<span>SOCIAL</span></Link>
       <form className="eaz-social-search" onSubmit={event => { event.preventDefault(); if (searchTerm.trim()) router.push(`/search?q=${encodeURIComponent(searchTerm.trim())}`); }}><span>⌕</span><input aria-label="Search EAZREAL" value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="Search EAZREAL" /></form>
       <nav className="eaz-social-top-actions">
         <Link href="/social" aria-label="Home">⌂</Link><Link href="/friends" aria-label="Friends">♧</Link><Link href="/messages" aria-label="Chats">✉</Link><Link href="/notifications" aria-label="Notifications">♧</Link><button onClick={signOut}>Sign out</button>
       </nav>
     </header>
-    <div className="eaz-social-layout">
+    <nav className="eaz-lite-tabs" aria-label="Main navigation"><Link className="active" href="/social">⌂</Link><Link href="/friends">♧</Link><Link href="/reels">▶</Link><Link href="/notifications">♧</Link><Link href="/account">☰</Link></nav><div className="eaz-social-layout">
       <aside className="eaz-social-sidebar">
         <div className="eaz-social-me"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><div><strong>{profile?.display_name || user?.email}</strong><small>@{profile?.username || "member"}</small></div></div>
         <Link className="eaz-social-side-active" href="/social">⌂ <span>Home</span></Link>
@@ -178,8 +180,8 @@ export default function SocialFeedPage() {
         <Link href="/account">⚙ <span>Settings</span></Link>
       </aside>
       <section className="eaz-social-feed">
-        <div className="eaz-social-welcome"><div><span className="eyebrow">YOUR COMMUNITY</span><h1>Home</h1><p>See what your people are sharing.</p></div><span className="eaz-feed-live">● Latest posts</span></div>
-        <form className="eaz-social-composer card" onSubmit={publish}>
+        <div className="eaz-social-welcome eaz-lite-welcome"><h1>Home</h1></div>
+        <form className="eaz-social-composer card eaz-lite-composer" onSubmit={publish}>
           <div className="eaz-composer-top"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><textarea value={draft} onChange={event => setDraft(event.target.value)} placeholder="What's on your mind?" maxLength={5000} rows={3} /></div>
           <div className="eaz-composer-bottom">
             <label className="eaz-media-picker">＋ Photo / video<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={event => setMediaFile(event.target.files?.[0] || null)} /></label>
@@ -195,7 +197,7 @@ export default function SocialFeedPage() {
           {post.body && <p className="eaz-post-body">{post.body}</p>}
           {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
           <div className="eaz-post-stats"><span>{post.likes} reactions</span><span>{post.shares} shares</span></div>
-          <div className="eaz-post-actions">
+          <div className="eaz-post-actions eaz-lite-post-actions">
             <label className="eaz-reaction-picker" aria-label="Choose a reaction">
               <span>{post.myReaction ? ({like:"👍",love:"❤️",care:"🤗",haha:"😂",wow:"😮",sad:"😢",angry:"😡"} as Record<string,string>)[post.myReaction] : "♡"} React</span>
               <select aria-label="React to post" value={post.myReaction || "none"} onChange={event => { if (event.target.value !== "none") void setReaction(post, event.target.value); }}>
@@ -224,5 +226,6 @@ export default function SocialFeedPage() {
       <Link href="/notifications"><span aria-hidden="true">♧</span><small>Notifications</small></Link>
       <Link href="/profile"><span aria-hidden="true">◉</span><small>Profile</small></Link>
     </nav>
+    {menuPost && <PostOptionsSheet postId={menuPost.id} saved={menuPost.saved} onClose={() => setMenuPost(null)} onSave={() => { void toggleSave(menuPost); setMenuPost(null); }} onCopy={() => { void navigator.clipboard?.writeText(window.location.origin + "/post/" + menuPost.id); setMenuPost(null); }} />}
   </main>;
 }
