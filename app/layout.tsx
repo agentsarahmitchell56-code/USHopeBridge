@@ -1,5 +1,6 @@
 import PWAInstall from "./pwa-install";
 import GlobalFooter from "../components/GlobalFooter";
+import SocialMobileNav from "../components/SocialMobileNav";
 import "./globals.css";
 
 export const metadata = {
@@ -53,6 +54,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <SocialMobileNav />
         <PWAInstall />
         <GlobalFooter />
       </body>
