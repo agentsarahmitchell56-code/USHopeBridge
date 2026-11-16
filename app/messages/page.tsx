@@ -128,8 +128,12 @@ export default function MessagesPage() {
     let { data } = await supabase.from("social_conversations").select("id,user_one,user_two,updated_at").eq("user_one",first).eq("user_two",second).maybeSingle();
     if (!data) {
       const created = await supabase.from("social_conversations").insert({ user_one:first,user_two:second }).select("id,user_one,user_two,updated_at").single();
-      if (created.error) { setNotice(created.error.message); setBusy(false); return; }
-      data = created.data;
+      if (created.error?.code === "23505") {
+        const retry = await supabase.from("social_conversations").select("id,user_one,user_two,updated_at").eq("user_one",first).eq("user_two",second).maybeSingle();
+        if (retry.error || !retry.data) { setNotice(retry.error?.message || created.error.message); setBusy(false); return; }
+        data = retry.data;
+      } else if (created.error) { setNotice(created.error.message); setBusy(false); return; }
+      else data = created.data;
     }
     const conversation = data as Conversation;
     setSelected(conversation);
@@ -152,6 +156,19 @@ export default function MessagesPage() {
     })();
     return () => { active = false; };
   }, [me, requestedUsername, openConversation]);
+
+  useEffect(() => {
+    return () => {
+      const recorder = recorderRef.current;
+      if (recorder && recorder.state !== "inactive") {
+        recorder.ondataavailable = null;
+        recorder.onstop = null;
+        recorder.stop();
+      }
+      mediaStreamRef.current?.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    };
+  }, []);
 
   async function toggleVoiceRecording() {
     if (recording) {
@@ -194,15 +211,17 @@ export default function MessagesPage() {
     let mediaPath: string | null = null;
     let mediaType: "image" | "video" | "audio" | null = null;
     if (mediaFile) {
+      // MediaRecorder may append codec parameters (for example, audio/webm;codecs=opus).
+      // Validate and upload using the normalized MIME type so Storage's allowlist matches.
+      const mimeType = mediaFile.type.toLowerCase().split(";")[0].trim();
       const allowed = ["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","audio/webm","audio/ogg","audio/mp4","audio/mpeg","audio/wav"];
-      const supportedType = allowed.includes(mediaFile.type) || mediaFile.type.startsWith("audio/webm;") || mediaFile.type.startsWith("audio/ogg;");
-      if (!supportedType || mediaFile.size > 25 * 1024 * 1024) {
+      if (!allowed.includes(mimeType) || mediaFile.size > 25 * 1024 * 1024) {
         setNotice("Choose an image, MP4/WebM video or supported audio file up to 25 MB."); setBusy(false); return;
       }
       const ext = mediaFile.name.split(".").pop()?.toLowerCase() || "jpg";
-      mediaType = mediaFile.type.startsWith("video/") ? "video" : mediaFile.type.startsWith("audio/") ? "audio" : "image";
+      mediaType = mimeType.startsWith("video/") ? "video" : mimeType.startsWith("audio/") ? "audio" : "image";
       mediaPath = `messages/${selected.id}/${me}/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("social-media").upload(mediaPath,mediaFile,{contentType:mediaFile.type,upsert:false});
+      const { error: uploadError } = await supabase.storage.from("social-media").upload(mediaPath,mediaFile,{contentType:mimeType,upsert:false});
       if (uploadError) { setNotice(uploadError.message); setBusy(false); return; }
     }
     const { error } = await supabase.from("social_messages").insert({ conversation_id:selected.id,sender_id:me,body:draft.trim(),media_path:mediaPath,media_type:mediaType });
