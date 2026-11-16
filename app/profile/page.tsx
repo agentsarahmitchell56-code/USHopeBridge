@@ -36,7 +36,6 @@ export default function ProfilePage() {
       if (row) {
         setUsername(row.username); setName(row.display_name || ""); setBio(row.bio || ""); setWebsite(row.website || "");
         setIsPrivate(Boolean(row.is_private)); setAvatarPath(row.avatar_path || ""); setCoverPath(row.cover_path || ""); setAvatarUrl(row.avatar_url || "");
-        if (row.avatar_path) { const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(row.avatar_path, 3600); if (active) setAvatarUrl(signed?.signedUrl || ""); }
         if (row.cover_path) { const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(row.cover_path, 3600); if (active) setCoverUrl(signed?.signedUrl || ""); }
       }
       setLoading(false);
