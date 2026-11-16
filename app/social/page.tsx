@@ -219,10 +219,9 @@ export default function SocialFeedPage() {
     <nav className="eaz-mobile-bottom-nav" aria-label="Main navigation">
       <Link href="/social" aria-current="page"><span aria-hidden="true">⌂</span><small>Home</small></Link>
       <Link href="/friends"><span aria-hidden="true">♧</span><small>Friends</small></Link>
-      <Link href="/reels"><span aria-hidden="true">▶</span><small>Reels</small></Link>
-      <Link href="/messages"><span aria-hidden="true">✉</span><small>Messages</small></Link>
+      <Link href="/reels"><span aria-hidden="true">▶</span><small>Watch</small></Link>
       <Link href="/notifications"><span aria-hidden="true">♧</span><small>Notifications</small></Link>
-      <Link href="/profile"><span aria-hidden="true">◉</span><small>Profile</small></Link>
+      <Link href="/account"><span aria-hidden="true">☰</span><small>Menu</small></Link>
     </nav>
   </main>;
 }
