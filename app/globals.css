@@ -2465,3 +2465,57 @@ img, video { max-width: 100%; }
   .auth-page { padding-left: 10px !important; padding-right: 10px !important; }
   .auth-card { padding: 17px !important; }
 }
+
+
+/* EAZREAL lightweight feed: compact Facebook Lite-inspired presentation */
+.eaz-lite-topbar{height:54px;min-height:54px;padding:0 max(12px,calc((100vw - 980px)/2));background:#fff;border-bottom:1px solid #e4e6eb;box-shadow:none}
+.eaz-lite-topbar .brand{font-size:23px;font-weight:850;color:#1877f2;letter-spacing:-.7px}
+.eaz-lite-topbar .brand span{display:none}
+.eaz-lite-top-actions{display:flex;align-items:center;gap:10px}
+.eaz-lite-top-actions a{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:#f0f2f5;color:#050505;font-size:22px;font-weight:700}
+.eaz-lite-tabs{height:48px;display:grid;grid-template-columns:repeat(5,1fr);max-width:980px;margin:0 auto;background:#fff;border-bottom:1px solid #e4e6eb}
+.eaz-lite-tabs a,.eaz-lite-tabs button{display:grid;place-items:center;align-content:center;border:0;background:transparent;color:#65676b;font-size:21px;text-decoration:none;cursor:pointer;position:relative}
+.eaz-lite-tabs a.active{color:#1877f2}
+.eaz-lite-tabs a.active:after{content:"";position:absolute;bottom:0;left:12%;right:12%;height:3px;background:#1877f2;border-radius:3px 3px 0 0}
+.eaz-social-app{background:#f0f2f5}
+.eaz-social-layout{max-width:980px;grid-template-columns:minmax(0,680px) 280px;gap:14px;padding-top:12px}
+.eaz-social-feed{max-width:680px;min-width:0;gap:8px}
+.eaz-lite-welcome{margin:0 0 4px;padding:0 2px}
+.eaz-lite-welcome h1{font-size:20px;margin:0;color:#050505}
+.eaz-social-composer.eaz-lite-composer,.eaz-social-post{background:#fff;border:0;border-radius:8px;box-shadow:none;padding:12px 14px;margin:0 0 8px}
+.eaz-lite-composer .eaz-composer-top{align-items:center;gap:10px}
+.eaz-lite-composer .eaz-composer-top textarea{min-height:40px;max-height:90px;resize:vertical;border:0;border-radius:22px;background:#f0f2f5;padding:10px 15px;font-size:15px;color:#050505}
+.eaz-lite-composer .eaz-composer-bottom{border-top:1px solid #e4e6eb;margin-top:10px;padding-top:9px;gap:8px}
+.eaz-lite-composer .eaz-composer-bottom>label:nth-child(2){display:none}
+.eaz-lite-composer .eaz-composer-bottom .btn{min-height:34px;padding:7px 12px;border-radius:7px;font-size:12px}
+.eaz-lite-post-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.eaz-lite-post-head .eaz-post-author{margin:0;min-width:0;flex:1;display:flex;align-items:center;gap:9px}
+.eaz-lite-post-head .eaz-post-author strong{font-size:14px;color:#050505}
+.eaz-lite-post-head .eaz-post-author small{display:flex;align-items:center;gap:4px;color:#65676b;font-size:11px}
+.eaz-globe-icon{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.2}
+.eaz-post-more{width:34px;height:34px;border:0;border-radius:50%;background:transparent;color:#65676b;font-size:17px;font-weight:800;cursor:pointer}
+.eaz-post-more:hover{background:#f0f2f5}
+.eaz-social-post .eaz-post-body{font-size:15px;line-height:1.42;color:#050505;margin:10px 0}
+.eaz-social-post .eaz-post-media{width:calc(100% + 28px);max-width:none;margin:10px -14px;border-radius:0;max-height:480px;object-fit:cover}
+.eaz-social-post .eaz-post-stats{font-size:12px;color:#65676b;padding:8px 0;border-bottom:1px solid #e4e6eb}
+.eaz-social-post .eaz-post-actions.eaz-lite-post-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:0;padding-top:5px;margin-top:4px}
+.eaz-lite-post-actions button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:6px 3px;border:0;border-radius:5px;background:transparent;color:#65676b;font-size:13px;font-weight:650;cursor:pointer}
+.eaz-lite-post-actions button:hover{background:#f0f2f5}
+.eaz-lite-post-actions button.is-liked{color:#1877f2}
+.eaz-sheet-backdrop{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.42);display:flex;align-items:flex-end;justify-content:center}
+.eaz-post-sheet{width:min(100%,520px);padding:10px 16px calc(18px + env(safe-area-inset-bottom));background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.15)}
+.eaz-sheet-handle{width:38px;height:4px;border-radius:4px;background:#ccd0d5;margin:0 auto 13px}
+.eaz-post-sheet h2{font-size:16px;margin:4px 0 10px;color:#050505}
+.eaz-post-sheet button{width:100%;text-align:left;padding:14px 8px;border:0;border-top:1px solid #f0f2f5;background:#fff;color:#1c1e21;font-size:15px;font-weight:600}
+.eaz-sheet-post-id{display:none}
+.eaz-lite-skeleton-feed{max-width:680px;margin:14px auto;padding:0 12px}
+.eaz-skeleton-card{position:relative;height:154px;padding:14px;margin-bottom:8px;border-radius:8px;background:#fff;overflow:hidden}
+.eaz-skeleton-line{background:linear-gradient(90deg,#f0f2f5 25%,#e4e6eb 50%,#f0f2f5 75%);background-size:200% 100%;animation:eaz-skeleton 1.35s ease-in-out infinite}
+.eaz-skeleton-avatar{width:38px;height:38px;border-radius:50%;float:left;margin-right:10px}
+.eaz-skeleton-name{height:12px;width:42%;border-radius:8px;margin:6px 0 22px 48px}
+.eaz-skeleton-copy{height:10px;width:90%;border-radius:8px;margin:14px 0}
+.eaz-skeleton-copy.short{width:58%}
+@keyframes eaz-skeleton{to{background-position:-200% 0}}
+@media(max-width:760px){.eaz-social-layout{display:block;padding:10px 0 14px}.eaz-social-sidebar,.eaz-social-right{display:none}.eaz-social-feed{max-width:none;gap:0}.eaz-social-post,.eaz-social-composer.eaz-lite-composer{border-radius:0;margin-bottom:7px;padding:12px 13px}.eaz-lite-tabs{display:none}.eaz-lite-topbar{padding:0 13px}.eaz-social-post .eaz-post-media{width:calc(100% + 26px);margin-left:-13px;margin-right:-13px}.eaz-mobile-bottom-nav.eaz-lite-bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr));min-height:56px;padding-bottom:calc(5px + env(safe-area-inset-bottom));box-shadow:none;backdrop-filter:none}.eaz-mobile-bottom-nav.eaz-lite-bottom-nav a{gap:1px}.eaz-mobile-bottom-nav.eaz-lite-bottom-nav a>span{font-size:21px}.eaz-mobile-bottom-nav.eaz-lite-bottom-nav small{font-size:9px}}
+@media(min-width:761px){.eaz-mobile-bottom-nav{display:none!important}.eaz-lite-top-actions{display:flex}.eaz-social-top-actions{display:none}.eaz-lite-tabs{margin-top:0}.eaz-social-feed{margin:0 auto}}
+@media(prefers-reduced-motion:reduce){.eaz-skeleton-line{animation:none}}
