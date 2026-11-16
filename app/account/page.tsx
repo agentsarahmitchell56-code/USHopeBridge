@@ -48,7 +48,12 @@ export default function AccountPage() {
         <Link href="/friends"><strong>♧ Friends</strong><span>Find people, send requests and connect.</span></Link>
         <Link href="/messages"><strong>✉ Chats</strong><span>Chat with friends and people on EAZREAL.</span></Link>
         <Link href="/profile"><strong>◉ Profile</strong><span>Edit your name, username and bio.</span></Link>
-        <Link href="/notifications"><strong>♧ Notifications</strong><span>See activity and friend requests.</span></Link>
+        <Link href="/notifications"><strong>♧ Notifications</strong><span>See activity, reactions and friend requests.</span></Link>
+        <Link href="/reels"><strong>▶ Watch</strong><span>Discover short videos and community clips.</span></Link>
+        <Link href="/stories"><strong>◉ Stories</strong><span>Share moments that disappear after 24 hours.</span></Link>
+        <Link href="/communities"><strong>♧ Communities</strong><span>Discover and join interest-based communities.</span></Link>
+        <Link href="/saved"><strong>▣ Saved</strong><span>Return to posts you have saved.</span></Link>
+        <Link href="/search"><strong>⌕ Search</strong><span>Find people, posts and communities.</span></Link>
         <Link href="/business/workspace"><strong>▣ Business Pages</strong><span>Manage your public business presence.</span></Link>
         <Link href="/apply"><strong>♡ HOPEBRIDGE Assistance</strong><span>Access the existing assistance service.</span></Link>
         <Link href="/status"><strong>▤ Track an application</strong><span>Check an existing application status.</span></Link>
