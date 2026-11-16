@@ -109,7 +109,7 @@ export default function FriendsPage() {
       const usernameTerm = clean.replace(/\s/g, "");
       const { data, error } = await supabase
         .from("user_profiles")
-        .select("id,username,display_name,bio,avatar_url,is_private")
+        .select("id,username,display_name,bio,avatar_url,avatar_path,is_private")
         .neq("id", userId)
         .or(`username.ilike.%${usernameTerm}%,display_name.ilike.%${clean}%`)
         .order("display_name", { ascending: true })
@@ -359,7 +359,7 @@ export default function FriendsPage() {
           const person = people[request.addressee_id];
           return <article className="card eaz-person-row" key={request.id}>
             <Link href={person?.username ? `/u/${encodeURIComponent(person.username)}` : "/friends"} className="eaz-person-profile-link">
-              {person?.avatar_url ? <img className="eaz-social-avatar" src={person.avatar_url} alt="" /> : <span className="eaz-social-avatar">{person?.display_name?.[0] || "E"}</span>}
+              <SocialAvatar name={person?.display_name} avatarPath={person?.avatar_path} avatarUrl={person?.avatar_url} />
             </Link>
             <div><Link href={person?.username ? `/u/${encodeURIComponent(person.username)}` : "/friends"} className="eaz-person-name"><strong>{person?.display_name || "EAZREAL member"}</strong></Link><small>@{person?.username || "member"}</small></div>
             <span className="eaz-friend-status">Request sent</span>
@@ -375,7 +375,7 @@ export default function FriendsPage() {
           const person = people[otherId];
           return <article className="card eaz-person-row" key={request.id}>
             <Link href={person?.username ? `/u/${encodeURIComponent(person.username)}` : "/friends"} className="eaz-person-profile-link" aria-label={`Open ${person?.display_name || "member"} profile`}>
-              {person?.avatar_url ? <img className="eaz-social-avatar" src={person.avatar_url} alt="" /> : <span className="eaz-social-avatar">{person?.display_name?.[0] || "E"}</span>}
+              <SocialAvatar name={person?.display_name} avatarPath={person?.avatar_path} avatarUrl={person?.avatar_url} />
             </Link>
             <div><Link href={person?.username ? `/u/${encodeURIComponent(person.username)}` : "/friends"} className="eaz-person-name"><strong>{person?.display_name || "EAZREAL member"}</strong></Link><small>@{person?.username || "member"}</small></div>
             <span className="eaz-friend-status">Friends</span>
