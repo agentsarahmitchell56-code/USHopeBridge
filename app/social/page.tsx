@@ -198,19 +198,10 @@ export default function SocialFeedPage() {
           {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
           <div className="eaz-post-stats"><span>{post.likes} reactions</span><span>{post.shares} shares</span></div>
           <div className="eaz-post-actions eaz-lite-post-actions">
-            <label className="eaz-reaction-picker" aria-label="Choose a reaction">
-              <span>{post.myReaction ? ({like:"👍",love:"❤️",care:"🤗",haha:"😂",wow:"😮",sad:"😢",angry:"😡"} as Record<string,string>)[post.myReaction] : "♡"} React</span>
-              <select aria-label="React to post" value={post.myReaction || "none"} onChange={event => { if (event.target.value !== "none") void setReaction(post, event.target.value); }}>
-                <option value="none">Choose reaction</option><option value="like">Like 👍</option><option value="love">Love ❤️</option><option value="care">Care 🤗</option><option value="haha">Haha 😂</option><option value="wow">Wow 😮</option><option value="sad">Sad 😢</option><option value="angry">Angry 😡</option>
-              </select>
-            </label>
-            <button onClick={() => setReaction(post, post.myReaction || "like")} disabled={!post.myReaction} title="Remove your reaction">Remove reaction</button>
-            <button onClick={() => router.push(`/post/${post.id}`)}>◯ Comment</button>
-            <button onClick={() => sharePost(post)}>↗ Share</button>
-            <button onClick={() => toggleSave(post)}>{post.saved ? "▣ Saved" : "▢ Save"}</button>
-            <button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/post/${post.id}`)}>Copy link</button>
-          </div>
-        </article>)}
+            <button className={post.myReaction === "like" ? "is-liked" : ""} onClick={() => void setReaction(post, "like")}>👍 <span>{post.myReaction === "like" ? "Liked" : "Like"}</span></button>
+            <button onClick={() => router.push("/post/" + post.id)}>▢ <span>Comment</span></button>
+            <button onClick={() => void sharePost(post)}>↗ <span>Share</span></button>
+          </div>       </article>)}
       </section>
       <aside className="eaz-social-right">
         <section className="card"><h3>Welcome to EAZREAL</h3><p>Connect with people, share your moments and discover new communities.</p><Link href="/friends">Find friends →</Link></section>
@@ -219,12 +210,11 @@ export default function SocialFeedPage() {
       </aside>
     </div>
     <nav className="eaz-mobile-bottom-nav eaz-lite-bottom-nav" aria-label="Main navigation">
-      <Link href="/social" aria-current="page"><span aria-hidden="true">⌂</span><small>Home</small></Link>
-      <Link href="/friends"><span aria-hidden="true">♧</span><small>Friends</small></Link>
-      <Link href="/reels"><span aria-hidden="true">▶</span><small>Reels</small></Link>
-      <Link href="/messages"><span aria-hidden="true">✉</span><small>Messages</small></Link>
-      <Link href="/notifications"><span aria-hidden="true">♧</span><small>Notifications</small></Link>
-      <Link href="/profile"><span aria-hidden="true">◉</span><small>Profile</small></Link>
+      <Link href="/social" aria-current="page"><span>⌂</span><small>Home</small></Link>
+      <Link href="/friends"><span>♧</span><small>Friends</small></Link>
+      <Link href="/reels"><span>▶</span><small>Watch</small></Link>
+      <Link href="/notifications"><span>♧</span><small>Notifications</small></Link>
+      <Link href="/account"><span>☰</span><small>Menu</small></Link>
     </nav>
     {menuPost && <PostOptionsSheet postId={menuPost.id} saved={menuPost.saved} onClose={() => setMenuPost(null)} onSave={() => { void toggleSave(menuPost); setMenuPost(null); }} onCopy={() => { void navigator.clipboard?.writeText(window.location.origin + "/post/" + menuPost.id); setMenuPost(null); }} />}
   </main>;
