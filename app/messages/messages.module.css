@@ -53,3 +53,17 @@
  .chatPage :global(.eaz-dm-attach){width:34px;height:38px;flex-basis:34px}
  .chatPage :global(.eaz-dm-composer .btn){width:38px;height:38px;min-height:38px;flex-basis:38px}
 }
+
+.chatPage :global(.eaz-dm-audio){display:block;width:min(280px,100%);height:38px;margin:5px 0}
+.chatPage :global(.eaz-dm-voice){width:38px;height:38px;flex:0 0 38px;border:0;border-radius:50%;background:#e7f3ff;color:#0866ff;font-size:17px;cursor:pointer}
+.chatPage :global(.eaz-dm-voice.recording){background:#ffe5e5;color:#d93025;animation:eaz-voice-pulse 1.2s ease-in-out infinite}
+.chatPage :global(.eaz-message-read-state){font-weight:700}
+.chatPage :global(.eaz-media-selected button){border:0;background:transparent;color:#0866ff;font-weight:700;cursor:pointer}
+@keyframes eaz-voice-pulse{50%{box-shadow:0 0 0 5px rgba(217,48,37,.12)}}
+@media(max-width:760px){.chatPage :global(.eaz-dm-voice){width:34px;height:38px;flex-basis:34px}}
+
+/* Explicit, user-initiated media playback in Messenger. */
+.chatPage :global(.eaz-dm-media video),.chatPage :global(video.eaz-dm-media){display:block;width:min(100%,360px);max-height:320px;object-fit:contain;background:#111;border-radius:12px;}
+.chatPage :global(.eaz-dm-media[controls]){cursor:pointer;}
+.chatPage :global(.eaz-social-notice[role="alert"]){padding:9px 12px;border-radius:10px;background:#fff4e5;color:#8a4b08;line-height:1.45;}
+.chatPage :global(.eaz-social-notice[role="alert"] button){margin-left:6px;border:0;background:transparent;color:#0866ff;font-weight:700;cursor:pointer;}
