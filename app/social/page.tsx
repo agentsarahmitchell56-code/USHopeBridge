@@ -151,11 +151,11 @@ export default function SocialFeedPage() {
     router.refresh();
   }
 
-  if (loading) return <main className="eaz-social-loading">Loading your EAZREAL feed…</main>;
+  if (loading) return <main className="eaz-social-app"><header className="eaz-social-topbar eaz-lite-topbar"><strong className="brand">EAZREAL</strong></header><section className="eaz-social-feed eaz-lite-skeleton-feed">{Array.from({length:3},(_,i)=><article className="eaz-skeleton-card" key={i}><div className="eaz-skeleton-line eaz-skeleton-avatar"/><div className="eaz-skeleton-line eaz-skeleton-name"/><div className="eaz-skeleton-line eaz-skeleton-copy"/><div className="eaz-skeleton-line eaz-skeleton-copy short"/></article>)}</section></main>;
 
   return <main className="eaz-social-app">
     <header className="eaz-social-topbar eaz-lite-topbar">
-      <Link href="/social" className="brand">EAZREAL<span>SOCIAL</span></Link>
+      <Link href="/social" className="brand">EAZREAL</Link><div className="eaz-lite-top-actions"><Link href="/search" aria-label="Search">⌕</Link><Link href="/messages" aria-label="Messenger">▣</Link></div>
       <form className="eaz-social-search" onSubmit={event => { event.preventDefault(); if (searchTerm.trim()) router.push(`/search?q=${encodeURIComponent(searchTerm.trim())}`); }}><span>⌕</span><input aria-label="Search EAZREAL" value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="Search EAZREAL" /></form>
       <nav className="eaz-social-top-actions">
         <Link href="/social" aria-label="Home">⌂</Link><Link href="/friends" aria-label="Friends">♧</Link><Link href="/messages" aria-label="Chats">✉</Link><Link href="/notifications" aria-label="Notifications">♧</Link><button onClick={signOut}>Sign out</button>
@@ -193,7 +193,7 @@ export default function SocialFeedPage() {
         </form>
         {error && <p className="eaz-social-error" role="alert">{error}</p>}
         {posts.length === 0 ? <div className="card eaz-social-empty"><div>✦</div><h2>Your feed starts here</h2><p>Share your first update or find people to connect with.</p><Link className="btn primary" href="/friends">Find people</Link></div> : posts.map(post => <article className="card eaz-social-post" key={post.id}>
-          <Link href={post.profile?.username ? `/u/${encodeURIComponent(post.profile.username)}` : "#"} className="eaz-post-author" aria-label={`View ${post.profile?.display_name || "member"} profile`}><span className="eaz-social-avatar">{post.profile?.display_name?.[0] || "E"}</span><div><strong>{post.profile?.display_name || "EAZREAL member"}</strong><small>@{post.profile?.username || "member"} · {new Date(post.created_at).toLocaleString()} · {post.visibility}</small></div></Link>
+          <div className="eaz-lite-post-head"><Link href={post.profile?.username ? `/u/${encodeURIComponent(post.profile.username)}` : "#"} className="eaz-post-author" aria-label={`View ${post.profile?.display_name || "member"} profile`}><span className="eaz-social-avatar">{post.profile?.display_name?.[0] || "E"}</span><div><strong>{post.profile?.display_name || "EAZREAL member"}</strong><small>@{post.profile?.username || "member"} · {new Date(post.created_at).toLocaleString()} · {post.visibility}</small></div></Link><button className="eaz-post-more" type="button" aria-label="Post options" onClick={() => setMenuPost(post)}>•••</button></div>
           {post.body && <p className="eaz-post-body">{post.body}</p>}
           {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
           <div className="eaz-post-stats"><span>{post.likes} reactions</span><span>{post.shares} shares</span></div>
@@ -218,7 +218,7 @@ export default function SocialFeedPage() {
         <section className="card"><h3>Community guidelines</h3><p>Be respectful. Share responsibly. Keep your account secure.</p></section>
       </aside>
     </div>
-    <nav className="eaz-mobile-bottom-nav" aria-label="Main navigation">
+    <nav className="eaz-mobile-bottom-nav eaz-lite-bottom-nav" aria-label="Main navigation">
       <Link href="/social" aria-current="page"><span aria-hidden="true">⌂</span><small>Home</small></Link>
       <Link href="/friends"><span aria-hidden="true">♧</span><small>Friends</small></Link>
       <Link href="/reels"><span aria-hidden="true">▶</span><small>Reels</small></Link>
