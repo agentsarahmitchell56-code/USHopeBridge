@@ -2465,3 +2465,37 @@ img, video { max-width: 100%; }
   .auth-page { padding-left: 10px !important; padding-right: 10px !important; }
   .auth-card { padding: 17px !important; }
 }
+
+
+/* Professional five-tab mobile navigation */
+@media (max-width: 760px) {
+  .eaz-mobile-bottom-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    min-height: 64px;
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+  .eaz-mobile-bottom-nav a {
+    min-height: 48px;
+    gap: 3px;
+    transition: color .15s ease, background .15s ease;
+  }
+  .eaz-mobile-bottom-nav a[aria-current="page"] {
+    background: #edf4ff;
+    color: #0866ff;
+  }
+  .eaz-mobile-bottom-nav a > span {
+    font-size: 21px;
+    font-weight: 700;
+  }
+  .eaz-mobile-bottom-nav small {
+    font-size: 10px;
+    letter-spacing: .01em;
+  }
+  .eaz-account-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 390px) {
+  .eaz-account-grid { grid-template-columns: 1fr; }
+}
