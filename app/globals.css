@@ -2520,4 +2520,4 @@ img, video { max-width: 100%; }
 @media(min-width:761px){.eaz-mobile-bottom-nav{display:none!important}.eaz-lite-top-actions{display:flex}.eaz-social-top-actions{display:none}.eaz-lite-tabs{margin-top:0}.eaz-social-feed{margin:0 auto}}
 @media(prefers-reduced-motion:reduce){.eaz-skeleton-line{animation:none}}
 
-.eaz-lite-topbar .eaz-social-search{display:none!important}.eaz-lite-tabs a,.eaz-lite-tabs button{font-size:0}.eaz-lite-tabs a:before,.eaz-lite-tabs button:before{font-size:22px}.eaz-mobile-bottom-nav.eaz-lite-bottom-nav small{display:none}.eaz-lite-post-actions .eaz-reaction-picker{display:none}
+.eaz-lite-topbar .eaz-social-search{display:none!important}.eaz-lite-tabs a,.eaz-lite-tabs button{font-size:22px}.eaz-mobile-bottom-nav.eaz-lite-bottom-nav small{display:none}.eaz-lite-post-actions .eaz-reaction-picker{display:none}
