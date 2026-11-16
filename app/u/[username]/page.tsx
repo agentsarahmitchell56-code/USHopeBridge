@@ -7,6 +7,7 @@ import { supabase } from "../../../lib/supabase";
 
 type Person = { id: string; username: string; display_name: string; bio: string; website: string | null; avatar_url: string | null; cover_url: string | null; avatar_path: string | null; cover_path: string | null; is_private: boolean; created_at?: string };
 type Post = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; created_at: string; media_url?: string };
+type Friendship = { id: string; requester_id: string; addressee_id: string; status: string };
 
 export default function PublicProfilePage() {
   const params = useParams<{ username: string }>();
@@ -20,6 +21,7 @@ export default function PublicProfilePage() {
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFriend, setIsFriend] = useState(false);
+  const [friendship, setFriendship] = useState<Friendship | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [blockedByThem, setBlockedByThem] = useState(false);
   const [notice, setNotice] = useState("");
@@ -43,15 +45,17 @@ export default function PublicProfilePage() {
       }
       if (profile.avatar_path) { const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(profile.avatar_path, 3600); setAvatarUrl(signed?.signedUrl || ""); }
       if (profile.cover_path) { const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(profile.cover_path, 3600); setCoverUrl(signed?.signedUrl || ""); }
-      const [{ count: followerCount }, { count: followingCount }, { data: followRow }, { data: friendship }] = await Promise.all([
+      const [{ count: followerCount }, { count: followingCount }, { data: followRow }, { data: friendshipRows }] = await Promise.all([
         supabase.from("follows").select("follower_id",{count:"exact",head:true}).eq("following_id",profile.id).eq("status","accepted"),
         supabase.from("follows").select("following_id",{count:"exact",head:true}).eq("follower_id",profile.id).eq("status","accepted"),
         current ? supabase.from("follows").select("status").eq("follower_id",current).eq("following_id",profile.id).maybeSingle() : Promise.resolve({data:null}),
-        current ? supabase.from("friendships").select("status").or(`and(requester_id.eq.${current},addressee_id.eq.${profile.id}),and(requester_id.eq.${profile.id},addressee_id.eq.${current})`).maybeSingle() : Promise.resolve({data:null}),
+        current ? supabase.from("friendships").select("id,requester_id,addressee_id,status").or(`and(requester_id.eq.${current},addressee_id.eq.${profile.id}),and(requester_id.eq.${profile.id},addressee_id.eq.${current})`).limit(2) : Promise.resolve({data:[]}),
       ]);
       setFollowers(followerCount || 0); setFollowing(followingCount || 0);
       setIsFollowing(followRow?.status === "accepted");
-      setIsFriend(friendship?.status === "accepted");
+      const activeFriendship = ((friendshipRows || []) as Friendship[]).find(row => row.status === "accepted") || ((friendshipRows || []) as Friendship[]).find(row => row.status === "pending") || null;
+      setFriendship(activeFriendship);
+      setIsFriend(activeFriendship?.status === "accepted");
       const { data: postRows } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,created_at").eq("author_id",profile.id).order("created_at",{ascending:false}).limit(30);
       const mapped = await Promise.all(((postRows || []) as Post[]).map(async post => {
         const signed = post.media_path ? await supabase.storage.from("social-media").createSignedUrl(post.media_path,3600) : null;
@@ -98,12 +102,47 @@ export default function PublicProfilePage() {
   async function addFriend() {
     if (!person) return;
     if (!me) { router.push("/account/login"); return; }
-    const { error } = await supabase.from("friendships").insert({requester_id:me,addressee_id:person.id,status:"pending"});
-    if (error) setNotice(error.code === "23505" ? "A friend request already exists." : error.message);
-    else {
-      setNotice("Friend request sent.");
-      await supabase.from("social_notifications").insert({recipient_id:person.id,actor_id:me,kind:"friend_request",body:"sent you a friend request"});
+    if (friendship?.status === "accepted") { setNotice("You are already friends."); return; }
+    if (friendship?.status === "pending" && friendship.requester_id === me) { setNotice("Your friend request is waiting for a response."); return; }
+    if (friendship?.status === "pending" && friendship.addressee_id === me) {
+      const { error } = await supabase.from("friendships").update({ status: "accepted", updated_at: new Date().toISOString() }).eq("id", friendship.id).eq("addressee_id", me).eq("status", "pending");
+      if (error) { setNotice(error.message); return; }
+      setFriendship({ ...friendship, status: "accepted" }); setIsFriend(true); setNotice("Friend request accepted. You are now friends.");
+      await supabase.from("social_notifications").insert({recipient_id:person.id,actor_id:me,kind:"friend_accepted",body:"accepted your friend request"});
+      return;
     }
+    const { data, error } = await supabase.from("friendships").insert({requester_id:me,addressee_id:person.id,status:"pending"}).select("id,requester_id,addressee_id,status").single();
+    if (error) {
+      if (error.code === "23505") {
+        setNotice("A friend request between these accounts already exists. Refresh the page to see its status.");
+      } else setNotice(error.message);
+    } else {
+      setFriendship(data as Friendship);
+      setNotice("Friend request sent.");
+      const { error: notificationError } = await supabase.from("social_notifications").insert({recipient_id:person.id,actor_id:me,kind:"friend_request",body:"sent you a friend request"});
+      if (notificationError) setNotice("Friend request sent, but its notification could not be delivered.");
+    }
+  }
+
+  async function declineFriendRequest() {
+    if (!friendship || friendship.addressee_id !== me) return;
+    const { error } = await supabase.from("friendships").update({ status: "declined", updated_at: new Date().toISOString() }).eq("id", friendship.id).eq("status", "pending");
+    if (error) setNotice(error.message);
+    else { setFriendship({ ...friendship, status: "declined" }); setNotice("Friend request declined."); }
+  }
+
+  async function cancelFriendRequest() {
+    if (!friendship || friendship.requester_id !== me) return;
+    const { error } = await supabase.from("friendships").delete().eq("id", friendship.id).eq("requester_id", me).eq("status", "pending");
+    if (error) setNotice(error.message);
+    else { setFriendship(null); setNotice("Friend request cancelled."); }
+  }
+
+  async function removeFriend() {
+    if (!friendship || friendship.status !== "accepted" || !window.confirm("Remove this person from your friends?")) return;
+    const { error } = await supabase.from("friendships").delete().eq("id", friendship.id).eq("status", "accepted");
+    if (error) setNotice(error.message);
+    else { setFriendship(null); setIsFriend(false); setNotice("Friend removed."); }
   }
 
   if (loading) return <main className="eaz-social-loading">Loading profile…</main>;
@@ -132,7 +171,10 @@ export default function PublicProfilePage() {
         <div className="eaz-public-actions">
           {me === person.id ? <Link className="btn primary" href="/profile">Edit profile</Link> : me ? <>
             {!blockedByThem && <button className="btn primary" onClick={follow} disabled={isFollowing || blocked}>{isFollowing ? "Following" : person.is_private ? "Request to follow" : "Follow"}</button>}
-            <button className="btn secondary" onClick={addFriend} disabled={isFriend || blocked || blockedByThem}>{isFriend ? "Friends" : "Add friend"}</button>
+            {friendship?.status === "accepted" ? <><span className="btn secondary" aria-label="You are friends">Friends</span><button className="btn secondary" onClick={removeFriend}>Remove friend</button></>
+              : friendship?.status === "pending" && friendship.requester_id === me ? <><button className="btn secondary" disabled>Request sent</button><button className="btn secondary" onClick={cancelFriendRequest}>Cancel request</button></>
+              : friendship?.status === "pending" && friendship.addressee_id === me ? <><button className="btn primary" onClick={addFriend}>Accept request</button><button className="btn secondary" onClick={declineFriendRequest}>Decline</button></>
+              : <button className="btn secondary" onClick={addFriend} disabled={blocked || blockedByThem}>Add friend</button>}
             <button className="btn secondary" onClick={() => router.push(`/messages?user=${person.username}`)} disabled={blocked || blockedByThem}>Message</button>
             {!blockedByThem && <button className="btn secondary" onClick={blocked ? unblockUser : blockUser}>{blocked ? "Unblock" : "Block"}</button>}
           </> : <button className="btn primary" onClick={() => router.push("/account/login")}>Sign in to connect</button>}
