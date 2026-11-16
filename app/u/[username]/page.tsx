@@ -160,7 +160,7 @@ export default function PublicProfilePage() {
     <header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>PROFILE</span></Link><nav className="eaz-profile-nav"><Link href="/social">News Feed</Link><Link href="/friends">Friends</Link><Link href="/messages">Messages</Link></nav></header>
     <div className="eaz-public-profile">
       <div className="eaz-public-cover" style={coverUrl ? {backgroundImage: `url(${coverUrl})`} : undefined}>
-        {avatarUrl ? <img className="eaz-public-avatar-img" src={avatarUrl} alt={`${person.display_name}'s profile photo`} /> : <span className="eaz-public-avatar">{person.display_name?.[0] || "E"}</span>}
+        <SocialAvatar name={person.display_name} avatarPath={person.avatar_path} avatarUrl={person.avatar_url} className="eaz-public-avatar" imageClassName="eaz-public-avatar-img" />
       </div>
       <section className="card eaz-public-profile-info">
         <div className="eaz-public-identity">
