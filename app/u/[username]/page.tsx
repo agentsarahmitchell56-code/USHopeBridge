@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import SocialAvatar from "../../../components/social-avatar";
 
 type Person = { id: string; username: string; display_name: string; bio: string; website: string | null; avatar_url: string | null; cover_url: string | null; avatar_path: string | null; cover_path: string | null; is_private: boolean; created_at?: string };
 type Post = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; created_at: string; media_url?: string };
@@ -14,7 +15,6 @@ export default function PublicProfilePage() {
   const router = useRouter();
   const [me, setMe] = useState("");
   const [person, setPerson] = useState<Person | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [posts, setPosts] = useState<Post[]>([]);
   const [followers, setFollowers] = useState(0);
@@ -43,7 +43,6 @@ export default function PublicProfilePage() {
         setBlocked(Boolean(blockRows?.some(row => row.blocker_id === current)));
         setBlockedByThem(Boolean(blockRows?.some(row => row.blocker_id === profile.id && row.blocked_id === current)));
       }
-      if (profile.avatar_path) { const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(profile.avatar_path, 3600); setAvatarUrl(signed?.signedUrl || ""); }
       if (profile.cover_path) { const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(profile.cover_path, 3600); setCoverUrl(signed?.signedUrl || ""); }
       const [{ count: followerCount }, { count: followingCount }, { data: followRow }, { data: friendshipRows }] = await Promise.all([
         supabase.from("follows").select("follower_id",{count:"exact",head:true}).eq("following_id",profile.id).eq("status","accepted"),
