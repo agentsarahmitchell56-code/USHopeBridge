@@ -2526,3 +2526,39 @@ img, video { max-width: 100%; }
   .eaz-composer-bottom label:nth-child(2){margin-left:0}
   .eaz-post-actions button,.eaz-post-actions .eaz-reaction-picker{font-size:10px}
 }
+
+
+/* EAZREAL feed discovery and consistent mobile page navigation */
+.eaz-feed-refresh{border:1px solid #dce5f1;background:#fff;color:#0866ff;border-radius:9px;padding:9px 13px;font-weight:750;font-size:12px;cursor:pointer;white-space:nowrap}
+.eaz-feed-refresh:disabled{opacity:.55;cursor:wait}
+.eaz-feed-tabs{display:flex;gap:5px;padding:4px;border-radius:11px;background:#e9eef6;margin:-2px 0 2px}
+.eaz-feed-tabs button{flex:1;min-height:38px;border:0;border-radius:8px;background:transparent;color:#627188;font-weight:750;font-size:13px;cursor:pointer}
+.eaz-feed-tabs button.active{background:#fff;color:#0866ff;box-shadow:0 1px 4px rgba(16,42,67,.1)}
+.eaz-friend-section{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.eaz-friend-section h2{display:flex;align-items:center;gap:9px;font-size:17px;margin:0 0 2px}
+.eaz-friend-section h2 span{display:inline-flex;min-width:23px;height:23px;align-items:center;justify-content:center;padding:0 6px;border-radius:20px;background:#eaf2ff;color:#0866ff;font-size:11px}
+.eaz-person-row{display:flex;align-items:center;gap:12px;min-width:0}
+.eaz-person-row>div{flex:1;min-width:0}
+.eaz-person-row>div p{margin:5px 0;font-size:12px;color:#65748b;overflow-wrap:anywhere}
+.eaz-person-row>button,.eaz-person-row>.btn{flex:0 0 auto;min-height:38px}
+@media(max-width:760px){
+  .eaz-social-subcontent{padding:14px 12px 88px!important}
+  .eaz-social-subcontent>h1{font-size:24px;margin:8px 0 3px}
+  .eaz-social-subcontent>.eaz-subtitle{font-size:13px;margin-bottom:14px}
+  .eaz-friend-search{display:flex;gap:8px;padding:11px;border-radius:12px}
+  .eaz-friend-search input{min-width:0;flex:1;height:42px;font-size:13px}
+  .eaz-friend-search .btn{min-width:76px;min-height:42px}
+  .eaz-friend-section{gap:9px;margin-top:20px}
+  .eaz-person-row{display:grid;grid-template-columns:44px minmax(0,1fr);gap:9px;padding:12px;border-radius:12px}
+  .eaz-person-row .eaz-social-avatar{width:44px;height:44px}
+  .eaz-person-row>div{grid-column:2;grid-row:1}
+  .eaz-person-row>button,.eaz-person-row>.btn,.eaz-person-row>.eaz-friend-status{grid-column:2;justify-self:start;min-height:36px}
+  .eaz-person-row>.eaz-friend-status{align-self:center}
+  .eaz-feed-tabs{position:sticky;top:58px;z-index:4}
+  .eaz-social-welcome{align-items:center}
+  .eaz-feed-refresh{min-height:36px;padding:7px 10px}
+}
+@media(max-width:380px){
+  .eaz-person-row{gap:7px;padding:10px}
+  .eaz-person-row .btn{font-size:11px;padding:8px 10px}
+}
