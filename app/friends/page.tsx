@@ -158,6 +158,10 @@ export default function FriendsPage() {
     setActionId(person.id);
     setMessage("");
     try {
+      if (existing?.status === "declined") {
+        const { error: deleteError } = await supabase.from("friendships").delete().eq("id", existing.id);
+        if (deleteError) throw deleteError;
+      }
       const { error } = await supabase.from("friendships").insert({
         requester_id: userId,
         addressee_id: person.id,
