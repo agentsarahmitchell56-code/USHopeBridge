@@ -53,7 +53,7 @@ export default function PublicProfilePage() {
       ]);
       setFollowers(followerCount || 0); setFollowing(followingCount || 0);
       setIsFollowing(followRow?.status === "accepted");
-      const activeFriendship = ((friendshipRows || []) as Friendship[]).find(row => row.status === "accepted") || ((friendshipRows || []) as Friendship[]).find(row => row.status === "pending") || null;
+      const activeFriendship = ((friendshipRows || []) as Friendship[]).find(row => row.status === "accepted") || ((friendshipRows || []) as Friendship[]).find(row => row.status === "pending") || ((friendshipRows || []) as Friendship[]).find(row => row.status === "declined") || null;
       setFriendship(activeFriendship);
       setIsFriend(activeFriendship?.status === "accepted");
       const { data: postRows } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,created_at").eq("author_id",profile.id).order("created_at",{ascending:false}).limit(30);
@@ -111,13 +111,19 @@ export default function PublicProfilePage() {
       await supabase.from("social_notifications").insert({recipient_id:person.id,actor_id:me,kind:"friend_accepted",body:"accepted your friend request"});
       return;
     }
+    if (friendship?.status === "declined") {
+      const { error: deleteError } = await supabase.from("friendships").delete()
+        .eq("id", friendship.id)
+        .eq("status", "declined");
+      if (deleteError) { setNotice(deleteError.message); return; }
+      setFriendship(null);
+    }
     const { data, error } = await supabase.from("friendships").insert({requester_id:me,addressee_id:person.id,status:"pending"}).select("id,requester_id,addressee_id,status").single();
     if (error) {
       if (error.code === "23505") {
         setNotice("A friend request between these accounts already exists. Refresh the page to see its status.");
       } else setNotice(error.message);
     } else {
-      setFriendship(data as Friendship);
       setFriendship(data as Friendship);
       setNotice("Friend request sent.");
       const { error: notificationError } = await supabase.from("social_notifications").insert({recipient_id:person.id,actor_id:me,kind:"friend_request",body:"sent you a friend request"});
