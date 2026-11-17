@@ -193,7 +193,7 @@ export default function SocialFeedPage() {
         {posts.length === 0 ? <div className="card eaz-social-empty"><div>✦</div><h2>Your feed starts here</h2><p>Share your first update or find people to connect with.</p><Link className="btn primary" href="/friends">Find people</Link></div> : posts.map(post => <article className="card eaz-social-post" key={post.id}>
           <Link href={post.profile?.username ? `/u/${encodeURIComponent(post.profile.username)}` : "#"} className="eaz-post-author" aria-label={`View ${post.profile?.display_name || "member"} profile`}><span className="eaz-social-avatar">{post.profile?.display_name?.[0] || "E"}</span><div><strong>{post.profile?.display_name || "EAZREAL member"}</strong><small>@{post.profile?.username || "member"} · {new Date(post.created_at).toLocaleString()} · {post.visibility}</small></div></Link>
           {post.body && <p className="eaz-post-body">{post.body}</p>}
-          {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
+          {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline preload="none" /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
           <div className="eaz-post-stats"><span>{post.likes} reactions</span><span>{post.shares} shares</span></div>
           <div className="eaz-post-actions">
             <label className="eaz-reaction-picker" aria-label="Choose a reaction">
