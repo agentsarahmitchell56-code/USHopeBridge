@@ -119,11 +119,18 @@ export default function MessagesPage() {
     setBusy(true); setNotice("");
     const first = me < person.id ? me : person.id;
     const second = me < person.id ? person.id : me;
-    let { data } = await supabase.from("social_conversations").select("id,user_one,user_two,updated_at").eq("user_one",first).eq("user_two",second).maybeSingle();
+    let { data, error: lookupError } = await supabase.from("social_conversations").select("id,user_one,user_two,updated_at").eq("user_one",first).eq("user_two",second).maybeSingle();
+    if (lookupError) { setNotice(lookupError.message); setBusy(false); return; }
     if (!data) {
       const created = await supabase.from("social_conversations").insert({ user_one:first,user_two:second }).select("id,user_one,user_two,updated_at").single();
-      if (created.error) { setNotice(created.error.message); setBusy(false); return; }
-      data = created.data;
+      if (created.error) {
+        // Another device may create the same unique conversation at the same time.
+        const retry = await supabase.from("social_conversations").select("id,user_one,user_two,updated_at").eq("user_one",first).eq("user_two",second).maybeSingle();
+        if (retry.error || !retry.data) { setNotice(created.error.message); setBusy(false); return; }
+        data = retry.data;
+      } else {
+        data = created.data;
+      }
     }
     const conversation = data as Conversation;
     setSelected(conversation);
