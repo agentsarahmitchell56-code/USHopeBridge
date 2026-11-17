@@ -27,7 +27,7 @@ export default function SocialFeedPage() {
   const loadFeed = useCallback(async (currentUser: User) => {
     const { data: profileData } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url,bio").eq("id", currentUser.id).maybeSingle();
     setProfile(profileData as Profile | null);
-    const { data: postData, error: postError } = await supabase.rpc("get_visible_social_posts", { p_author_id: null, p_limit: 40 });
+    const { data: postData, error: postError } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,visibility,created_at").order("created_at", { ascending: false }).limit(40);
     if (postError) throw postError;
     const rows = (postData || []) as RawPost[];
     const ids = [...new Set(rows.map(post => post.author_id))];
