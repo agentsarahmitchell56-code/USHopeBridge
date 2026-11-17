@@ -39,7 +39,7 @@ export default function ReelsPage() {
 
   return <main className="eaz-social-subpage"><header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>REELS</span></Link><Link href="/social">Home</Link></header>
     <div className="eaz-reels-page"><h1>Reels</h1><p className="eaz-subtitle">Short videos shared by the EAZREAL community.</p>
-      {loading?<p className="eaz-muted">Loading videos…</p>:error?<p className="eaz-social-error">{error}</p>:reels.length===0?<section className="card eaz-social-empty"><div>▶</div><h2>No reels yet</h2><p>Share a video post and it can appear here.</p><Link className="btn primary" href="/social">Create a video post</Link></section>:<div className="eaz-reels-grid">{reels.map(reel=><article className="card eaz-reel-card" key={reel.id}><video src={reel.media_url} controls playsInline/><div><strong>{reel.name||"EAZREAL member"}</strong><small>@{reel.username||"member"}</small><p>{reel.body}</p><Link href={`/post/${reel.id}`}>View comments →</Link></div></article>)}</div>}
+      {loading?<p className="eaz-muted">Loading videos…</p>:error?<p className="eaz-social-error">{error}</p>:reels.length===0?<section className="card eaz-social-empty"><div>▶</div><h2>No reels yet</h2><p>Share a video post and it can appear here.</p><Link className="btn primary" href="/social">Create a video post</Link></section>:<div className="eaz-reels-grid">{reels.map(reel=><article className="card eaz-reel-card" key={reel.id}><video src={reel.media_url} controls playsInline preload="none"/><div><strong>{reel.name||"EAZREAL member"}</strong><small>@{reel.username||"member"}</small><p>{reel.body}</p><Link href={`/post/${reel.id}`}>View comments →</Link></div></article>)}</div>}
     </div>
   </main>;
 }
