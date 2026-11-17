@@ -52,7 +52,8 @@ export default function PublicProfilePage() {
       setFollowers(followerCount || 0); setFollowing(followingCount || 0);
       setIsFollowing(followRow?.status === "accepted");
       setIsFriend(friendship?.status === "accepted");
-      const { data: postRows } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,created_at").eq("author_id",profile.id).order("created_at",{ascending:false}).limit(30);
+      const { data: postRows, error: postsError } = await supabase.rpc("get_visible_social_posts", { p_author_id: profile.id, p_limit: 30 });
+      if (postsError && active) setNotice(postsError.message);
       const mapped = await Promise.all(((postRows || []) as Post[]).map(async post => {
         const signed = post.media_path ? await supabase.storage.from("social-media").createSignedUrl(post.media_path,3600) : null;
         return {...post,media_url:signed?.data?.signedUrl};
