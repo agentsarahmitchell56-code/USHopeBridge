@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import SocialAvatar from "../../../components/social-avatar";
 
 type Person = { id: string; username: string; display_name: string; bio: string; website: string | null; avatar_url: string | null; cover_url: string | null; avatar_path: string | null; cover_path: string | null; is_private: boolean; created_at?: string };
 type Post = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; created_at: string; media_url?: string };
@@ -151,7 +152,7 @@ export default function PublicProfilePage() {
         <section className="eaz-profile-timeline" id="posts">
           <div className="eaz-profile-section-heading"><h2>{activeTab === "photos" ? "Photos" : activeTab === "videos" ? "Videos" : "Posts"}</h2>{me === person.id && <Link href="/social">Create a post</Link>}</div>
           {blocked ? <p className="eaz-muted">You blocked this account. Posts are hidden.</p> : blockedByThem ? <p className="eaz-muted">This member has blocked you. Posts are hidden.</p> : visiblePosts.length === 0 ? <div className="card eaz-social-empty"><h3>{activeTab === "photos" ? "No photos yet" : activeTab === "videos" ? "No videos yet" : "No posts yet"}</h3><p>Updates shared by this member will appear here.</p></div> : visiblePosts.map(post => <article className="card eaz-social-post" key={post.id}>
-            <div className="eaz-post-author"><span className="eaz-social-avatar">{person.display_name?.[0] || "E"}</span><div><strong>{person.display_name}</strong><small>@{person.username} · {new Date(post.created_at).toLocaleString()}</small></div></div>
+            <div className="eaz-post-author"><SocialAvatar path={person.avatar_path} url={person.avatar_url} name={person.display_name} /><div><strong>{person.display_name}</strong><small>@{person.username} · {new Date(post.created_at).toLocaleString()}</small></div></div>
             {post.body && <p className="eaz-post-body">{post.body}</p>}
             {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
             <div className="eaz-post-actions"><Link href={`/post/${post.id}`}>View post and comments</Link><button onClick={() => { const url = `${window.location.origin}/post/${post.id}`; navigator.clipboard?.writeText(url).then(() => setNotice("Post link copied.")); }}>Share</button></div>
