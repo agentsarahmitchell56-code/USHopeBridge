@@ -34,7 +34,7 @@ export default function NotificationsPage() {
           const incoming = payload.new as Notice;
           setItems(current => [incoming, ...current.filter(item => item.id !== incoming.id)].slice(0, 50));
           if (incoming.actor_id) {
-            const { data: actor } = await supabase.from("user_profiles").select("id,display_name,username").eq("id", incoming.actor_id).maybeSingle();
+            const { data: actor } = await supabase.from("user_profiles").select("id,display_name,username,avatar_path,avatar_url").eq("id", incoming.actor_id).maybeSingle();
             if (actor) setActors(current => ({ ...current, [incoming.actor_id as string]: actor }));
           }
         }).subscribe();
