@@ -4,10 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import SocialAvatar from "../../../components/social-avatar";
 
 type Comment = { id: string; author_id: string; body: string; created_at: string; parent_comment_id: string | null };
 type SocialPost = { id: string; author_id: string; body: string; created_at: string; media_path: string | null; media_type: string | null };
-type Author = { display_name: string; username: string; avatar_url: string | null };
+type Author = { display_name: string; username: string; avatar_url: string | null; avatar_path?: string | null };
 
 export default function PostPage() {
   const params = useParams<{ id: string }>();
@@ -36,7 +37,7 @@ export default function PostPage() {
       setMediaUrl(signed?.signedUrl || "");
     }
     const [{ data: profile }, { data: commentRows }] = await Promise.all([
-      supabase.from("user_profiles").select("display_name,username,avatar_url").eq("id", currentPost.author_id).maybeSingle(),
+      supabase.from("user_profiles").select("display_name,username,avatar_url,avatar_path").eq("id", currentPost.author_id).maybeSingle(),
       supabase.from("social_post_comments").select("id,author_id,body,created_at,parent_comment_id").eq("post_id", params.id).order("created_at", { ascending: true }),
     ]);
     setAuthor(profile as Author | null);
@@ -88,7 +89,7 @@ export default function PostPage() {
 
   return <main className="eaz-social-subpage"><header className="eaz-social-subnav"><Link href="/social" className="brand">EAZREAL<span>POST</span></Link><Link href="/social">Home</Link></header><div className="eaz-social-subcontent">
     <h1>Post conversation</h1>{error && <p className="eaz-social-error">{error}</p>}
-    {post && <article className="card eaz-social-post"><div className="eaz-post-author"><span className="eaz-social-avatar">{author?.display_name?.[0] || "E"}</span><div><Link href={author?.username ? `/u/${author.username}` : "/social"}><strong>{author?.display_name || "EAZREAL member"}</strong></Link><small>@{author?.username || "member"} · {new Date(post.created_at).toLocaleString()}</small></div></div>{post.body&&<p className="eaz-post-body">{post.body}</p>}{mediaUrl&&(post.media_type==="video"?<video className="eaz-post-media" src={mediaUrl} controls playsInline/>:<img className="eaz-post-media" src={mediaUrl} alt="Post attachment"/>)}</article>}
+    {post && <article className="card eaz-social-post"><div className="eaz-post-author"><SocialAvatar path={author?.avatar_path} url={author?.avatar_url} name={author?.display_name} /><div><Link href={author?.username ? `/u/${author.username}` : "/social"}><strong>{author?.display_name || "EAZREAL member"}</strong></Link><small>@{author?.username || "member"} · {new Date(post.created_at).toLocaleString()}</small></div></div>{post.body&&<p className="eaz-post-body">{post.body}</p>}{mediaUrl&&(post.media_type==="video"?<video className="eaz-post-media" src={mediaUrl} controls playsInline/>:<img className="eaz-post-media" src={mediaUrl} alt="Post attachment"/>)}</article>}
     <section className="eaz-friend-section"><h2>Comments</h2><form className="card eaz-comment-form" onSubmit={submit}><textarea value={body} onChange={event => setBody(event.target.value)} placeholder={replyTo ? `Reply to ${commentProfiles[replyTo.author_id]?.display_name || "this comment"}…` : "Write a comment…"} rows={3} maxLength={2000}/><button className="btn primary" disabled={!body.trim()}>{replyTo ? "Reply" : "Comment"}</button></form>
       {replyTo && <p className="eaz-social-notice">Replying to {commentProfiles[replyTo.author_id]?.display_name || "this member"} <button type="button" onClick={() => setReplyTo(null)}>Cancel</button></p>}
       {comments.filter(comment => !comment.parent_comment_id).map(comment => renderComment(comment))}
