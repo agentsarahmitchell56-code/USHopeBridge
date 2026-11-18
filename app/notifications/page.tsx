@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import SocialAvatar from "../../components/social-avatar";
 
 type Notice = { id: string; actor_id: string | null; kind: string; body: string; post_id: string | null; created_at: string; read_at: string | null };
 
 export default function NotificationsPage() {
   const router = useRouter();
   const [items, setItems] = useState<Notice[]>([]);
-  const [actors, setActors] = useState<Record<string, { display_name: string; username: string }>>({});
+  const [actors, setActors] = useState<Record<string, { display_name: string; username: string; avatar_path?: string | null; avatar_url?: string | null }>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,7 +26,7 @@ export default function NotificationsPage() {
       setItems(rows);
       const ids = [...new Set(rows.map(n => n.actor_id).filter(Boolean))] as string[];
       if (ids.length) {
-        const { data: profiles } = await supabase.from("user_profiles").select("id,display_name,username").in("id", ids);
+        const { data: profiles } = await supabase.from("user_profiles").select("id,display_name,username,avatar_path,avatar_url").in("id", ids);
         if (active) setActors(Object.fromEntries((profiles || []).map((p: { id: string; display_name: string; username: string }) => [p.id, p])));
       }
       channel = supabase.channel(`social-notifications-${auth.user.id}`)
@@ -55,7 +56,7 @@ export default function NotificationsPage() {
       {loading ? <p className="eaz-muted">Loading notifications…</p> : items.length === 0 ? <section className="card eaz-social-empty"><div>♧</div><h2>You’re all caught up</h2><p>New friend requests and post activity will appear here.</p></section> : items.map(item => {
         const actor = item.actor_id ? actors[item.actor_id] : null;
         return <button key={item.id} className={`card eaz-notification-row ${item.read_at ? "" : "unread"}`} onClick={() => { markRead(item); if (item.post_id) router.push(`/post/${item.post_id}`); }}>
-          <span className="eaz-social-avatar">{actor?.display_name?.[0] || "E"}</span><span><strong>{actor?.display_name || "An EAZREAL member"}</strong> {item.body || item.kind.replaceAll("_"," ")}<small>{new Date(item.created_at).toLocaleString()}</small></span><span className="eaz-notification-dot">{item.read_at ? "" : "●"}</span>
+          <SocialAvatar path={actor?.avatar_path} url={actor?.avatar_url} name={actor?.display_name} /><span><strong>{actor?.display_name || "An EAZREAL member"}</strong> {item.body || item.kind.replaceAll("_"," ")}<small>{new Date(item.created_at).toLocaleString()}</small></span><span className="eaz-notification-dot">{item.read_at ? "" : "●"}</span>
         </button>;
       })}
     </div>
