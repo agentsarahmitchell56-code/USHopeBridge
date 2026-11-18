@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
+import SocialAvatar from "../../components/social-avatar";
 
-type Profile = { id: string; username: string; display_name: string; avatar_url: string | null; bio?: string };
+type Profile = { id: string; username: string; display_name: string; avatar_url: string | null; avatar_path?: string | null; bio?: string };
 type RawPost = { id: string; author_id: string; body: string; media_path: string | null; media_type: string | null; visibility: string; created_at: string };
 type ReactionRow = { post_id: string; user_id: string; reaction: string };
 type FeedPost = RawPost & { profile?: Profile; likes: number; liked: boolean; saved: boolean; myReaction: string | null; shares: number; media_url?: string };
@@ -25,14 +26,14 @@ export default function SocialFeedPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const loadFeed = useCallback(async (currentUser: User) => {
-    const { data: profileData } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url,bio").eq("id", currentUser.id).maybeSingle();
+    const { data: profileData } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url,avatar_path,bio").eq("id", currentUser.id).maybeSingle();
     setProfile(profileData as Profile | null);
-    const { data: postData, error: postError } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,visibility,created_at").order("created_at", { ascending: false }).limit(40);
+    const { data: postData, error: postError } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,visibility,created_at").order("created_at", { ascending: false }).limit(12);
     if (postError) throw postError;
     const rows = (postData || []) as RawPost[];
     const ids = [...new Set(rows.map(post => post.author_id))];
     const [profileResult, reactionResult, savedResult, shareResult] = await Promise.all([
-      ids.length ? supabase.from("user_profiles").select("id,username,display_name,avatar_url").in("id", ids) : Promise.resolve({ data: [] as Profile[] }),
+      ids.length ? supabase.from("user_profiles").select("id,username,display_name,avatar_url,avatar_path").in("id", ids) : Promise.resolve({ data: [] as Profile[] }),
       rows.length ? supabase.from("social_post_reactions").select("post_id,user_id,reaction").in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as ReactionRow[] }),
       rows.length ? supabase.from("social_saved_posts").select("post_id").eq("user_id", currentUser.id).in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as Array<{post_id:string}> }),
       rows.length ? supabase.from("social_post_shares").select("post_id").in("post_id", rows.map(post => post.id)) : Promise.resolve({ data: [] as Array<{post_id:string}> }),
@@ -161,7 +162,7 @@ export default function SocialFeedPage() {
     </header>
     <div className="eaz-social-layout">
       <aside className="eaz-social-sidebar">
-        <div className="eaz-social-me"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><div><strong>{profile?.display_name || user?.email}</strong><small>@{profile?.username || "member"}</small></div></div>
+        <div className="eaz-social-me"><SocialAvatar path={profile?.avatar_path} url={profile?.avatar_url} name={profile?.display_name} size={40} /><div><strong>{profile?.display_name || user?.email}</strong><small>@{profile?.username || "member"}</small></div></div>
         <Link className="eaz-social-side-active" href="/social">⌂ <span>Home</span></Link>
         <Link href="/friends">♧ <span>Friends</span></Link>
         <Link href="/messages">✉ <span>Chats</span></Link>
@@ -180,7 +181,7 @@ export default function SocialFeedPage() {
       <section className="eaz-social-feed">
         <div className="eaz-social-welcome"><div><span className="eyebrow">YOUR COMMUNITY</span><h1>Home</h1><p>See what your people are sharing.</p></div><span className="eaz-feed-live">● Latest posts</span></div>
         <form className="eaz-social-composer card" onSubmit={publish}>
-          <div className="eaz-composer-top"><span className="eaz-social-avatar">{profile?.display_name?.[0] || "E"}</span><textarea value={draft} onChange={event => setDraft(event.target.value)} placeholder="What's on your mind?" maxLength={5000} rows={3} /></div>
+          <div className="eaz-composer-top"><SocialAvatar path={profile?.avatar_path} url={profile?.avatar_url} name={profile?.display_name} size={38} /><textarea value={draft} onChange={event => setDraft(event.target.value)} placeholder="What's on your mind?" maxLength={5000} rows={3} /></div>
           <div className="eaz-composer-bottom">
             <label className="eaz-media-picker">＋ Photo / video<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onChange={event => setMediaFile(event.target.files?.[0] || null)} /></label>
             <label>Post audience <select value={visibility} onChange={event => setVisibility(event.target.value)}><option value="public">Public</option><option value="friends">Friends</option><option value="private">Only me</option></select></label>
@@ -191,7 +192,7 @@ export default function SocialFeedPage() {
         </form>
         {error && <p className="eaz-social-error" role="alert">{error}</p>}
         {posts.length === 0 ? <div className="card eaz-social-empty"><div>✦</div><h2>Your feed starts here</h2><p>Share your first update or find people to connect with.</p><Link className="btn primary" href="/friends">Find people</Link></div> : posts.map(post => <article className="card eaz-social-post" key={post.id}>
-          <Link href={post.profile?.username ? `/u/${encodeURIComponent(post.profile.username)}` : "#"} className="eaz-post-author" aria-label={`View ${post.profile?.display_name || "member"} profile`}><span className="eaz-social-avatar">{post.profile?.display_name?.[0] || "E"}</span><div><strong>{post.profile?.display_name || "EAZREAL member"}</strong><small>@{post.profile?.username || "member"} · {new Date(post.created_at).toLocaleString()} · {post.visibility}</small></div></Link>
+          <Link href={post.profile?.username ? `/u/${encodeURIComponent(post.profile.username)}` : "#"} className="eaz-post-author" aria-label={`View ${post.profile?.display_name || "member"} profile`}><SocialAvatar path={post.profile?.avatar_path} url={post.profile?.avatar_url} name={post.profile?.display_name} /><div><strong>{post.profile?.display_name || "EAZREAL member"}</strong><small>@{post.profile?.username || "member"} · {new Date(post.created_at).toLocaleString()} · {post.visibility}</small></div></Link>
           {post.body && <p className="eaz-post-body">{post.body}</p>}
           {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
           <div className="eaz-post-stats"><span>{post.likes} reactions</span><span>{post.shares} shares</span></div>
