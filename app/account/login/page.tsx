@@ -72,7 +72,7 @@ export default function CustomerLoginPage() {
   return <main className="auth-page">
     <section className="card auth-card">
       <Link href="/" className="brand">EAZREAL<span>PERSONAL ACCOUNT</span></Link>
-      <h1 style={{ marginTop: 26, marginBottom: 8 }}>{step === "login" ? "Log in" : "Confirm your email"}</h1>
+      <h1 style={{ marginTop: 18, marginBottom: 8 }}>{step === "login" ? "Log in to EAZREAL" : "Confirm your email"}</h1>
       <p style={{ color: "#627d98", lineHeight: 1.6 }}>{step === "login" ? "Log in to your EAZREAL account." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
       {step === "login" ? <form onSubmit={submit} style={formStyle}>
         <label style={label}>Email address<input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" required style={fieldStyle} /></label>
@@ -89,8 +89,8 @@ export default function CustomerLoginPage() {
         <button type="button" className="btn secondary" disabled={busy} onClick={resend}>Resend confirmation code</button>
         <button type="button" onClick={() => { setStep("login"); setCode(""); setError(""); setNotice(""); }} style={textButton}>Back to sign in</button>
       </form>}
-      <p style={{ marginTop: 18, color: "#627d98" }}>New to EAZREAL? <Link href="/account/signup" style={link}>Create an account</Link></p>
-      <Link href="/chat" style={link}>Visit support</Link>
+      <div className="auth-create-wrap"><div className="auth-divider" /><Link href="/account/signup" className="auth-create-account">Create new account</Link></div>
+      <Link href="/chat" className="auth-support-link">Visit support</Link>
     </section>
   </main>;
 }
