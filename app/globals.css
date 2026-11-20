@@ -2608,3 +2608,25 @@ img, video { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .eaz-social-top-actions a { transition:none; }
 }
+
+
+/* Final EAZREAL login-card hierarchy and actions */
+.auth-page { isolation:isolate; }
+.auth-card { position:relative; z-index:1; }
+.auth-wordmark { display:inline-block; margin:0 0 9px; color:#0866ff!important; font-size:27px; line-height:1; font-weight:900!important; letter-spacing:-.055em; }
+.auth-card h1 { margin:9px 0 5px!important; font-size:25px!important; line-height:1.2; }
+.auth-card .auth-intro { margin:0; color:#65676b!important; font-size:14px; line-height:1.5!important; }
+.auth-create-wrap { display:grid; gap:15px; margin-top:20px; }
+.auth-divider { display:flex; align-items:center; gap:12px; color:#8a8d91; font-size:12px; }
+.auth-divider::before,.auth-divider::after { content:""; height:1px; flex:1; background:#dadde1; }
+.auth-create-account { display:flex; min-height:46px; align-items:center; justify-content:center; padding:10px 16px; border-radius:7px; background:#42b72a; color:#fff!important; font-size:15px; font-weight:750!important; text-align:center; }
+.auth-create-account:hover { background:#36a420; color:#fff!important; }
+.auth-support-link { display:block; margin:17px auto 0; width:max-content; font-size:12px; }
+.auth-card .btn.secondary { border:0; background:transparent; color:#0866ff; font-weight:650; }
+.auth-card .btn.secondary:hover { background:#f0f2f5; }
+@media(max-width:760px) {
+ .auth-page::before { display:none; }
+ .auth-wordmark { display:none; }
+ .auth-card h1 { margin-top:0!important; }
+ .auth-card { width:100%; }
+}
