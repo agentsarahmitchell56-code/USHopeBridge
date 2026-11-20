@@ -71,12 +71,12 @@ export default function CustomerLoginPage() {
 
   return <main className="auth-page">
     <section className="card auth-card">
-      <Link href="/" className="brand">EAZREAL<span>PERSONAL ACCOUNT</span></Link>
-      <h1 style={{ marginTop: 18, marginBottom: 8 }}>{step === "login" ? "Log in to EAZREAL" : "Confirm your email"}</h1>
-      <p style={{ color: "#627d98", lineHeight: 1.6 }}>{step === "login" ? "Log in to your EAZREAL account." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
+      <Link href="/" className="auth-wordmark" aria-label="EAZREAL home">EAZREAL</Link>
+      <h1>{step === "login" ? "Log in" : "Confirm your email"}</h1>
+      <p className="auth-intro">{step === "login" ? "Connect with friends and the world around you." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
       {step === "login" ? <form onSubmit={submit} style={formStyle}>
-        <label style={label}>Email address<input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" required style={fieldStyle} /></label>
-        <label style={label}>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required style={fieldStyle} /></label>
+        <label style={label}>Email address<input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" placeholder="Email address" required style={fieldStyle} /></label>
+        <label style={label}>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" placeholder="Password" required style={fieldStyle} /></label>
         {error && <p role="alert" style={alertStyle}>{error}</p>}
         {notice && <p role="status" style={noticeStyle}>{notice}</p>}
         <button className="btn primary" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
@@ -89,7 +89,7 @@ export default function CustomerLoginPage() {
         <button type="button" className="btn secondary" disabled={busy} onClick={resend}>Resend confirmation code</button>
         <button type="button" onClick={() => { setStep("login"); setCode(""); setError(""); setNotice(""); }} style={textButton}>Back to sign in</button>
       </form>}
-      <div className="auth-create-wrap"><div className="auth-divider" /><Link href="/account/signup" className="auth-create-account">Create new account</Link></div>
+      {step === "login" && <div className="auth-create-wrap"><div className="auth-divider"><span>or</span></div><Link href="/account/signup" className="auth-create-account">Create new account</Link></div>}
       <Link href="/chat" className="auth-support-link">Visit support</Link>
     </section>
   </main>;
