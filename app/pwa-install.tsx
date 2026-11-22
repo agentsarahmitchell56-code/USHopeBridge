@@ -51,8 +51,8 @@ export default function PWAInstall() {
     };
   }, []);
 
-  // Keep the fixed install control away from the business inbox composer on small screens.
-  if (isInstalled || pathname === "/business/inbox") return null;
+  // Keep the fixed install control away from account navigation and the business inbox composer.
+  if (isInstalled || pathname === "/business/inbox" || pathname === "/account") return null;
 
   async function installApp() {
     if (!installPrompt) {
