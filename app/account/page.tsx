@@ -24,7 +24,7 @@ export default function AccountPage() {
       if (!active) return;
       setProfile(row);
       const imageValue = row?.avatar_path || row?.avatar_url || "";
-      if (/^https?:\\/\\//i.test(imageValue)) {
+      if (/^https?:\/\//i.test(imageValue)) {
         setAvatarSrc(imageValue);
       } else if (imageValue) {
         const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(imageValue, 3600);
