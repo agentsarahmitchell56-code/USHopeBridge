@@ -2630,3 +2630,85 @@ img, video { max-width: 100%; }
  .auth-card h1 { margin-top:0!important; }
  .auth-card { width:100%; }
 }
+
+
+/* EAZREAL whole-site consistency layer — applied across public, account, social and business routes */
+:root {
+  --eaz-blue:#0866ff;
+  --eaz-blue-hover:#0758dc;
+  --eaz-ink:#1c1e21;
+  --eaz-muted:#65676b;
+  --eaz-line:#e4e6eb;
+  --eaz-canvas:#f0f2f5;
+  --eaz-surface:#fff;
+  --eaz-radius:14px;
+  --eaz-shadow:0 1px 2px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.035);
+}
+html { scroll-padding-top:80px; }
+body { color:var(--eaz-ink); background:var(--eaz-canvas); }
+:where(button,input,select,textarea) { max-width:100%; }
+:where(button,a,[role=button]) { -webkit-tap-highlight-color:transparent; }
+:where(button,a):focus-visible { outline:3px solid rgba(8,102,255,.35); outline-offset:2px; }
+:where(input,select,textarea):focus-visible { outline:2px solid rgba(8,102,255,.42); outline-offset:1px; }
+:where(.card,.eaz-social-post,.eaz-social-composer,.eaz-business-card,.eaz-page-card) {
+  border-color:var(--eaz-line);
+}
+:where(.btn,.eaz-action-button) { min-height:40px; transition:background .15s ease,color .15s ease,border-color .15s ease; }
+:where(.btn.primary,.eaz-primary-button) { background:var(--eaz-blue); }
+:where(.btn.primary,.eaz-primary-button):hover:not(:disabled) { background:var(--eaz-blue-hover); }
+:where(input,select,textarea) { color:var(--eaz-ink); }
+:where(input,select,textarea)::placeholder { color:#8a8d91; opacity:1; }
+:where(img,video,iframe) { max-width:100%; }
+video { background:#101318; }
+:where(.eaz-social-post,.eaz-profile-post,.eaz-message-card,.eaz-business-post) { overflow-wrap:anywhere; }
+:where(.eaz-social-post,.eaz-profile-post,.eaz-business-post) img,
+:where(.eaz-social-post,.eaz-profile-post,.eaz-business-post) video { display:block; }
+:where(.eaz-feed,.eaz-social-feed,.eaz-profile-timeline) { min-width:0; }
+:where(.eaz-social-layout,.eaz-profile-page,.eaz-business-workspace,.eaz-inbox-layout) { min-width:0; }
+:where(.eaz-social-sidebar,.eaz-social-right) { scrollbar-width:thin; }
+:where(.eaz-social-topbar,.eaz-social-subnav) { z-index:30; }
+:where(.eaz-mobile-bottom-nav) { z-index:100; }
+:where(.eaz-mobile-bottom-nav a) { min-height:44px; }
+:where(.eaz-social-search input,.eaz-composer-top textarea) { min-width:0; }
+:where(.eaz-post-actions button,.eaz-post-actions a) { touch-action:manipulation; }
+:where(.eaz-profile-cover,.eaz-public-cover) { background-color:#dbeafe; background-position:center; background-size:cover; }
+:where(.eaz-profile-avatar,.eaz-social-avatar,.eaz-avatar) { flex-shrink:0; }
+:where(.eaz-notification-item,.eaz-friend-card,.eaz-search-result,.eaz-conversation-row) {
+  min-width:0; overflow-wrap:anywhere;
+}
+:where(.eaz-notification-item,.eaz-friend-card,.eaz-search-result,.eaz-conversation-row):hover {
+  background-color:#f5f8ff;
+}
+:where(.eaz-business-workspace,.eaz-business-inbox,.eaz-admin-dashboard) h1,
+:where(.eaz-business-workspace,.eaz-business-inbox,.eaz-admin-dashboard) h2 {
+  letter-spacing:-.035em;
+}
+:where(.eaz-business-workspace,.eaz-business-inbox,.eaz-admin-dashboard) .card {
+  border-radius:var(--eaz-radius); box-shadow:var(--eaz-shadow);
+}
+:where(.eaz-business-workspace,.eaz-business-inbox,.eaz-admin-dashboard) :where(input,select,textarea) {
+  border-radius:10px;
+}
+:where(.eaz-business-workspace,.eaz-business-inbox,.eaz-admin-dashboard) :where(button,.btn) {
+  touch-action:manipulation;
+}
+@media(max-width:760px) {
+  html { scroll-padding-top:62px; }
+  .container { padding-left:15px; padding-right:15px; }
+  :where(.eaz-social-layout,.eaz-profile-page,.eaz-business-workspace,.eaz-inbox-layout) {
+    width:100%; max-width:100%; margin-left:auto; margin-right:auto;
+  }
+  :where(.eaz-social-feed,.eaz-profile-timeline,.eaz-business-feed) { gap:10px; }
+  :where(.eaz-business-workspace,.eaz-business-inbox,.eaz-admin-dashboard) {
+    padding-left:12px; padding-right:12px;
+  }
+  :where(.eaz-business-workspace,.eaz-business-inbox,.eaz-admin-dashboard) .card {
+    padding:15px; border-radius:13px;
+  }
+  :where(.eaz-form-actions,.eaz-profile-form-actions) { gap:9px; }
+  :where(.eaz-form-actions,.eaz-profile-form-actions) .btn { min-height:44px; }
+  :where(.eaz-table-wrap) { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media(prefers-reduced-motion:reduce) {
+  *,*::before,*::after { scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; }
+}
