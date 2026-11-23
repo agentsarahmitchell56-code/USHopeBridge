@@ -16,9 +16,9 @@ type SocialAvatarProps = {
 
 export default function SocialAvatar({ path, url, name, className = "eaz-social-avatar", size = 42 }: SocialAvatarProps) {
   const [src, setSrc] = useState("");
+  const fallbackUrl = url && /^https?:\/\//i.test(url) ? url : "";
   useEffect(() => {
     let active = true;
-    const fallbackUrl = url && /^https?:\/\//i.test(url) ? url : "";
     const value = path || url || "";
     if (!value) { setSrc(""); return () => { active = false; }; }
     if (/^https?:\/\//i.test(value)) { setSrc(value); return () => { active = false; }; }
