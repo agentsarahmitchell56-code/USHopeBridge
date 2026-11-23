@@ -382,13 +382,13 @@ export default function ChatPage() {
     <main className="messenger-page">
       <div className="messenger-shell">
         <header className="messenger-header">
-          <Link href="/" className="messenger-back" aria-label="Return home">‹</Link>
+          <Link href="/b/hopebridge-financial-assistance" className="messenger-back" aria-label="Return home">‹</Link>
           <div className="messenger-avatar" aria-hidden="true">HB</div>
           <div className="messenger-heading">
             <div className="messenger-title">HOPEBRIDGE Support</div>
             <div className="messenger-presence"><span className={`online-dot ${chatConnection === "connected" ? "online-dot-connected" : ""}`} />{!started ? "Support chat · No account required" : chatConnection === "connected" ? "Connected · Replies update automatically" : chatConnection === "reconnecting" ? "Reconnecting to chat…" : "Connecting to support…"}</div>
           </div>
-          <Link className="messenger-info" href="/" aria-label="Business profile" title="Business profile">i</Link>
+          <Link className="messenger-info" href="/b/hopebridge-financial-assistance" aria-label="Business profile" title="Business profile">i</Link>
         </header>
 
         {!started ? (
@@ -464,7 +464,7 @@ export default function ChatPage() {
               </button>
             </form>
             <div className="messenger-bottom-links">
-              <Link href="/">Home</Link><span>·</span>
+              <Link href="/b/hopebridge-financial-assistance">Home</Link><span>·</span>
               <button type="button" onClick={startNewConversation}>New chat</button>
             </div>
           </>
