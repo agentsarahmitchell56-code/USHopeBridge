@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
     }
     const { data, error } = await db.storage.from("hopebridge-private-uploads").createSignedUrl(path, 3600);
     if (error || !data?.signedUrl) return NextResponse.json({ error: "Attachment unavailable." }, { status: 404 });
-    return NextResponse.json({ url: data.signedUrl });
+    return NextResponse.json({ url: data.signedUrl }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Attachment could not be opened." }, { status: 500 });
   }
