@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
+import SocialAvatar from "../../components/social-avatar";
 
 export default function AccountPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<{ username: string; display_name: string; avatar_url: string | null; avatar_path?: string | null } | null>(null);
-  const [avatarSrc, setAvatarSrc] = useState("");
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -21,15 +21,7 @@ export default function AccountPage() {
       if (error || !data.user) { router.replace("/account/login"); return; }
       setUser(data.user);
       const { data: row } = await supabase.from("user_profiles").select("username,display_name,avatar_url,avatar_path").eq("id", data.user.id).maybeSingle();
-      if (!active) return;
-      setProfile(row);
-      const imageValue = row?.avatar_path || row?.avatar_url || "";
-      if (/^https?:\/\//i.test(imageValue)) {
-        setAvatarSrc(imageValue);
-      } else if (imageValue) {
-        const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(imageValue, 3600);
-        if (active) setAvatarSrc(signed?.signedUrl || "");
-      }
+      if (active) setProfile(row);
       setLoading(false);
     });
     return () => { active = false; };
@@ -48,7 +40,7 @@ export default function AccountPage() {
     <section className="card eaz-account-card">
       <Link href="/social" className="brand">EAZREAL<span>MENU</span></Link>
       <div className="eaz-account-heading">
-        {avatarSrc ? <img className="eaz-social-avatar eaz-account-avatar" src={avatarSrc} alt="Your profile photo" /> : <span className="eaz-social-avatar eaz-account-avatar">{profile?.display_name?.[0] || "E"}</span>}
+        <SocialAvatar className="eaz-social-avatar eaz-account-avatar" path={profile?.avatar_path} url={profile?.avatar_url} name={profile?.display_name} size={58} />
         <div><h1>Welcome{profile?.display_name ? `, ${profile.display_name}` : ""}</h1><p>{user?.email}</p><small>@{profile?.username || "member"}</small></div>
       </div>
       <h2>Menu</h2>
