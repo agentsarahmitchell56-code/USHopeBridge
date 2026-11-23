@@ -95,12 +95,7 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
       const continueSaved = window.confirm(
         "Continue the saved private business conversation on this device? Choose Cancel if you are not the person who started it."
       );
-      if (continueSaved) {
-        setSession(pendingSavedSession);
-      } else {
-        localStorage.removeItem(`platform-business-chat:${slug}`);
-        setPendingSavedSession(null);
-      }
+      if (continueSaved) setSession(pendingSavedSession);
     }
     setOpen(value => !value);
   }
