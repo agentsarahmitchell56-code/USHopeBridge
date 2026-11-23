@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type ChatMessage = { id: string; senderType: "customer" | "business"; body: string; attachmentType: string | null; attachmentUrl: string | null; createdAt: string };
@@ -15,6 +15,7 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const mediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number; type: string | null }>());
 
   useEffect(() => {
     try {
@@ -27,7 +28,31 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
     const response = await fetch(`/api/business-chat/${current.conversationId}`, { headers: { "x-business-chat-token": current.accessToken }, cache: "no-store" });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Chat could not be loaded.");
-    setMessages(result.messages || []);
+    const now = Date.now();
+    const incoming = (result.messages || []) as ChatMessage[];
+    const stableMessages = incoming.map(item => {
+      const cached = mediaUrlCache.current.get(item.id);
+      if (cached && cached.type === item.attachmentType && cached.expiresAt > now + 60_000) {
+        return { ...item, attachmentUrl: cached.url };
+      }
+      if (item.attachmentUrl) {
+        mediaUrlCache.current.set(item.id, {
+          url: item.attachmentUrl,
+          type: item.attachmentType,
+          expiresAt: now + 13 * 60_000,
+        });
+      }
+      return item;
+    });
+    setMessages(current => {
+      const unchanged = current.length === stableMessages.length && current.every((item, index) => {
+        const next = stableMessages[index];
+        return item.id === next.id && item.body === next.body &&
+          item.attachmentUrl === next.attachmentUrl && item.attachmentType === next.attachmentType &&
+          item.createdAt === next.createdAt && item.senderType === next.senderType;
+      });
+      return unchanged ? current : stableMessages;
+    });
   }
 
   useEffect(() => {
