@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
   try {
     const path = request.nextUrl.searchParams.get("path") || "";
     const conversationId = request.nextUrl.searchParams.get("conversationId") || "";
-    const chatToken = request.nextUrl.searchParams.get("chatToken") || "";
+    const chatToken = request.headers.get("x-chat-token") || "";
     if (!/^(applications|chat)\/[0-9a-f-]{36}\.(jpg|png|webp|mp4|webm|mov)$/i.test(path)) return NextResponse.json({ error: "Access denied." }, { status: 401 });
 
     const db = adminClient();
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
     }
     const { data, error } = await db.storage.from("hopebridge-private-uploads").createSignedUrl(path, 3600);
     if (error || !data?.signedUrl) return NextResponse.json({ error: "Attachment unavailable." }, { status: 404 });
-    return NextResponse.json({ url: data.signedUrl });
+    return NextResponse.json({ url: data.signedUrl }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Attachment could not be opened." }, { status: 500 });
   }

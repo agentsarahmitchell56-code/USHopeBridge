@@ -51,8 +51,8 @@ export default function PWAInstall() {
     };
   }, []);
 
-  // Keep the fixed install control away from the business inbox composer on small screens.
-  if (isInstalled || pathname === "/business/inbox") return null;
+  // Keep the floating install control on the landing page only so it never covers social or chat controls.
+  if (isInstalled || pathname !== "/") return null;
 
   async function installApp() {
     if (!installPrompt) {

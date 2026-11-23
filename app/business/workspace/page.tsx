@@ -40,7 +40,7 @@ export default function BusinessWorkspacePage() {
         const currentWebsite = (data.website_url || "").trim().toLowerCase();
         const isPlaceholderWebsite = ["", "https://example.com", "http://example.com", "https://example.com/", "http://example.com/"].includes(currentWebsite);
         const websiteUrl = isHopebridge && isPlaceholderWebsite
-          ? "https://us-hope-bridge.vercel.app"
+          ? ""
           : data.website_url;
         setDraft({ owner_id: data.owner_id, name: data.name, slug: data.slug, category: data.category, description: data.description, contact_email: data.contact_email, contact_phone: data.contact_phone || "", website_url: websiteUrl, avatar_url: data.avatar_url, cover_url: data.cover_url, published: data.published });
         const { data: rows, error: postsError } = await supabase.from("business_page_posts").select("id,body,media_path,media_type,media_url,status,created_at").eq("page_id", data.id).order("created_at", { ascending: false }).limit(50);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
@@ -22,7 +22,7 @@ export default function SocialReportsPage() {
   const [notice, setNotice] = useState("");
   const [allowed, setAllowed] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
       router.replace("/account/login");
@@ -41,9 +41,9 @@ export default function SocialReportsPage() {
     if (error) setNotice(error.message);
     else setItems((data || []) as Report[]);
     setLoading(false);
-  }
+  }, [router]);
 
-  useEffect(() => { void load(); }, [router]);
+  useEffect(() => { void load(); }, [load]);
 
   async function update(id: string, status: string) {
     const { error } = await supabase.from("social_reports").update({ status }).eq("id", id);

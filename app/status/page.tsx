@@ -1,5 +1,7 @@
 "use client";
 
+import HopebridgeServiceNav from "../../components/hopebridge-service-nav";
+
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
@@ -77,10 +79,10 @@ export default function ApplicationStatusPage() {
     });
 
   return (
-    <main className="section">
+    <main className="section"><HopebridgeServiceNav active="status" />
       <div className="container">
         <div className="page-brand-row">
-          <Link href="/" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
+          <Link href="/b/hopebridge-financial-assistance" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
           <Link href="/apply" className="text-link">Apply for assistance →</Link>
         </div>
 

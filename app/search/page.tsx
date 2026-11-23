@@ -4,8 +4,9 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import SocialAvatar from "../../components/social-avatar";
 
-type Person = { id: string; username: string; display_name: string; bio: string | null; avatar_url: string | null };
+type Person = { id: string; username: string; display_name: string; bio: string | null; avatar_url: string | null; avatar_path?: string | null };
 type Post = { id: string; author_id: string; body: string; created_at: string };
 type Group = { id: string; name: string; slug: string; description: string; privacy: string };
 type Page = { id: string; name: string; slug: string; category: string; description: string };
@@ -29,7 +30,7 @@ export default function SearchPage() {
     setLoading(true); setError(""); setSearched(true);
     const pattern = `%${safe}%`;
     const [peopleResult, postResult, groupResult, pageResult] = await Promise.all([
-      supabase.from("user_profiles").select("id,username,display_name,bio,avatar_url")
+      supabase.from("user_profiles").select("id,username,display_name,bio,avatar_url,avatar_path")
         .or(`display_name.ilike.${pattern},username.ilike.${pattern}`).limit(20),
       supabase.from("social_posts").select("id,author_id,body,created_at")
         .ilike("body", pattern).order("created_at", { ascending: false }).limit(20),
@@ -74,7 +75,7 @@ export default function SearchPage() {
       {searched && !loading && <div className="eaz-search-results">
         <section className="eaz-friend-section"><h2>People <span>{people.length}</span></h2>
           {people.length ? people.map(person => <article className="card eaz-person-row" key={person.id}>
-            <Link href={`/u/${encodeURIComponent(person.username)}`} className="eaz-person-profile-link"><span className="eaz-social-avatar">{person.display_name?.[0] || "E"}</span></Link>
+            <Link href={`/u/${encodeURIComponent(person.username)}`} className="eaz-person-profile-link"><SocialAvatar path={person.avatar_path} url={person.avatar_url} name={person.display_name} /></Link>
             <div><Link href={`/u/${encodeURIComponent(person.username)}`} className="eaz-person-name"><strong>{person.display_name}</strong></Link><small>@{person.username}</small>{person.bio && <p>{person.bio}</p>}</div>
           </article>) : <p className="eaz-muted">No matching people found.</p>}
         </section>

@@ -3,7 +3,7 @@ import GlobalFooter from "../components/GlobalFooter";
 import "./globals.css";
 
 export const metadata = {
-  metadataBase: new URL("https://us-hope-bridge.vercel.app"),
+  metadataBase: new URL("https://eazreal.vercel.app"),
   title: {
     default: "EAZREAL | Social Platform",
     template: "%s | EAZREAL",
@@ -11,7 +11,7 @@ export const metadata = {
   description: "EAZREAL brings people, friends, photos, videos, messages and business pages together in one social platform.",
   openGraph: {
     type: "website",
-    url: "https://us-hope-bridge.vercel.app",
+    url: "https://eazreal.vercel.app",
     siteName: "EAZREAL",
     title: "EAZREAL | Social Platform",
     description: "Connect. Create. Grow. Connect with friends, share moments and discover communities.",
@@ -41,7 +41,7 @@ export const metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#123c69",
+  themeColor: "#0866ff",
 };
 
 export default function RootLayout({

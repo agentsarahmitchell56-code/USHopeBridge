@@ -125,9 +125,9 @@ export async function POST(request: NextRequest) {
     if (imagePath && videoPath) return NextResponse.json({ error: "Send one attachment at a time." }, { status: 400 });
     if (!message && !imagePath && !videoPath) return NextResponse.json({ error: "Write a message or attach a file." }, { status: 400 });
 
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !anonKey) throw new Error("Staff message submission is not configured.");
-    const userDb = createClient(supabaseUrl, anonKey, {
+    const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    if (!supabaseUrl || !publishableKey) throw new Error("Staff message submission is not configured.");
+    const userDb = createClient(supabaseUrl, publishableKey, {
       global: { headers: { Authorization: `Bearer ${bearer}` } },
       auth: { persistSession: false, autoRefreshToken: false },
     });

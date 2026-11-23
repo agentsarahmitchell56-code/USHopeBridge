@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type ChatMessage = { id: string; senderType: "customer" | "business"; body: string; attachmentType: string | null; attachmentUrl: string | null; createdAt: string };
@@ -10,34 +10,95 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
   const [open, setOpen] = useState(false);
   const [identity, setIdentity] = useState({ name: "", email: "" });
   const [session, setSession] = useState<Session | null>(null);
+  const [pendingSavedSession, setPendingSavedSession] = useState<Session | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const mediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number; type: string | null }>());
 
   useEffect(() => {
+    setSession(null);
+    setPendingSavedSession(null);
+    setMessages([]);
+    setOpen(false);
+    setIdentity({ name: "", email: "" });
+    mediaUrlCache.current.clear();
     try {
       const saved = localStorage.getItem(`platform-business-chat:${slug}`);
-      if (saved) setSession(JSON.parse(saved) as Session);
-    } catch { /* Ignore invalid local chat data. */ }
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as Partial<Session>;
+      if (typeof parsed.conversationId === "string" && typeof parsed.accessToken === "string") {
+        setPendingSavedSession({ conversationId: parsed.conversationId, accessToken: parsed.accessToken });
+      } else {
+        localStorage.removeItem(`platform-business-chat:${slug}`);
+      }
+    } catch {
+      localStorage.removeItem(`platform-business-chat:${slug}`);
+    }
   }, [slug]);
 
   async function refresh(current: Session) {
     const response = await fetch(`/api/business-chat/${current.conversationId}`, { headers: { "x-business-chat-token": current.accessToken }, cache: "no-store" });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Chat could not be loaded.");
-    setMessages(result.messages || []);
+    const now = Date.now();
+    const incoming = (result.messages || []) as ChatMessage[];
+    const stableMessages = incoming.map(item => {
+      const cached = mediaUrlCache.current.get(item.id);
+      if (cached && cached.type === item.attachmentType && cached.expiresAt > now + 60_000) {
+        return { ...item, attachmentUrl: cached.url };
+      }
+      if (item.attachmentUrl) {
+        mediaUrlCache.current.set(item.id, {
+          url: item.attachmentUrl,
+          type: item.attachmentType,
+          expiresAt: now + 13 * 60_000,
+        });
+      }
+      return item;
+    });
+    setMessages(current => {
+      const unchanged = current.length === stableMessages.length && current.every((item, index) => {
+        const next = stableMessages[index];
+        return item.id === next.id && item.body === next.body &&
+          item.attachmentUrl === next.attachmentUrl && item.attachmentType === next.attachmentType &&
+          item.createdAt === next.createdAt && item.senderType === next.senderType;
+      });
+      return unchanged ? current : stableMessages;
+    });
   }
 
   useEffect(() => {
     if (!open || !session) return;
     let active = true;
-    const load = async () => { try { await refresh(session); } catch (e) { if (active) setError(e instanceof Error ? e.message : "Chat could not be loaded."); } };
+    let requestInFlight = false;
+    const load = async () => {
+      if (requestInFlight) return;
+      requestInFlight = true;
+      try {
+        await refresh(session);
+      } catch (e) {
+        if (active) setError(e instanceof Error ? e.message : "Chat could not be loaded.");
+      } finally {
+        requestInFlight = false;
+      }
+    };
     void load();
     const timer = window.setInterval(() => { if (active) void load(); }, 7000);
     return () => { active = false; window.clearInterval(timer); };
   }, [open, session]);
+
+  function toggleChat() {
+    if (!open && !session && pendingSavedSession) {
+      const continueSaved = window.confirm(
+        "Continue the saved private business conversation on this device? Choose Cancel if you are not the person who started it."
+      );
+      if (continueSaved) setSession(pendingSavedSession);
+    }
+    setOpen(value => !value);
+  }
 
   async function start(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
@@ -50,6 +111,7 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
       const next = { conversationId: result.conversationId, accessToken: result.accessToken };
       localStorage.setItem(`platform-business-chat:${slug}`, JSON.stringify(next));
       setSession(next);
+      setPendingSavedSession(null);
     } catch (e) { setError(e instanceof Error ? e.message : "Chat could not be started."); }
     finally { setBusy(false); }
   }
@@ -88,7 +150,7 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
   return <section style={{ background: "white", border: "1px solid #dce6f1", borderRadius: 16, padding: 18, boxShadow: "0 4px 18px #173b6208" }}>
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
       <div><strong style={{ color: "#173b62" }}>Contact {businessName}</strong><p style={{ margin: "4px 0 0", color: "#718297", fontSize: 13 }}>Send a private message to this business.</p></div>
-      <button type="button" onClick={() => setOpen(v => !v)} style={{ border: 0, borderRadius: 9, background: "#1768dc", color: "white", padding: "11px 16px", fontWeight: 800, cursor: "pointer" }}>{open ? "Close chat" : "Message business"}</button>
+      <button type="button" onClick={toggleChat} style={{ border: 0, borderRadius: 9, background: "#1768dc", color: "white", padding: "11px 16px", fontWeight: 800, cursor: "pointer" }}>{open ? "Close chat" : "Message business"}</button>
     </div>
     {open && <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
       {error && <p role="alert" style={{ margin: 0, padding: 10, color: "#9f1d20", background: "#fff1f2", borderRadius: 9, fontSize: 13 }}>{error}</p>}

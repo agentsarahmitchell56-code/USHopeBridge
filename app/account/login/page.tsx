@@ -15,6 +15,11 @@ export default function CustomerLoginPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  function destination() {
+    const requested = new URLSearchParams(window.location.search).get("next");
+    return requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/account";
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (busy) return;
     setBusy(true); setError(""); setNotice("");
@@ -26,7 +31,7 @@ export default function CustomerLoginPage() {
         }
         throw signInError;
       }
-      router.replace("/account"); router.refresh();
+      router.replace(destination()); router.refresh();
     } catch {
       setError("Sign-in failed. Check your email and password, or create an account.");
     } finally { setBusy(false); }
@@ -71,12 +76,12 @@ export default function CustomerLoginPage() {
 
   return <main className="auth-page">
     <section className="card auth-card">
-      <Link href="/" className="brand">EAZREAL<span>PERSONAL ACCOUNT</span></Link>
-      <h1 style={{ marginTop: 26, marginBottom: 8 }}>{step === "login" ? "Log in" : "Confirm your email"}</h1>
-      <p style={{ color: "#627d98", lineHeight: 1.6 }}>{step === "login" ? "Log in to your EAZREAL account." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
+      <Link href="/" className="auth-wordmark" aria-label="EAZREAL home">EAZREAL</Link>
+      <h1>{step === "login" ? "Log in" : "Confirm your email"}</h1>
+      <p className="auth-intro">{step === "login" ? "Connect with friends and the world around you." : `Enter the confirmation code sent to ${email.trim().toLowerCase()}.`}</p>
       {step === "login" ? <form onSubmit={submit} style={formStyle}>
-        <label style={label}>Email address<input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" required style={fieldStyle} /></label>
-        <label style={label}>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required style={fieldStyle} /></label>
+        <label style={label}>Email address<input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" placeholder="Email address" required style={fieldStyle} /></label>
+        <label style={label}>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" placeholder="Password" required style={fieldStyle} /></label>
         {error && <p role="alert" style={alertStyle}>{error}</p>}
         {notice && <p role="status" style={noticeStyle}>{notice}</p>}
         <button className="btn primary" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
@@ -89,15 +94,14 @@ export default function CustomerLoginPage() {
         <button type="button" className="btn secondary" disabled={busy} onClick={resend}>Resend confirmation code</button>
         <button type="button" onClick={() => { setStep("login"); setCode(""); setError(""); setNotice(""); }} style={textButton}>Back to sign in</button>
       </form>}
-      <p style={{ marginTop: 18, color: "#627d98" }}>New to EAZREAL? <Link href="/account/signup" style={link}>Create an account</Link></p>
-      <Link href="/chat" style={link}>Visit support</Link>
+      {step === "login" && <div className="auth-create-wrap"><div className="auth-divider"><span>or</span></div><Link href="/account/signup" className="auth-create-account">Create new account</Link></div>}
+      <Link href="/chat" className="auth-support-link">Visit support</Link>
     </section>
   </main>;
 }
 const formStyle = { display: "grid", gap: 14, marginTop: 22 };
 const label = { display: "grid", gap: 6, fontWeight: 600 } as const;
 const fieldStyle = { width: "100%", boxSizing: "border-box" as const, padding: 12, border: "1px solid #cbd5e1", borderRadius: 10, font: "inherit", background: "white" };
-const link = { color: "#1464f4" };
 const textButton = { border: 0, background: "transparent", color: "#1464f4", padding: 8, font: "inherit", cursor: "pointer" } as const;
 const alertStyle = { margin: 0, padding: 12, borderRadius: 10, border: "1px solid #fecaca", background: "#fff1f2", color: "#b42318", overflowWrap: "anywhere" as const };
 const noticeStyle = { margin: 0, padding: 12, borderRadius: 10, border: "1px solid #b7e4c7", background: "#effaf3", color: "#155e35", overflowWrap: "anywhere" as const };
