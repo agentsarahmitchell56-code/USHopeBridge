@@ -177,7 +177,7 @@ export default function PublicBusinessPage() {
 
           <div style={{ display: "grid", gap: 14, minWidth: 0 }}>
             <section id="page-chat" style={{ scrollMarginTop: 76 }}>
-              <BusinessCustomerChat slug={page.slug} businessName={page.name} />
+              <BusinessCustomerChat key={page.slug} slug={page.slug} businessName={page.name} />
             </section>
             <section id="page-posts" style={{ display: "grid", gap: 12, scrollMarginTop: 76 }}>
               <h2 style={{ margin: "2px 0", fontSize: 20 }}>Posts</h2>
