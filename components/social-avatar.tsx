@@ -36,7 +36,7 @@ export default function SocialAvatar({ path, url, name, className = "eaz-social-
       } else setSrc(fallbackUrl);
     }).catch(() => { if (active) setSrc(fallbackUrl); });
     return () => { active = false; };
-  }, [path, url]);
+  }, [path, url, fallbackUrl]);
   const fallback = (name || "E").trim().charAt(0).toUpperCase() || "E";
   const style = { width: size, height: size, flex: `0 0 ${size}px`, objectFit: "cover" as const, borderRadius: "50%" };
   return src
