@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import SocialAvatar from "../../components/social-avatar";
 import styles from "./messages.module.css";
 
-type Person = { id: string; username: string; display_name: string; avatar_url: string | null };
+type Person = { id: string; username: string; display_name: string; avatar_url: string | null; avatar_path?: string | null };
 type Conversation = { id: string; user_one: string; user_two: string; updated_at: string };
 type Message = { id: string; conversation_id: string; sender_id: string; body: string; created_at: string; media_path: string | null; media_type: string | null; media_url?: string };
 
@@ -38,7 +39,7 @@ export default function MessagesPage() {
     setConversations(rows);
     const ids = [...new Set(rows.map(c => c.user_one === userId ? c.user_two : c.user_one))];
     if (ids.length) {
-      const { data: profiles } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url").in("id", ids);
+      const { data: profiles } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url,avatar_path").in("id", ids);
       setContacts(Object.fromEntries(((profiles || []) as Person[]).map(p => [p.id,p])));
     }
   }
@@ -130,7 +131,7 @@ export default function MessagesPage() {
     event.preventDefault();
     const term = search.trim().replace(/[^a-zA-Z0-9_ ]/g,"");
     if (term.length < 2) return;
-    const { data, error } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url").or(`username.ilike.%${term.replace(/ /g,"")}%,display_name.ilike.%${term}%`).neq("id",me).limit(12);
+    const { data, error } = await supabase.from("user_profiles").select("id,username,display_name,avatar_url,avatar_path").or(`username.ilike.%${term.replace(/ /g,"")}%,display_name.ilike.%${term}%`).neq("id",me).limit(12);
     if (error) setNotice(error.message);
     else {
       const candidates = (data || []) as Person[];
@@ -223,14 +224,14 @@ export default function MessagesPage() {
       <section className="card eaz-conversation-list">
         <h1>Chats</h1>
         <form className="eaz-message-search" onSubmit={findPeople}><input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Find someone to message"/><button aria-label="Search">⌕</button></form>
-        {results.map(person=><button className="eaz-conversation-item" key={person.id} onClick={()=>openConversation(person)}><span className="eaz-social-avatar">{person.display_name?.[0]||"E"}</span><span><strong>{person.display_name}</strong><small>@{person.username}</small></span></button>)}
+        {results.map(person=><button className="eaz-conversation-item" key={person.id} onClick={()=>openConversation(person)}><SocialAvatar path={person.avatar_path} url={person.avatar_url} name={person.display_name} /><span><strong>{person.display_name}</strong><small>@{person.username}</small></span></button>)}
         <h2>Recent conversations</h2>
-        {conversations.map(conversation=>{const id=conversation.user_one===me?conversation.user_two:conversation.user_one;const person=contacts[id];return <button className={`eaz-conversation-item ${selected?.id===conversation.id?"active":""}`} key={conversation.id} onClick={async()=>{setSelected(conversation);await loadMessages(conversation);}}><span className="eaz-social-avatar">{person?.display_name?.[0]||"E"}</span><span><strong>{person?.display_name||"EAZREAL member"}</strong><small>@{person?.username||"member"}</small></span></button>;})}
+        {conversations.map(conversation=>{const id=conversation.user_one===me?conversation.user_two:conversation.user_one;const person=contacts[id];return <button className={`eaz-conversation-item ${selected?.id===conversation.id?"active":""}`} key={conversation.id} onClick={async()=>{setSelected(conversation);await loadMessages(conversation);}}><SocialAvatar path={person?.avatar_path} url={person?.avatar_url} name={person?.display_name} /><span><strong>{person?.display_name||"EAZREAL member"}</strong><small>@{person?.username||"member"}</small></span></button>;})}
         {conversations.length===0&&results.length===0&&<p className="eaz-muted">Search for a person to start a private conversation.</p>}
       </section>
       <section className="card eaz-message-window">
         {selected ? <>
-          <header className="eaz-message-heading"><button type="button" className="eaz-chat-back" onClick={() => setSelected(null)} aria-label="Back to conversations">‹</button>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-profile-link" aria-label={`View ${other.display_name} profile`}><span className="eaz-social-avatar">{other.display_name?.[0]||"E"}</span></Link> : <span className="eaz-social-avatar">{other?.display_name?.[0]||"E"}</span>}<div>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-name"><strong>{other.display_name}</strong></Link> : <strong>{other?.display_name||"EAZREAL member"}</strong>}<small>@{other?.username||"member"}</small></div></header>
+          <header className="eaz-message-heading"><button type="button" className="eaz-chat-back" onClick={() => setSelected(null)} aria-label="Back to conversations">‹</button>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-profile-link" aria-label={`View ${other.display_name} profile`}><SocialAvatar path={other.avatar_path} url={other.avatar_url} name={other.display_name} /></Link> : <SocialAvatar path={other?.avatar_path} url={other?.avatar_url} name={other?.display_name} />}<div>{other?.username ? <Link href={`/u/${encodeURIComponent(other.username)}`} className="eaz-person-name"><strong>{other.display_name}</strong></Link> : <strong>{other?.display_name||"EAZREAL member"}</strong>}<small>@{other?.username||"member"}</small></div></header>
           <div className="eaz-message-list" ref={messageListRef} onScroll={event => {
             const element = event.currentTarget;
             autoScrollRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 120;
