@@ -154,7 +154,7 @@ export default function PublicProfilePage() {
             <section className="card eaz-profile-intro">
               <h2>Intro</h2>
               {person.bio ? <p>{person.bio}</p> : <p className="eaz-muted">No bio added yet.</p>}
-              {person.website && <p><span aria-hidden="true">🔗 </span><a href={person.website} target="_blank" rel="noreferrer">{person.website.replace(/^https?:\\/\\//, "")}</a></p>}
+              {person.website && <p><span aria-hidden="true">🔗 </span><a href={person.website} target="_blank" rel="noreferrer">{person.website.replace(/^https?:\/\//, "")}</a></p>}
               <p><span aria-hidden="true">👤 </span>{person.is_private ? "Private profile" : "Public profile"}</p>
               <p><span aria-hidden="true">📅 </span>Joined {person.created_at ? new Date(person.created_at).toLocaleDateString() : "EAZREAL"}</p>
             </section>
