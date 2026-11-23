@@ -142,6 +142,8 @@ CREATE TABLE IF NOT EXISTS public.application_status_rate_limits (
 );
 
 ALTER TABLE public.application_status_rate_limits ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS application_status_rate_limits_window_idx
+  ON public.application_status_rate_limits (window_started_at);
 
 REVOKE ALL PRIVILEGES ON TABLE public.application_status_rate_limits
 FROM PUBLIC, anon, authenticated;
@@ -194,6 +196,13 @@ BEGIN
 
   -- 5 attempts per IP and 3 attempts per normalized reference/email pair
   -- in each 15-minute window. Increment both counters even when one is over.
+  -- Opportunistic expiry cleanup keeps this hash-only table bounded without
+  -- running a full-table delete on every request.
+  IF random() < 0.01 THEN
+    DELETE FROM public.application_status_rate_limits
+    WHERE window_started_at < v_now - interval '1 day';
+  END IF;
+
   RETURN v_ip_attempts <= 5 AND v_lookup_attempts <= 3;
 END;
 $function$;
