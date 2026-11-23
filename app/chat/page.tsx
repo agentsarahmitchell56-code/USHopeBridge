@@ -1,5 +1,7 @@
 "use client";
 
+import HopebridgeServiceNav from "../../components/hopebridge-service-nav";
+
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -379,7 +381,7 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="messenger-page">
+    <main className="messenger-page"><HopebridgeServiceNav active="chat" />
       <div className="messenger-shell">
         <header className="messenger-header">
           <Link href="/b/hopebridge-financial-assistance" className="messenger-back" aria-label="Return home">‹</Link>
