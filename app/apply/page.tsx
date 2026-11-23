@@ -1,5 +1,7 @@
 "use client";
 
+import HopebridgeServiceNav from "../../components/hopebridge-service-nav";
+
 import Link from "next/link";
 import { useState } from "react";
 
@@ -99,7 +101,7 @@ export default function Apply() {
 
   if (ref) {
     return (
-      <main className="section"><div className="container">
+      <main className="section"><HopebridgeServiceNav active="apply" /><div className="container">
         <Link href="/b/hopebridge-financial-assistance" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
         <div className="card form-wrap application-success">
           <div className="success-mark" aria-hidden="true">✓</div>
