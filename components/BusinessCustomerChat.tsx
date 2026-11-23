@@ -73,7 +73,18 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
   useEffect(() => {
     if (!open || !session) return;
     let active = true;
-    const load = async () => { try { await refresh(session); } catch (e) { if (active) setError(e instanceof Error ? e.message : "Chat could not be loaded."); } };
+    let requestInFlight = false;
+    const load = async () => {
+      if (requestInFlight) return;
+      requestInFlight = true;
+      try {
+        await refresh(session);
+      } catch (e) {
+        if (active) setError(e instanceof Error ? e.message : "Chat could not be loaded.");
+      } finally {
+        requestInFlight = false;
+      }
+    };
     void load();
     const timer = window.setInterval(() => { if (active) void load(); }, 7000);
     return () => { active = false; window.clearInterval(timer); };
