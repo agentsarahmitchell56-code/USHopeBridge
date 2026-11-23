@@ -40,6 +40,7 @@ export default function PublicBusinessPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -90,15 +91,27 @@ export default function PublicBusinessPage() {
     );
   }
 
+  const isHopebridge = page.slug === "hopebridge-financial-assistance" || page.name.toLowerCase().includes("hopebridge");
+  const pageTabs = isHopebridge
+    ? [["Home", "#page-posts"], ["About", "#page-about"], ["Apply", "/apply"], ["Track Application", "/status"], ["Photos", "#page-photos"], ["Videos", "#page-videos"], ["Contact", "#page-chat"]]
+    : [["Home", "#page-posts"], ["About", "#page-about"], ["Photos", "#page-photos"], ["Videos", "#page-videos"], ["Community", "#page-community"]];
+
   return (
     <main style={{ minHeight: "100vh", background: "#f0f2f5", color: ink, paddingBottom: 48 }}>
       <header style={{ height: 58, background: "#fff", borderBottom: "1px solid #dddfe2", position: "sticky", top: 0, zIndex: 20 }}>
         <div style={{ maxWidth: 1100, height: "100%", margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 9, color: blue, textDecoration: "none", fontSize: 22, fontWeight: 900, letterSpacing: "-1px" }}>
-            <span style={{ width: 34, height: 34, borderRadius: 50, display: "grid", placeItems: "center", background: blue, color: "#fff", fontSize: 21 }}>e</span>
-            EAZREAL
+          <Link href={isHopebridge ? "/b/hopebridge-financial-assistance" : "/"} style={{ display: "flex", alignItems: "center", gap: 9, color: blue, textDecoration: "none", fontSize: 20, fontWeight: 900, letterSpacing: "-.7px", minWidth: 0 }}>
+            <span style={{ width: 34, height: 34, flex: "0 0 34px", borderRadius: 50, display: "grid", placeItems: "center", background: blue, color: "#fff", fontSize: 21 }}>H</span>
+            <span style={{ minWidth: 0 }}>{isHopebridge ? <><span>HOPEBRIDGE</span><small style={{ display: "block", color: muted, fontSize: 9, letterSpacing: "1.2px" }}>FINANCIAL ASSISTANCE</small></> : "EAZREAL"}</span>
           </Link>
-          <Link href="/account/login" style={{ background: blue, color: "#fff", borderRadius: 7, padding: "10px 16px", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>Log in</Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, position: "relative" }}>
+            <Link href="/account/login" style={{ background: blue, color: "#fff", borderRadius: 7, padding: "9px 14px", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>Log in</Link>
+            <button type="button" aria-label="Open page menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)} style={{ width: 42, height: 42, border: "1px solid #e4e6eb", borderRadius: "50%", background: "#f0f2f5", color: ink, display: "grid", placeItems: "center", cursor: "pointer", fontSize: 22, fontWeight: 800 }}>☰</button>
+            {menuOpen && <div role="menu" aria-label="Page menu" style={{ position: "absolute", top: 50, right: 0, width: "min(290px, calc(100vw - 32px))", padding: 8, background: "#fff", border: "1px solid #e4e6eb", borderRadius: 12, boxShadow: "0 12px 32px rgba(0,0,0,.16)", zIndex: 40, display: "grid", gap: 3 }}>
+              <div style={{ padding: "10px 12px 8px", color: muted, fontSize: 11, fontWeight: 800, letterSpacing: ".08em" }}>{isHopebridge ? "HOPEBRIDGE MENU" : "PAGE MENU"}</div>
+              {(isHopebridge ? [{label:"Home",href:"#page-posts",icon:"⌂"},{label:"Apply for assistance",href:"/apply",icon:"＋"},{label:"Track application",href:"/status",icon:"▤"},{label:"Message HOPEBRIDGE",href:"#page-chat",icon:"✉"},{label:"About HOPEBRIDGE",href:"#page-about",icon:"ⓘ"}] : [{label:"Home",href:"#page-posts",icon:"⌂"},{label:"About",href:"#page-about",icon:"ⓘ"},{label:"Contact this page",href:"#page-chat",icon:"✉"}]).map(item => <a key={item.label} role="menuitem" href={item.href} onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px", borderRadius: 8, color: ink, textDecoration: "none", fontSize: 14, fontWeight: 650 }}><span style={{ width: 32, height: 32, borderRadius: "50%", display: "grid", placeItems: "center", background: "#e4e6eb", fontSize: 17 }}>{item.icon}</span>{item.label}</a>)}
+            </div>}
+          </div>
         </div>
       </header>
 
@@ -134,13 +147,7 @@ export default function PublicBusinessPage() {
             {page.description && <p style={{ color: muted, margin: "10px 0 18px", lineHeight: 1.55, fontSize: 15 }}>{page.description}</p>}
           </div>
           <nav aria-label="Page sections" style={{ borderTop: "1px solid #e4e6eb", display: "flex", gap: 4, padding: "0 14px", overflowX: "auto", whiteSpace: "nowrap" }}>
-            {[
-              ["Posts", "#page-posts"],
-              ["About", "#page-about"],
-              ["Photos", "#page-photos"],
-              ["Videos", "#page-videos"],
-              ["Community", "#page-community"],
-            ].map(([label, href], index) => (
+            {pageTabs.map(([label, href], index) => (
               <a key={label} href={href} style={{ display: "inline-flex", alignItems: "center", minHeight: 54, padding: "0 16px", color: index === 0 ? blue : muted, borderBottom: index === 0 ? `3px solid ${blue}` : "3px solid transparent", fontWeight: 700, textDecoration: "none", fontSize: 14 }}>{label}</a>
             ))}
           </nav>
