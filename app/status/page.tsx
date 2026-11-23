@@ -4,7 +4,6 @@ import HopebridgeServiceNav from "../../components/hopebridge-service-nav";
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { supabase } from "../../lib/supabase";
 
 type StatusResult = {
   reference_number: string;
@@ -51,22 +50,20 @@ export default function ApplicationStatusPage() {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      const { data, error: lookupError } = await supabase.rpc(
-        "lookup_application_status",
-        {
-          p_reference_number: cleanReference,
-          p_email: cleanEmail,
-        }
-      );
+      const response = await fetch("/api/status/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({ reference: cleanReference, email: cleanEmail }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload?.error || "Status lookup failed.");
 
-      if (lookupError) throw lookupError;
-
-      const match = Array.isArray(data) ? data[0] : null;
-      if (match) setResult(match as StatusResult);
+      if (payload.result) setResult(payload.result as StatusResult);
       setSearched(true);
     } catch (lookupError) {
       console.error("Application status lookup failed:", lookupError);
-      setError("We couldn't check your application right now. Please try again shortly.");
+      setError(lookupError instanceof Error ? lookupError.message : "We couldn't check your application right now. Please try again shortly.");
     } finally {
       setLoading(false);
     }
