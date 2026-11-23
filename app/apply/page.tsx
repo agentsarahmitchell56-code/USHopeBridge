@@ -100,7 +100,7 @@ export default function Apply() {
   if (ref) {
     return (
       <main className="section"><div className="container">
-        <Link href="/" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
+        <Link href="/b/hopebridge-financial-assistance" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
         <div className="card form-wrap application-success">
           <div className="success-mark" aria-hidden="true">✓</div>
           <p className="eyebrow">STEP 3 OF 3 · COMPLETE</p>
@@ -110,7 +110,7 @@ export default function Apply() {
             <button type="button" className="btn secondary" onClick={() => void navigator.clipboard?.writeText(ref)}>Copy reference</button>
           </div>
           <p className="helper-copy">Please save this number. To check for updates, you’ll also need the email address you used on the form.</p>
-          <div className="actions"><Link className="btn primary" href="/status">Check application status</Link><Link className="btn secondary" href="/chat">Contact support</Link><Link className="btn secondary" href="/">Return home</Link></div>
+          <div className="actions"><Link className="btn primary" href="/status">Check application status</Link><Link className="btn secondary" href="/chat">Contact support</Link><Link className="btn secondary" href="/b/hopebridge-financial-assistance">Return home</Link></div>
           <p className="form-footnote">Submitting an application does not guarantee approval or funding.</p>
         </div>
       </div></main>
@@ -120,7 +120,7 @@ export default function Apply() {
   return (
     <main className="section"><div className="container">
       <div className="page-brand-row">
-        <Link href="/" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
+        <Link href="/b/hopebridge-financial-assistance" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
         <Link href="/status" className="text-link">Already applied? Check status →</Link>
       </div>
       <div className="form-wrap application-form-wrap">
@@ -166,7 +166,7 @@ export default function Apply() {
             {step > 1 && <button type="button" className="btn secondary" onClick={() => { setError(""); setStep((s) => s - 1); }} disabled={loading}>Back</button>}
             {step < 3 ? <button type="button" className="btn primary application-submit" onClick={nextStep}>Continue to step {step + 1} →</button> : <button type="button" className="btn primary application-submit" onClick={submit} disabled={loading}>{loading ? "Sending your application…" : "Submit application"}</button>}
           </div>
-          <p className="form-footnote">Need help? <Link href="/chat" className="text-link">Chat with our support team</Link> or go back to the <Link href="/" className="text-link">home page</Link>.</p>
+          <p className="form-footnote">Need help? <Link href="/chat" className="text-link">Chat with our support team</Link> or go back to the <Link href="/b/hopebridge-financial-assistance" className="text-link">home page</Link>.</p>
         </div>
       </div>
     </div></main>
