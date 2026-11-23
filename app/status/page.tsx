@@ -80,7 +80,7 @@ export default function ApplicationStatusPage() {
     <main className="section">
       <div className="container">
         <div className="page-brand-row">
-          <Link href="/" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
+          <Link href="/b/hopebridge-financial-assistance" className="brand">HOPEBRIDGE<span>FINANCIAL ASSISTANCE</span></Link>
           <Link href="/apply" className="text-link">Apply for assistance →</Link>
         </div>
 
