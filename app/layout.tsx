@@ -1,6 +1,7 @@
 import PWAInstall from "./pwa-install";
 import GlobalFooter from "../components/GlobalFooter";
 import "./globals.css";
+import "./profile-facebook.css";
 
 export const metadata = {
   metadataBase: new URL("https://eazreal.vercel.app"),
