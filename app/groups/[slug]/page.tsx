@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useState} from "react";
+import {useCallback,useEffect,useState} from "react";
 import Link from "next/link";
 import {useParams,useRouter} from "next/navigation";
 import {supabase} from "../../../lib/supabase";
@@ -9,7 +9,7 @@ type Post={id:string;author_id:string;body:string;created_at:string;display_name
 type Pending={user_id:string;role:string;display_name?:string;username?:string};
 export default function GroupPage(){
  const params=useParams<{slug:string}>();const router=useRouter();const[me,setMe]=useState("");const[group,setGroup]=useState<Group|null>(null);const[member,setMember]=useState(false);const[owner,setOwner]=useState(false);const[pending,setPending]=useState<Pending[]>([]);const[posts,setPosts]=useState<Post[]>([]);const[draft,setDraft]=useState("");const[notice,setNotice]=useState("");
- async function load(){
+ const load=useCallback(async()=>{
   const{data:auth}=await supabase.auth.getUser();if(!auth.user){router.replace("/account/login");return;}setMe(auth.user.id);
   const{data:g,error}=await supabase.from("social_groups").select("id,name,slug,description,privacy,created_by").eq("slug",params.slug).maybeSingle();
   if(error||!g){setNotice("Community not found or not accessible.");return;}setGroup(g as Group);const isOwner=g.created_by===auth.user.id;setOwner(isOwner);
@@ -17,7 +17,7 @@ export default function GroupPage(){
   if(isOwner){const{data:requests}=await supabase.from("social_group_members").select("user_id,role").eq("group_id",g.id).eq("status","pending");const rows=(requests||[])as Pending[];const ids=rows.map(x=>x.user_id);const{data:profiles}=ids.length?await supabase.from("user_profiles").select("id,display_name,username,avatar_url,avatar_path").in("id",ids):{data:[]as Array<{id:string;display_name:string;username:string}>};const map=new Map((profiles||[]).map(x=>[x.id,x]));setPending(rows.map(x=>({...x,display_name:map.get(x.user_id)?.display_name,username:map.get(x.user_id)?.username})));}
   const{data:p,error:pe}=await supabase.from("social_group_posts").select("id,author_id,body,created_at").eq("group_id",g.id).order("created_at",{ascending:false}).limit(60);if(pe){setNotice(pe.message);return;}const rows=(p||[])as Post[];const authorIds=[...new Set(rows.map(x=>x.author_id))];const{data:profiles}=authorIds.length?await supabase.from("user_profiles").select("id,display_name,username").in("id",authorIds):{data:[]as Array<{id:string;display_name:string;username:string}>};const map=new Map((profiles||[]).map(x=>[x.id,x]));setPosts(rows.map(x=>({...x,display_name:map.get(x.author_id)?.display_name,username:map.get(x.author_id)?.username,avatar_url:map.get(x.author_id)?.avatar_url,avatar_path:map.get(x.author_id)?.avatar_path})));
  }
- useEffect(()=>{void load();},[params.slug,router]);
+ useEffect(()=>{void load();},[load]);
  async function publish(e:React.FormEvent<HTMLFormElement>){e.preventDefault();if(!group||!member||!draft.trim())return;const{error}=await supabase.from("social_group_posts").insert({group_id:group.id,author_id:me,body:draft.trim()});if(error)setNotice(error.message);else{setDraft("");await load();}}
  async function requestJoin(){if(!group)return;const status=group.privacy==="private"?"pending":"member";const{error}=await supabase.from("social_group_members").insert({group_id:group.id,user_id:me,role:"member",status});if(error)setNotice(error.message);else{setNotice(status==="pending"?"Request sent to the community owner.":"You joined the community.");await load();}}
  async function reviewRequest(userId:string,approved:boolean){if(!group||!owner)return;const{error}=await supabase.from("social_group_members").update({status:approved?"member":"declined"}).eq("group_id",group.id).eq("user_id",userId);if(error)setNotice(error.message);else{setNotice(approved?"Member approved.":"Request declined.");await load();}}
