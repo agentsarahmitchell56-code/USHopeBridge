@@ -15,6 +15,11 @@ export default function CustomerLoginPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  function destination() {
+    const requested = new URLSearchParams(window.location.search).get("next");
+    return requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/account";
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (busy) return;
     setBusy(true); setError(""); setNotice("");
@@ -26,7 +31,7 @@ export default function CustomerLoginPage() {
         }
         throw signInError;
       }
-      router.replace("/account"); router.refresh();
+      router.replace(destination()); router.refresh();
     } catch {
       setError("Sign-in failed. Check your email and password, or create an account.");
     } finally { setBusy(false); }
