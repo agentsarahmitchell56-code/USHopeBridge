@@ -89,6 +89,30 @@ BEGIN
   IF NOT denied THEN
     RAISE EXCEPTION 'FAIL: client was not denied changing conversation_id';
   END IF;
+
+  denied := false;
+  BEGIN
+    UPDATE public.social_messages
+      SET sender_id = f.bob
+      WHERE id = f.alice_message;
+  EXCEPTION WHEN insufficient_privilege THEN
+    denied := true;
+  END;
+  IF NOT denied THEN
+    RAISE EXCEPTION 'FAIL: client was not denied changing sender_id';
+  END IF;
+
+  denied := false;
+  BEGIN
+    UPDATE public.social_messages
+      SET created_at = now()
+      WHERE id = f.alice_message;
+  EXCEPTION WHEN insufficient_privilege THEN
+    denied := true;
+  END;
+  IF NOT denied THEN
+    RAISE EXCEPTION 'FAIL: client was not denied changing created_at';
+  END IF;
 END;
 $move_message$;
 
