@@ -47,6 +47,9 @@ export default function ChatPage() {
   const [error, setError] = useState("");
   const messagesRef = useRef<HTMLDivElement>(null);
   const imageUrlsRef = useRef<Record<string, string>>({});
+  const imageUrlExpiresAtRef = useRef<Record<string, number>>({});
+  const shouldAutoScrollRef = useRef(true);
+  const previousMessageCountRef = useRef(0);
   const knownMessageIdsRef = useRef<Set<string> | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">("default");
 
@@ -130,19 +133,27 @@ export default function ChatPage() {
         setMessages((current) => {
           const merged = new Map(current.map((item) => [item.id, item]));
           for (const item of loaded) merged.set(item.id, item);
-          return Array.from(merged.values()).sort(
+          const nextMessages = Array.from(merged.values()).sort(
             (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
+          const unchanged = current.length === nextMessages.length && current.every((item, index) => {
+            const next = nextMessages[index];
+            return item.id === next.id && item.message === next.message &&
+              item.created_at === next.created_at && item.sender_type === next.sender_type &&
+              item.image_path === next.image_path && item.video_path === next.video_path;
+          });
+          return unchanged ? current : nextMessages;
         });
         setChatConnection("connected");
         setError("");
         for (const item of loaded) {
-          if ((item.image_path || item.video_path) && !imageUrlsRef.current[item.id]) {
+          if ((item.image_path || item.video_path) && (!imageUrlsRef.current[item.id] || (imageUrlExpiresAtRef.current[item.id] || 0) < Date.now() + 60_000)) {
             try {
               const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path || item.video_path || "")}&conversationId=${encodeURIComponent(conversationId)}`, { headers: { "x-chat-token": chatToken } });
               const result = await response.json();
               if (response.ok && result.url && active) {
                 imageUrlsRef.current[item.id] = result.url;
+                imageUrlExpiresAtRef.current[item.id] = Date.now() + 55 * 60_000;
                 setImageUrls((current) => ({ ...current, [item.id]: result.url }));
               }
             } catch { /* Images can be retried on the next refresh. */ }
@@ -165,12 +176,16 @@ export default function ChatPage() {
   }, [started, conversationId, chatToken]);
 
   useEffect(() => {
-    if (messagesRef.current) {
-      messagesRef.current.scrollTo({
-        top: messagesRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
+    const element = messagesRef.current;
+    if (!element) return;
+    const previousCount = previousMessageCountRef.current;
+    const hasNewMessages = messages.length > previousCount;
+    previousMessageCountRef.current = messages.length;
+    if (!shouldAutoScrollRef.current && hasNewMessages) return;
+    element.scrollTo({
+      top: element.scrollHeight,
+      behavior: previousCount === 0 ? "auto" : "smooth",
+    });
   }, [messages]);
 
   async function startChat(e: FormEvent<HTMLFormElement>) {
@@ -401,7 +416,7 @@ export default function ChatPage() {
               <span className="context-lock" aria-hidden="true">✓</span>
               <span><strong>You are chatting with HOPEBRIDGE Support</strong><small>Hi {name.split(" ")[0]}, send us a message to get started. You do not need a customer account; replies appear here automatically.</small>{(notificationPermission === "default") && <button type="button" onClick={() => void enableReplyNotifications()} style={{ display: "block", marginTop: 8, padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: 8, background: "#fff", color: "#123c69", fontSize: 12, cursor: "pointer" }}>🔔 Enable reply notifications</button>}{notificationPermission === "denied" && <small>Notifications are blocked in your browser settings. You can still see replies when you reopen this chat.</small>}{notificationPermission === "unsupported" && <small>Browser reply notifications are not supported on this device.</small>}</span>
             </div>
-            <div className="messenger-messages" ref={messagesRef} aria-live="polite">
+            <div className="messenger-messages" ref={messagesRef} onScroll={event => { const element = event.currentTarget; shouldAutoScrollRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 120; }} aria-live="polite">
               <div className="chat-day-label">MESSAGES</div>
               {messages.length === 0 ? (
                 <div className="messenger-empty">
