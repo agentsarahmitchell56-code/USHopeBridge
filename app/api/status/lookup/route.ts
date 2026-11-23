@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // Vercel supplies x-real-ip. x-forwarded-for is a fallback for trusted
     // hosting proxies; do not accept a client-provided body/header IP value.
     const ip = request.headers.get("x-real-ip")?.trim()
-      || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim()
       || "unknown";
     const hmacSecret = process.env.CRON_SECRET || serviceKey;
     const ipHash = digest(hmacSecret, `ip:${ip}`);
