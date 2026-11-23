@@ -56,4 +56,38 @@ BEGIN
 END;
 $privileges$;
 
+-- The first three attempts for one lookup key pass; the fourth is blocked.
+DO $rate_limit$
+DECLARE
+  attempt integer;
+  allowed boolean;
+BEGIN
+  FOR attempt IN 1..3 LOOP
+    SELECT public.consume_application_status_rate_limit(repeat('a', 64), repeat('b', 64))
+      INTO allowed;
+    IF allowed IS DISTINCT FROM true THEN
+      RAISE EXCEPTION 'FAIL: valid status lookup attempt % was unexpectedly blocked', attempt;
+    END IF;
+  END LOOP;
+
+  SELECT public.consume_application_status_rate_limit(repeat('a', 64), repeat('b', 64))
+    INTO allowed;
+  IF allowed IS DISTINCT FROM false THEN
+    RAISE EXCEPTION 'FAIL: fourth attempt for a lookup key was not blocked';
+  END IF;
+
+  -- The IP threshold is five; a sixth attempt is blocked even with a new pair.
+  SELECT public.consume_application_status_rate_limit(repeat('a', 64), repeat('c', 64))
+    INTO allowed;
+  IF allowed IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'FAIL: fifth IP attempt should still be allowed';
+  END IF;
+  SELECT public.consume_application_status_rate_limit(repeat('a', 64), repeat('d', 64))
+    INTO allowed;
+  IF allowed IS DISTINCT FROM false THEN
+    RAISE EXCEPTION 'FAIL: sixth IP attempt was not blocked';
+  END IF;
+END;
+$rate_limit$;
+
 ROLLBACK;
