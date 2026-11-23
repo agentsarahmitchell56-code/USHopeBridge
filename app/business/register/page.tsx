@@ -91,8 +91,6 @@ export default function BusinessRegisterPage() {
     <Link href="/" style={link}>Return to EAZREAL</Link>
   </section></main>;
 }
-const shell: React.CSSProperties = { minHeight: "75vh", display: "grid", placeItems: "center", padding: 20, background: "#f3f7fc" };
-const card: React.CSSProperties = { width: "100%", maxWidth: 480, padding: 28, borderRadius: 18, background: "white", boxShadow: "0 8px 28px #15395f12" };
 const brand: React.CSSProperties = { color: "#15395f", fontWeight: 900, textDecoration: "none", letterSpacing: ".08em" };
 const muted: React.CSSProperties = { color: "#627d98", lineHeight: 1.65 };
 const label: React.CSSProperties = { display: "grid", gap: 6, fontWeight: 650 };
