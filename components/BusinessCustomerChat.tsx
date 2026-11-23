@@ -19,6 +19,12 @@ export default function BusinessCustomerChat({ slug, businessName }: { slug: str
   const mediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number; type: string | null }>());
 
   useEffect(() => {
+    setSession(null);
+    setPendingSavedSession(null);
+    setMessages([]);
+    setOpen(false);
+    setIdentity({ name: "", email: "" });
+    mediaUrlCache.current.clear();
     try {
       const saved = localStorage.getItem(`platform-business-chat:${slug}`);
       if (!saved) return;
