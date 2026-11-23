@@ -51,9 +51,7 @@ export default function AccountPage() {
         <Link href="/profile"><strong>◉ Profile</strong><span>Edit your name, username and bio.</span></Link>
         <Link href="/notifications"><strong>♧ Notifications</strong><span>See activity and friend requests.</span></Link>
         <Link href="/business/workspace"><strong>▣ Business Pages</strong><span>Manage your public business presence.</span></Link>
-        <Link href="/apply"><strong>♡ HOPEBRIDGE Assistance</strong><span>Access the existing assistance service.</span></Link>
-        <Link href="/status"><strong>▤ Track an application</strong><span>Check an existing application status.</span></Link>
-        <Link href="/chat"><strong>✉ Contact support</strong><span>Open the private HOPEBRIDGE support chat.</span></Link>
+        <Link href="/b/hopebridge-financial-assistance"><strong>♡ HOPEBRIDGE Financial Assistance</strong><span>Open the official page for applications, tracking and support.</span></Link>
       </div>
       <button className="btn secondary" onClick={signOut} disabled={signingOut}>{signingOut ? "Signing out…" : "Log out"}</button>
     </section>
