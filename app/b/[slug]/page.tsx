@@ -90,7 +90,6 @@ export default function PublicBusinessPage() {
     );
   }
 
-  const pageLink = `/b/${encodeURIComponent(page.slug)}`;
   return (
     <main style={{ minHeight: "100vh", background: "#f0f2f5", color: ink, paddingBottom: 48 }}>
       <header style={{ height: 58, background: "#fff", borderBottom: "1px solid #dddfe2", position: "sticky", top: 0, zIndex: 20 }}>
