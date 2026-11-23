@@ -24,7 +24,7 @@ export default function ReelsPage() {
       else {
         const rows = (data || []) as Reel[];
         const ids = [...new Set(rows.map(row => row.author_id))];
-        const { data: profiles } = ids.length ? await supabase.from("user_profiles").select("id,display_name,username,avatar_url,avatar_path").in("id",ids) : { data: [] as Array<{id:string;display_name:string;username:string}> };
+        const { data: profiles } = ids.length ? await supabase.from("user_profiles").select("id,display_name,username,avatar_url,avatar_path").in("id",ids) : { data: [] as Array<{id:string;display_name:string;username:string;avatar_url:string|null;avatar_path:string|null}> };
         const profileMap = new Map((profiles || []).map(profile => [profile.id,profile]));
         const mapped = await Promise.all(rows.map(async row => {
           const { data: signed } = await supabase.storage.from("social-media").createSignedUrl(row.media_path,3600);
