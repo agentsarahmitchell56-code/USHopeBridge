@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
@@ -20,6 +20,8 @@ export default function BusinessInboxPage() {
   const [busy, setBusy] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const mediaUrlCache = useRef(new Map<string, { url: string; expiresAt: number; type: string | null }>());
+  const messageRequestId = useRef(0);
 
   const headers = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
@@ -36,12 +38,38 @@ export default function BusinessInboxPage() {
   }, [headers, page]);
 
   const loadMessages = useCallback(async (conversationId: string) => {
+    const requestId = ++messageRequestId.current;
     const auth = await headers();
     if (!auth || !page) return;
     const response = await fetch(`/api/business-chat?pageId=${page.id}&conversationId=${conversationId}`, { headers: auth, cache: "no-store" });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Messages could not be loaded.");
-    setMessages(result.messages || []);
+    if (requestId !== messageRequestId.current) return;
+    const now = Date.now();
+    const incoming = (result.messages || []) as Message[];
+    const stableMessages = incoming.map(item => {
+      const cached = mediaUrlCache.current.get(item.id);
+      if (cached && cached.type === item.attachmentType && cached.expiresAt > now + 60_000) {
+        return { ...item, attachmentUrl: cached.url };
+      }
+      if (item.attachmentUrl) {
+        mediaUrlCache.current.set(item.id, {
+          url: item.attachmentUrl,
+          type: item.attachmentType,
+          expiresAt: now + 13 * 60_000,
+        });
+      }
+      return item;
+    });
+    setMessages(current => {
+      const unchanged = current.length === stableMessages.length && current.every((item, index) => {
+        const next = stableMessages[index];
+        return item.id === next.id && item.body === next.body &&
+          item.attachmentUrl === next.attachmentUrl && item.attachmentType === next.attachmentType &&
+          item.createdAt === next.createdAt && item.senderType === next.senderType;
+      });
+      return unchanged ? current : stableMessages;
+    });
     setConversations(old => old.map(item => item.id === conversationId ? { ...item, unreadCount: 0 } : item));
   }, [headers, page]);
 
