@@ -17,6 +17,7 @@ export default function PublicProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [posts, setPosts] = useState<Post[]>([]);
+  const [postCount, setPostCount] = useState(0);
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -53,12 +54,12 @@ export default function PublicProfilePage() {
       setFollowers(followerCount || 0); setFollowing(followingCount || 0);
       setIsFollowing(followRow?.status === "accepted");
       setIsFriend(friendship?.status === "accepted");
-      const { data: postRows } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,created_at").eq("author_id",profile.id).order("created_at",{ascending:false}).limit(10);
+      const { data: postRows, count: totalPostCount } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,created_at", { count: "exact" }).eq("author_id",profile.id).order("created_at",{ascending:false}).limit(10);
       const mapped = await Promise.all(((postRows || []) as Post[]).map(async post => {
         const signed = post.media_path ? await supabase.storage.from("social-media").createSignedUrl(post.media_path,3600) : null;
         return {...post,media_url:signed?.data?.signedUrl};
       }));
-      if (active) { setPosts(mapped); setLoading(false); }
+      if (active) { setPosts(mapped); setPostCount(totalPostCount || 0); setLoading(false); }
     })();
     return () => { active = false; };
   }, [params.username]);
@@ -126,7 +127,7 @@ export default function PublicProfilePage() {
           <div className="eaz-public-counts">
             <Link href={`/u/${person.username}/connections`}><strong>{followers}</strong> followers</Link>
             <Link href={`/u/${person.username}/connections`}><strong>{following}</strong> following</Link>
-            <span><strong>{posts.length}</strong> posts</span>
+            <span><strong>{postCount}</strong> posts</span>
           </div>
           {person.is_private && <small className="eaz-muted">🔒 Private account</small>}
         </div>
