@@ -139,7 +139,7 @@ export default function ChatPage() {
         for (const item of loaded) {
           if ((item.image_path || item.video_path) && !imageUrlsRef.current[item.id]) {
             try {
-              const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path || item.video_path || "")}&conversationId=${encodeURIComponent(conversationId)}&chatToken=${encodeURIComponent(chatToken)}`);
+              const response = await fetch(`/api/uploads?path=${encodeURIComponent(item.image_path || item.video_path || "")}&conversationId=${encodeURIComponent(conversationId)}`, { headers: { "x-chat-token": chatToken } });
               const result = await response.json();
               if (response.ok && result.url && active) {
                 imageUrlsRef.current[item.id] = result.url;
