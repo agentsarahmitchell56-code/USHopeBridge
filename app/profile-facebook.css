@@ -36,3 +36,20 @@
 .eaz-public-actions .btn:disabled{opacity:.62;cursor:not-allowed}
 @media(max-width:700px){.eaz-social-subnav{min-height:52px;padding:6px 12px;gap:8px}.eaz-social-subnav .brand{font-size:19px}.eaz-profile-nav{gap:2px}.eaz-profile-nav a{padding:9px 8px;font-size:12px}.eaz-profile-nav a:first-child{display:none}.eaz-public-profile{width:100%}.eaz-public-cover{background-position:center}.eaz-profile-discovery{padding:12px 14px}}
 @media(max-width:370px){.eaz-profile-nav a{padding:8px 6px;font-size:11px}.eaz-public-identity h1{font-size:23px}}
+
+/* Two-column profile body: intro and photo preview beside the live timeline. */
+.eaz-profile-columns{display:grid;grid-template-columns:minmax(250px,340px) minmax(0,1fr);align-items:start;gap:16px}
+.eaz-profile-sidebar{display:grid;gap:14px;position:sticky;top:76px;min-width:0}
+.eaz-profile-intro,.eaz-profile-photos{padding:18px;border-radius:10px;background:var(--card,#fff);border:1px solid var(--border,#e4e6eb);box-shadow:0 1px 3px #0001}
+.eaz-profile-intro h2,.eaz-profile-photos h2{font-size:20px;font-weight:750;margin:0 0 12px;color:var(--text,#1c1e21)}
+.eaz-profile-intro p{margin:9px 0;color:var(--muted,#65676b);overflow-wrap:anywhere;line-height:1.45}
+.eaz-profile-intro a{color:#0866ff;text-decoration:none;overflow-wrap:anywhere}
+.eaz-profile-sidebar-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.eaz-profile-sidebar-heading button{border:0;background:transparent;color:#0866ff;font-weight:650;cursor:pointer}
+.eaz-profile-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.eaz-profile-photo-grid button{aspect-ratio:1;border:0;padding:0;background:#f0f2f5;overflow:hidden;cursor:pointer}
+.eaz-profile-photo-grid img{width:100%;height:100%;object-fit:cover;display:block}
+.eaz-profile-photo-grid .eaz-muted{grid-column:1/-1;font-size:13px}
+.eaz-profile-timeline{width:100%;max-width:none;min-width:0}
+@media(max-width:760px){.eaz-profile-columns{grid-template-columns:minmax(0,1fr)}.eaz-profile-sidebar{position:static;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.eaz-profile-intro,.eaz-profile-photos{padding:14px}.eaz-profile-intro h2,.eaz-profile-photos h2{font-size:18px}}
+@media(max-width:460px){.eaz-profile-sidebar{grid-template-columns:minmax(0,1fr)}}
