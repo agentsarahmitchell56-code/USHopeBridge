@@ -17,6 +17,7 @@ export default function PublicProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [posts, setPosts] = useState<Post[]>([]);
+  const [postCount, setPostCount] = useState(0);
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -53,12 +54,12 @@ export default function PublicProfilePage() {
       setFollowers(followerCount || 0); setFollowing(followingCount || 0);
       setIsFollowing(followRow?.status === "accepted");
       setIsFriend(friendship?.status === "accepted");
-      const { data: postRows } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,created_at").eq("author_id",profile.id).order("created_at",{ascending:false}).limit(10);
+      const { data: postRows, count: totalPostCount } = await supabase.from("social_posts").select("id,author_id,body,media_path,media_type,created_at", { count: "exact" }).eq("author_id",profile.id).order("created_at",{ascending:false}).limit(10);
       const mapped = await Promise.all(((postRows || []) as Post[]).map(async post => {
         const signed = post.media_path ? await supabase.storage.from("social-media").createSignedUrl(post.media_path,3600) : null;
         return {...post,media_url:signed?.data?.signedUrl};
       }));
-      if (active) { setPosts(mapped); setLoading(false); }
+      if (active) { setPosts(mapped); setPostCount(totalPostCount || 0); setLoading(false); }
     })();
     return () => { active = false; };
   }, [params.username]);
@@ -126,7 +127,7 @@ export default function PublicProfilePage() {
           <div className="eaz-public-counts">
             <Link href={`/u/${person.username}/connections`}><strong>{followers}</strong> followers</Link>
             <Link href={`/u/${person.username}/connections`}><strong>{following}</strong> following</Link>
-            <span><strong>{posts.length}</strong> posts</span>
+            <span><strong>{postCount}</strong> posts</span>
           </div>
           {person.is_private && <small className="eaz-muted">🔒 Private account</small>}
         </div>
@@ -149,7 +150,24 @@ export default function PublicProfilePage() {
         <button className={activeTab === "about" ? "active" : ""} onClick={() => setActiveTab("about")}>About</button>
       </nav>
       {activeTab === "about" ? <section className="card eaz-profile-about"><h2>About {person.display_name}</h2><p><strong>Username</strong> @{person.username}</p>{person.bio && <p><strong>Bio</strong> {person.bio}</p>}{person.website && <p><strong>Website</strong> <a href={person.website} target="_blank" rel="noreferrer">{person.website}</a></p>}<p><strong>Account type</strong> {person.is_private ? "Private" : "Public"}</p><p><strong>Member since</strong> {person.created_at ? new Date(person.created_at).toLocaleDateString() : "EAZREAL member"}</p></section> :
-        <section className="eaz-profile-timeline" id="posts">
+        <div className="eaz-profile-columns">
+          <aside className="eaz-profile-sidebar" aria-label="Profile information">
+            <section className="card eaz-profile-intro">
+              <h2>Intro</h2>
+              {person.bio ? <p>{person.bio}</p> : <p className="eaz-muted">No bio added yet.</p>}
+              {person.website && <p><span aria-hidden="true">🔗 </span><a href={person.website} target="_blank" rel="noreferrer">{person.website.replace(/^https?:\/\//, "")}</a></p>}
+              <p><span aria-hidden="true">👤 </span>{person.is_private ? "Private profile" : "Public profile"}</p>
+              <p><span aria-hidden="true">📅 </span>Joined {person.created_at ? new Date(person.created_at).toLocaleDateString() : "EAZREAL"}</p>
+            </section>
+            <section className="card eaz-profile-photos">
+              <div className="eaz-profile-sidebar-heading"><h2>Photos</h2><button type="button" onClick={() => setActiveTab("photos")}>See all</button></div>
+              <div className="eaz-profile-photo-grid">
+                {posts.filter(post => post.media_type === "image" && post.media_url).slice(0,6).map(post => <button type="button" key={post.id} onClick={() => setActiveTab("photos")} aria-label="View profile photos"><img src={post.media_url} alt="Photo shared by this member" loading="lazy" /></button>)}
+                {posts.filter(post => post.media_type === "image" && post.media_url).length === 0 && <p className="eaz-muted">No photos shared yet.</p>}
+              </div>
+            </section>
+          </aside>
+          <section className="eaz-profile-timeline" id="posts">
           <div className="eaz-profile-section-heading"><h2>{activeTab === "photos" ? "Photos" : activeTab === "videos" ? "Videos" : "Posts"}</h2>{me === person.id && <Link href="/social">Create a post</Link>}</div>
           {blocked ? <p className="eaz-muted">You blocked this account. Posts are hidden.</p> : blockedByThem ? <p className="eaz-muted">This member has blocked you. Posts are hidden.</p> : visiblePosts.length === 0 ? <div className="card eaz-social-empty"><h3>{activeTab === "photos" ? "No photos yet" : activeTab === "videos" ? "No videos yet" : "No posts yet"}</h3><p>Updates shared by this member will appear here.</p></div> : visiblePosts.map(post => <article className="card eaz-social-post" key={post.id}>
             <div className="eaz-post-author"><SocialAvatar path={person.avatar_path} url={person.avatar_url} name={person.display_name} /><div><strong>{person.display_name}</strong><small>@{person.username} · {new Date(post.created_at).toLocaleString()}</small></div></div>
@@ -157,7 +175,7 @@ export default function PublicProfilePage() {
             {post.media_url && (post.media_type === "video" ? <video className="eaz-post-media" src={post.media_url} controls playsInline /> : <img className="eaz-post-media" src={post.media_url} alt="Post attachment" />)}
             <div className="eaz-post-actions"><Link href={`/post/${post.id}`}>View post and comments</Link><button onClick={() => { const url = `${window.location.origin}/post/${post.id}`; navigator.clipboard?.writeText(url).then(() => setNotice("Post link copied.")); }}>Share</button></div>
           </article>)}
-        </section>}
+          </section></div>}
       <section className="eaz-profile-discovery"><Link href="/stories">Stories</Link><Link href="/reels">Reels</Link><Link href="/communities">Communities</Link><Link href="/friends">Find friends</Link></section>
     </div>
   </main>;
