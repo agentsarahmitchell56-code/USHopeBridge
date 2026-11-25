@@ -14,11 +14,12 @@ BEGIN
  (f.stranger_id,'authenticated','authenticated','pm-s-'||f.stranger_id||'@example.invalid','',now(),'{"provider":"email","providers":["email"]}','{}',now(),now()),
  (f.follower_id,'authenticated','authenticated','pm-f-'||f.follower_id||'@example.invalid','',now(),'{"provider":"email","providers":["email"]}','{}',now(),now()),
  (f.blocked_id,'authenticated','authenticated','pm-b-'||f.blocked_id||'@example.invalid','',now(),'{"provider":"email","providers":["email"]}','{}',now(),now());
- INSERT INTO public.user_profiles(id,username,display_name,is_private,avatar_path) VALUES
- (f.owner_id,'pm_o_'||left(f.owner_id::text,8),'Owner',true,f.media_path),
- (f.stranger_id,'pm_s_'||left(f.stranger_id::text,8),'Stranger',false,null),
- (f.follower_id,'pm_f_'||left(f.follower_id::text,8),'Follower',false,null),
- (f.blocked_id,'pm_b_'||left(f.blocked_id::text,8),'Blocked',false,null);
+ -- The auth.users trigger creates each user_profiles row. Update those rows
+ -- rather than inserting duplicates.
+ UPDATE public.user_profiles SET username='pm_o_'||left(f.owner_id::text,8),display_name='Owner',is_private=true,avatar_path=f.media_path WHERE id=f.owner_id;
+ UPDATE public.user_profiles SET username='pm_s_'||left(f.stranger_id::text,8),display_name='Stranger',is_private=false WHERE id=f.stranger_id;
+ UPDATE public.user_profiles SET username='pm_f_'||left(f.follower_id::text,8),display_name='Follower',is_private=false WHERE id=f.follower_id;
+ UPDATE public.user_profiles SET username='pm_b_'||left(f.blocked_id::text,8),display_name='Blocked',is_private=false WHERE id=f.blocked_id;
  INSERT INTO public.follows(follower_id,following_id,status) VALUES(f.follower_id,f.owner_id,'accepted');
  INSERT INTO public.social_user_blocks(blocker_id,blocked_id) VALUES(f.owner_id,f.blocked_id);
  INSERT INTO storage.objects(bucket_id,name,owner) VALUES('social-media',f.media_path,f.owner_id);
